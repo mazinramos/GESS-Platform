@@ -107,16 +107,19 @@
             // تهيئة أيقونات Lucide بعد الرندر
             React.useEffect(() => { lucide.createIcons(); });
 
-            const handleLogin = (e) => {
-                e.preventDefault();
-                if (e.target.password.value === "Hala@123") {
-                    setStudentName(e.target.name.value);
-                    setIsLoggedIn(true);
-                    setView('student');
-                } else {
-                    alert("كلمة المرور غير صحيحة!");
-                }
-            };
+           const handleLogin = (e) => {
+    e.preventDefault();
+    if (e.target.password.value === "Hala@123") {
+      const name = e.target.name.value;
+      setStudentName(name);
+      // حفظ الاسم في ذاكرة المتصفح
+      localStorage.setItem("gess_user_name", name); 
+      setIsLoggedIn(true);
+      setView('student');
+    } else {
+      alert("كلمة المرور غير صحيحة!");
+    }
+  };
 
             const checkAdminAuth = (e) => {
                 e.preventDefault();
