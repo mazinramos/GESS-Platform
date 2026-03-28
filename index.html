@@ -133,20 +133,26 @@
     }
   };
     
-
 React.useEffect(() => {
-  const handleBackButton = (event) => {
-    if (path.length > 0) {
+  const handlePopState = (event) => {
+    if (view === 'admin') {
+      event.preventDefault();
+      setView('student');
+      window.history.pushState(null, null, window.location.pathname); 
+    } 
+    else if (path.length > 0) {
+      event.preventDefault();
       setPath(prev => prev.slice(0, -1));
-      window.history.pushState(null, null, window.location.pathname);
+      window.history.pushState(null, null, window.location.pathname); 
     }
   };
   window.history.pushState(null, null, window.location.pathname);
-  window.addEventListener('popstate', handleBackButton);
+  window.addEventListener('popstate', handlePopState);
   return () => {
-    window.removeEventListener('popstate', handleBackButton);
+    window.removeEventListener('popstate', handlePopState);
   };
-}, [path]);
+}, [path, view]);
+            
             const checkAdminAuth = (e) => {
                 e.preventDefault();
                 if (adminPassInput === "Hala@123") {
