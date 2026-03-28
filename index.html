@@ -213,7 +213,9 @@
                                 </div>
                                 <div className="flex gap-1 bg-gray-50 p-1 rounded-xl">
                                     <button onClick={() => view === 'admin' ? setView('student') : setShowAdminAuth(true)} className={`p-3 rounded-lg ${view === 'admin' ? 'bg-[#f58220] text-white' : 'text-gray-400'}`}><i data-lucide="settings"></i></button>
-                                    <button onClick={() => window.location.reload()} className="p-3 text-red-400"><i data-lucide="log-out"></i></button>
+                                    <button 
+  onClick={() => {
+    localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
                                 </div>
                             </div>
                         </div>
