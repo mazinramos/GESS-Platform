@@ -9,10 +9,9 @@
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>tailwind.config = {darkMode: 'class',}</script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-    
     <script src="https://unpkg.com/lucide@latest"></script>
-
     <style>
         body { font-family: 'Tajawal', sans-serif; }
         .backdrop-blur-xl { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
@@ -28,7 +27,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-        // إعدادات Firebase
+     
         const firebaseConfig = {
             apiKey: "ضع_هنا_API_KEY_الخاص_بك", 
             authDomain: "gess-edu.firebaseapp.com",
@@ -38,7 +37,7 @@
             appId: "1:123456789:web:abcdef"
         };
 
-        // تهيئة Firebase
+       
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -66,7 +65,13 @@
             const [path, setPath] = React.useState([]);
             const [contents, setContents] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
-
+          
+            const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");React.useEffect(() => {if (darkMode) {document.documentElement.classList.add('dark');
+            localStorage.setItem("gess_theme", "dark");}
+            else {
+            document.documentElement.classList.remove('dark');
+            localStorage.setItem("gess_theme", "light");}}, [darkMode]);
+            
             const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` }));
             const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
 
@@ -94,7 +99,6 @@
         } else if (view === 'admin') {
           setView('student');
         }
-        // منع المتصفح من الخروج
         window.history.pushState(null, null, window.location.pathname);
       }
     };
@@ -104,7 +108,7 @@
     return () => window.removeEventListener('popstate', handleBackButton);
   }, [view, path, selectedItem]);
 
-            // تهيئة أيقونات Lucide بعد الرندر
+          
             React.useEffect(() => { lucide.createIcons(); });
 
            const handleLogin = (e) => {
@@ -112,7 +116,7 @@
     if (e.target.password.value === "Hala@123") {
       const name = e.target.name.value;
       setStudentName(name);
-      // حفظ الاسم في ذاكرة المتصفح
+     
       localStorage.setItem("gess_user_name", name); 
       setIsLoggedIn(true);
       setView('student');
@@ -150,17 +154,17 @@
             };
 
             if (view === 'login') return (
-                <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+                <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
                     <div className="absolute inset-0 z-0">
-                        <div className="absolute inset-0 bg-[#f58220]/10 mix-blend-multiply z-10"></div>
+                       <div className={`absolute inset-0 transition-colors duration-500 ${darkMode ? 'bg-black/60' : 'bg-[#f58220]/10'} mix-blend-multiply z-10`}></div>
                         <img src="https://images.unsplash.com/photo-1581092583537-20d51b4b4f1b?q=80&w=1600" className="w-full h-full object-cover blur-md scale-110" />
                     </div>
-                    <div className="relative z-20 bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-white/50 animate-in">
+                    <div className={`relative z-20 transition-all duration-500 p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border backdrop-blur-xl ${darkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/80 border-white/50'}`}>
                         <div className="flex flex-col items-center mb-8">
                             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg p-2 mb-4 border-2 border-[#f58220]">
                                 <img src={GESS_LOGO} className="w-full h-full object-contain rounded-full" />
                             </div>
-                            <h1 className="text-2xl font-black text-gray-800">GESS EDU PLATFORM</h1>
+                            <h1 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>GESS EDU PLATFORM</h1>
                             <p className="text-[#f58220] font-bold text-sm tracking-widest mt-1">هندسة المساحة - جامعة الخرطوم</p>
                         </div>
                         <form onSubmit={handleLogin} className="space-y-5">
@@ -214,9 +218,8 @@
                                 </div>
                                 <div className="flex gap-1 bg-gray-50 p-1 rounded-xl">
                                     <button onClick={() => view === 'admin' ? setView('student') : setShowAdminAuth(true)} className={`p-3 rounded-lg ${view === 'admin' ? 'bg-[#f58220] text-white' : 'text-gray-400'}`}><i data-lucide="settings"></i></button>
-                                    <button 
-  onClick={() => {
-    localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
+                                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 transition-colors">{darkMode ? <i data-lucide="sun"></i> : <i data-lucide="moon"></i>}</button>
+                                    <button onClick={() => {localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
                                 </div>
                             </div>
                         </div>
