@@ -71,39 +71,10 @@
             const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
 
             React.useEffect(() => {
-                React.useEffect(() => {
-    const savedName = localStorage.getItem("gess_user_name");
-    if (savedName) {
-      setStudentName(savedName);
-      setIsLoggedIn(true);
-      setView('student');
-    }
-    
-  }, []);
                 const { auth, db, signInAnonymously, onAuthStateChanged, query, collection, onSnapshot, appId } = window.fb;
                 
                 signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
                 onAuthStateChanged(auth, setUser);
-                // التحكم في زر الرجوع بالهاتف
-  React.useEffect(() => {
-    const handleBackButton = (e) => {
-      if (view !== 'login') {
-        e.preventDefault();
-        if (selectedItem) {
-          setSelectedItem(null);
-        } else if (path.length > 0) {
-          setPath(path.slice(0, -1));
-        } else if (view === 'admin') {
-          setView('student');
-        }
-        window.history.pushState(null, null, window.location.pathname);
-      }
-    };
-
-    window.history.pushState(null, null, window.location.pathname);
-    window.addEventListener('popstate', handleBackButton);
-    return () => window.removeEventListener('popstate', handleBackButton);
-  }, [view, path, selectedItem]);
 
                 const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'materials'));
                 const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -112,21 +83,19 @@
                 return () => unsubscribe();
             }, []);
 
+            // تهيئة أيقونات Lucide بعد الرندر
             React.useEffect(() => { lucide.createIcons(); });
 
             const handleLogin = (e) => {
-    e.preventDefault();
-    if (e.target.password.value === "Hala@123") {
-      const name = e.target.name.value;
-      setStudentName(name);
-      localStorage.setItem("gess_user_name", name); 
-      setIsLoggedIn(true);
-      setView('student');
-      alert(`أهلاً بك يا ${name} في منصة GESS EDU`);
-    } else {
-      alert("كلمة المرور غير صحيحة!");
-    }
-  };
+                e.preventDefault();
+                if (e.target.password.value === "Hala@123") {
+                    setStudentName(e.target.name.value);
+                    setIsLoggedIn(true);
+                    setView('student');
+                } else {
+                    alert("كلمة المرور غير صحيحة!");
+                }
+            };
 
             const checkAdminAuth = (e) => {
                 e.preventDefault();
@@ -207,12 +176,6 @@
                             <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setView('student'); setPath([]); setSelectedItem(null);}}>
                                 <div className="w-12 h-12 border border-gray-100 rounded-lg p-1 bg-white">
                                     <img src={GESS_LOGO} className="w-full h-full object-contain" />
-                                    <div className="flex items-center gap-2 bg-[#f58220]/5 px-4 py-2 rounded-xl text-[#f58220]">
-    <i data-lucide="user" class="w-4 h-4"></i>
-    <span className="text-sm font-black italic">
-        {studentName ? studentName : "طالب زائر"}
-    </span>
-</div>
                                 </div>
                                 <div>
                                     <h1 className="text-lg font-black leading-none text-gray-800">GESS EDU</h1>
