@@ -66,12 +66,19 @@
             const [contents, setContents] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
           
-            const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");React.useEffect(() => {if (darkMode) {document.documentElement.classList.add('dark');
-            localStorage.setItem("gess_theme", "dark");}
-            else {
-            document.documentElement.classList.remove('dark');
-            localStorage.setItem("gess_theme", "light");}}, [darkMode]);
-            
+          const [darkMode, setDarkMode] = React.useState(
+    localStorage.getItem("gess_theme") === "dark"
+  );
+
+  React.useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem("gess_theme", "dark");
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem("gess_theme", "light");
+    }
+  }, [darkMode]);  
             const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` }));
             const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
 
