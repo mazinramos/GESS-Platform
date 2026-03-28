@@ -210,29 +210,29 @@
                    <header className={`sticky top-0 z-50 border-b h-20 flex items-center transition-all ${darkMode ? 'bg-gray-800 border-gray-700 shadow-xl' : 'bg-white border-gray-100 shadow-sm'}`}>
                         <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
                             <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setView('student'); setPath([]); setSelectedItem(null);}}>
-                                <div className="w-12 h-12 border border-gray-100 rounded-lg p-1 bg-white">
+                               <div className={`w-12 h-12 border rounded-lg p-1 transition-all ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-100'}`}>
                                     <img src={GESS_LOGO} className="w-full h-full object-contain" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg font-black leading-none text-gray-800">GESS EDU</h1>
+                                    <h1 className={`text-lg font-black leading-none transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>GESS EDU</h1>
                                     <p className="text-[10px] text-[#f58220] font-bold mt-1">نحو آفاق هندسية أوسع</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="hidden md:flex items-center gap-2 bg-[#f58220]/5 px-4 py-2 rounded-xl text-[#f58220]">
+                               <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-[#f58220]/5 text-[#f58220]'}`}>
                                     <i data-lucide="user" class="w-4 h-4"></i>
                                     <span className="text-sm font-black italic">{studentName}</span>
                                 </div>
-                                <div className="flex gap-1 bg-gray-50 p-1 rounded-xl">
+                                <div className={`flex gap-1 p-1 rounded-xl transition-colors ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
                                     <button onClick={() => view === 'admin' ? setView('student') : setShowAdminAuth(true)} className={`p-3 rounded-lg ${view === 'admin' ? 'bg-[#f58220] text-white' : 'text-gray-400'}`}><i data-lucide="settings"></i></button>
-                                    <button onClick={() => setDarkMode(!darkMode)} className="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-yellow-400 transition-colors">{darkMode ? <i data-lucide="sun"></i> : <i data-lucide="moon"></i>}</button>
+                                  <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-all ${darkMode ? 'bg-gray-600 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}><i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i></button>
                                     <button onClick={() => {localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
                                 </div>
                             </div>
                         </div>
                     </header>
 
-                    <main className="max-w-6xl mx-auto px-4 py-8">
+                    <main className={`max-w-6xl mx-auto px-4 py-8 transition-colors ${darkMode ? 'text-white' : ''}`}>
                         {view === 'admin' ? (
                             <div className="max-w-4xl mx-auto animate-in">
                                 <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
@@ -266,9 +266,9 @@
                                 {path.length === 0 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                         {years.map(y => (
-                                            <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className="bg-white p-12 rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-[#f58220] transition-all text-right relative overflow-hidden group">
+                                           <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                                 <i data-lucide="graduation-cap" class="w-12 h-12 text-[#f58220] mb-4"></i>
-                                                <h3 className="text-2xl font-black">{y.title}</h3>
+                                               <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{y.title}</h3>
                                                 <p className="text-gray-400 text-sm mt-2">عرض المواد الدراسية</p>
                                             </button>
                                         ))}
@@ -278,9 +278,9 @@
                                 {path.length === 1 && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                                         {semesters.map(s => (
-                                            <button key={s.id} onClick={() => setPath([...path, {type: 'semester', ...s}])} className="bg-white p-16 rounded-[3rem] shadow-xl text-center hover:scale-105 transition-all">
+                                            <button key={s.id} onClick={() => setPath([...path, {type: 'semester', ...s}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                                 <i data-lucide="book-open" class="w-16 h-16 text-[#f58220] mx-auto mb-4"></i>
-                                                <h3 className="text-3xl font-black">{s.title}</h3>
+                                                <h3 className={`text-3xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{s.title}</h3>
                                             </button>
                                         ))}
                                     </div>
