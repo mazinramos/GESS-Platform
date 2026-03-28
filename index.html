@@ -132,6 +132,21 @@
       alert("كلمة المرور غير صحيحة!");
     }
   };
+    
+React.useEffect(() => {
+  const handleBackButton = (event) => {
+    if (path.length > 0) {
+      event.preventDefault();
+      setPath(prev => prev.slice(0, -1));
+    }
+  };
+
+  window.history.pushState(null, null, window.location.pathname);
+  window.addEventListener('popstate', handleBackButton);
+  return () => {
+    window.removeEventListener('popstate', handleBackButton);
+  };
+}, [path]);
 
             const checkAdminAuth = (e) => {
                 e.preventDefault();
