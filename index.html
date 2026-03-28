@@ -83,6 +83,27 @@
                 return () => unsubscribe();
             }, []);
 
+  React.useEffect(() => {
+    const handleBackButton = (e) => {
+      if (view !== 'login') {
+        e.preventDefault();
+        if (selectedItem) {
+          setSelectedItem(null);
+        } else if (path.length > 0) {
+          setPath(path.slice(0, -1));
+        } else if (view === 'admin') {
+          setView('student');
+        }
+        // منع المتصفح من الخروج
+        window.history.pushState(null, null, window.location.pathname);
+      }
+    };
+
+    window.history.pushState(null, null, window.location.pathname);
+    window.addEventListener('popstate', handleBackButton);
+    return () => window.removeEventListener('popstate', handleBackButton);
+  }, [view, path, selectedItem]);
+
             // تهيئة أيقونات Lucide بعد الرندر
             React.useEffect(() => { lucide.createIcons(); });
 
