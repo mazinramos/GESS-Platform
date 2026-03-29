@@ -78,11 +78,53 @@
     }
   }, [darkMode]);  
             const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` }));
-            const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
-
+           const semesters = [
+  { id: 1, title: 'السمستر الأول' },
+  { id: 2, title: 'السمستر الثاني' },
+  { id: 3, title: 'السمستر الثالث' },
+  { id: 4, title: 'السمستر الرابع' },
+  { id: 5, title: 'السمستر الخامس' }
+];
+          
+const resourceTypes = [
+  { id: 'pdf', title: 'محاضرات PDF', icon: '📄' },
+  { id: 'video', title: 'فيديو', icon: '🎥' },
+  { id: 'exams', title: 'امتحانات', icon: '📝' },
+  { id: 'ref', title: 'مراجع', icon: '📚' }
+];
             React.useEffect(() => {
                 const { auth, db, signInAnonymously, onAuthStateChanged, query, collection, onSnapshot, appId } = window.fb;
                 
+              {contents.filter(m => m.semesterId === sem.id).map((material) => (
+  <div key={material.id} className="bg-white/10 backdrop-blur-md p-4 rounded-2xl border border-white/10 mb-4">
+    <h3 className="text-white text-center mb-4 font-bold text-sm">{material.subjectName}</h3>
+    
+    {/* شبكة الكروت الصغيرة 2*2 */}
+    <div className="grid grid-cols-2 gap-2">
+      <a href={material.pdf} target="_blank" className="flex flex-col items-center p-2 rounded-xl bg-white/5 hover:bg-orange-500/20 border border-white/5 transition-all">
+        <span className="text-lg">📄</span>
+        <span className="text-[10px] text-gray-300">PDF</span>
+      </a>
+      
+      <a href={material.video} target="_blank" className="flex flex-col items-center p-2 rounded-xl bg-white/5 hover:bg-orange-500/20 border border-white/5 transition-all">
+        <span className="text-lg">🎥</span>
+        <span className="text-[10px] text-gray-300">فيديو</span>
+      </a>
+
+      <a href={material.exams} target="_blank" className="flex flex-col items-center p-2 rounded-xl bg-white/5 hover:bg-orange-500/20 border border-white/5 transition-all">
+        <span className="text-lg">📝</span>
+        <span className="text-[10px] text-gray-300">امتحانات</span>
+      </a>
+
+      <a href={material.ref} target="_blank" className="flex flex-col items-center p-2 rounded-xl bg-white/5 hover:bg-orange-500/20 border border-white/5 transition-all">
+        <span className="text-lg">📚</span>
+        <span className="text-[10px] text-gray-300">مراجع</span>
+      </a>
+    </div>
+  </div>
+))}
+  </div>
+))}
                 signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
                 onAuthStateChanged(auth, setUser);
 
@@ -258,22 +300,48 @@ React.useEffect(() => {
                             <div className="max-w-4xl mx-auto animate-in">
                                 <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
                                    <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i> إضافة مادة</h2> 
-                                    <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                        <input name="subject" required placeholder="اسم المادة" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
-                                        <input name="title" required placeholder="عنوان الدرس" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
-                                        <input name="url" required placeholder="الرابط المباشر" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
-                                        <select name="yearId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
-                                            {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
-                                        </select>
-                                        <select name="semesterId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
-                                            {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                                        </select>
-                                        <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
-                                            <option value="video">محاضرة فيديو</option>
-                                            <option value="pdf">ملف ملخص</option>
-                                        </select>
-                                        <button className="md:col-span-3 bg-[#f58220] text-white p-5 rounded-2xl font-black">نشر المحتوى</button>
-                                    </form>
+                                  <form onSubmit={addMaterial} className="space-y-4 text-right">
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+     <input name="subjectName" placeholder="اسم المادة" required className="bg-white/5 p-3 rounded-xl border border-white/10 text-white" />
+     
+     <select name="semesterId" className="bg-[#1a1a1a] p-3 rounded-xl border border-white/10 text-white">
+        {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+     </select>
+
+     <select name="yearId" className="bg-[#1a1a1a] p-3 rounded-xl border border-white/10 text-white">
+        {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
+     </select>
+  </div>
+
+<div className="grid grid-cols-2 gap-4 mt-6">
+
+  <div className="flex flex-col gap-1">
+    <label className="text-[10px] text-gray-400 mr-2 text-right">رابط الـ PDF</label>
+    <input name="pdf" placeholder="Google Drive Link" className="bg-white/5 p-3 rounded-xl border border-white/10 text-right text-xs text-white" />
+  </div>
+  
+  <div className="flex flex-col gap-1">
+    <label className="text-[10px] text-gray-400 mr-2 text-right">رابط الفيديو</label>
+    <input name="video" placeholder="YouTube / Drive Link" className="bg-white/5 p-3 rounded-xl border border-white/10 text-right text-xs text-white" />
+  </div>
+
+
+  <div className="flex flex-col gap-1">
+    <label className="text-[10px] text-gray-400 mr-2 text-right">رابط الامتحانات</label>
+    <input name="exams" placeholder="Google Drive Link" className="bg-white/5 p-3 rounded-xl border border-white/10 text-right text-xs text-white" />
+  </div>
+
+
+  <div className="flex flex-col gap-1">
+    <label className="text-[10px] text-gray-400 mr-2 text-right">رابط المراجع</label>
+    <input name="ref" placeholder="Google Drive Link" className="bg-white/5 p-3 rounded-xl border border-white/10 text-right text-xs text-white" />
+  </div>
+</div>
+
+  <button type="submit" className="w-full bg-[#f58220] text-white p-4 rounded-2xl font-bold hover:opacity-90 transition-all">
+    نشر المحتوى للمواد
+  </button>
+</form>
                                 </div>
                             </div>
                         ) : (
