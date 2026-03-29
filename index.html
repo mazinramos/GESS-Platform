@@ -18,57 +18,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = {darkMode: 'class',}</script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
-
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
-
-<script>ا
-  const firebaseConfig = {
-    apiKey: "AIzaSyCtQtSikYFWEPtKjwxVIJim8fHzeW5ACtY",
-    authDomain: "gess-platform.firebaseapp.com",
-    projectId: "gess-platform",
-    storageBucket: "gess-platform.firebasestorage.app",
-    messagingSenderId: "794482265366",
-    appId: "1:794482265366:web:0188b0cae375d8efd3d437"
-  };
-
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore(); 
-    // دالة الإضافة لفايربيس
-const addMaterialToFirebase = async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(e.target);
-    
-    const materialData = {
-        subjectName: formData.get('subjectName'),
-        semesterId: formData.get('semesterId'),
-        yearId: formData.get('yearId'),
-        pdf: formData.get('pdf'),
-        video: formData.get('video'),
-        exams: formData.get('exams'),
-        ref: formData.get('ref'),
-        createdAt: new Date()
-    };
-
-    try {
-   
-        await db.collection("materials").add(materialData);
-        alert("تمت إضافة المادة بنجاح للمنصة! 🔥");
-        e.target.reset(); 
-    } catch (error) {
-        console.error("خطأ في الإضافة: ", error);
-        alert("فشل في إضافة المادة، راجع الكونسول");
-    }
-};
-</script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body { font-family: 'Tajawal', sans-serif; }
         .backdrop-blur-xl { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .animate-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
-    
 </head>
 <body class="bg-[#fafafa]">
     <div id="root"></div>
@@ -217,30 +173,20 @@ React.useEffect(() => {
                 }
             };
 
-           const addMaterial = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.currentTarget);
-  
-  const materialData = {
-    subject: formData.get('subject'),
-    title: formData.get('title'),
-    url: formData.get('url'),
-    yearId: formData.get('yearId'),
-    semesterId: formData.get('semesterId'),
-    type: formData.get('type'),
-    createdAt: new Date()
-  };
-
-  try {
-
-    await db.collection("materials").add(materialData);
-    alert("تمت إضافة المادة بنجاح! 🔥");
-    e.target.reset();
-  } catch (error) {
-    console.error("Error: ", error);
-    alert("حصل خطأ، راجع كونسول المتصفح");
-  }
-};
+            const addMaterial = async (e) => {
+                e.preventDefault();
+                const { db, collection, addDoc, appId } = window.fb;
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'materials'), {
+                    ...data,
+                    yearId: parseInt(data.yearId),
+                    semesterId: parseInt(data.semesterId),
+                    createdAt: new Date().toISOString()
+                });
+                e.target.reset();
+                alert("تمت إضافة المادة بنجاح!");
+            };
 
             if (view === 'login') return (
                 <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
