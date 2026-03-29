@@ -65,11 +65,9 @@
             const [path, setPath] = React.useState([]);
             const [contents, setContents] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
-          
-          const [darkMode, setDarkMode] = React.useState(
-    localStorage.getItem("gess_theme") === "dark"
-  );
-
+            const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
+            const [toast, setToast] = React.useState({ show: false, message: '' });
+            
   React.useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -127,9 +125,11 @@
       localStorage.setItem("gess_user_name", name); 
       setIsLoggedIn(true);
       setView('student');
-        alert(`أهلاً بك يا ${name} في منصة GESS EDU`);
+       setToast({ show: true, message: `أهلاً بك يا ${name} في منصة GESS EDU` });
+        setTimeout(() => setToast({ show: false, message: '' }), 3000);
     } else {
-      alert("كلمة المرور غير صحيحة!");
+      setToast({ show: true, message: "⚠️ عذراً، كلمة المرور غير صحيحة" });
+setTimeout(() => setToast({ show: false, message: '' }), 3000);
     }
   };
     
@@ -161,7 +161,8 @@ React.useEffect(() => {
                     setAdminPassInput("");
                     setPath([]);
                 } else {
-                    alert("كلمة مرور الإدارة خاطئة!");
+                   setToast({ show: true, message: "🚫 خطأ: كلمة مرور الإدارة غير صحيحة" });
+                    setTimeout(() => setToast({ show: false, message: '' }), 3000);
                 }
             };
 
@@ -365,6 +366,14 @@ React.useEffect(() => {
                     <footer className="fixed bottom-0 left-0 right-0 h-10 bg-white/50 backdrop-blur-md border-t flex items-center justify-center">
                         <p className="text-[10px] font-black text-gray-400">GESS • UNIVERSITY OF KHARTOUM • GEOMATICS ENGINEERING</p>
                     </footer>
+                    {toast.show && (
+  <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
+    <div className="bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl border border-gray-700 flex items-center gap-3">
+      <div className="w-2 h-2 rounded-full bg-[#f58220]"></div>
+      <span className="font-bold text-sm">{toast.message}</span>
+    </div>
+  </div>
+)}
                 </div>
             );
         }
