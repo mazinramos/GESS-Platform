@@ -3,22 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="google-site-verification" content="IH_dYUXH_BQW7TR7uUDlCoLQvJy0kQdNy503aXl8W8w" />
-    <meta name="description" content="منصة GESS EDU توفر محاضرات PDF، . طلاب جامعه الخرطوم . جامعة الخرطوم هندسة جامغة الخرطوم , هندسة المساحة . طلاب هندسة المساحة جامعة الخرطوم . فيديوهات، امتحانات ومراجع لطلاب الهندسة لجميع السمسترات.">
-    <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
-    <link rel="apple-touch-icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22GESS%20EDU%22,%22short_name%22:%22GESS%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22icons%22:[{%22src%22:%22https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
-    <title>GESS EDU | منصة المواد الهندسية والكمبيوتر</title>
+    <title>GESS EDU PLATFORM</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = {darkMode: 'class',}</script>
     <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    
     <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
         body { font-family: 'Tajawal', sans-serif; }
         .backdrop-blur-xl { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
@@ -34,7 +28,7 @@
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-     
+        // إعدادات Firebase
         const firebaseConfig = {
             apiKey: "ضع_هنا_API_KEY_الخاص_بك", 
             authDomain: "gess-edu.firebaseapp.com",
@@ -44,7 +38,7 @@
             appId: "1:123456789:web:abcdef"
         };
 
-       
+        // تهيئة Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
@@ -72,38 +66,25 @@
             const [path, setPath] = React.useState([]);
             const [contents, setContents] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
-            const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
-            const [toast, setToast] = React.useState({ show: false, message: '' });
-            const [adminAddMode, setAdminAddMode] = React.useState('academic');
 
-  React.useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem("gess_theme", "dark");
-    } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem("gess_theme", "light");
-    }
-  }, [darkMode]);  
             const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` }));
             const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
-            const extraCourses = [
-    { id: 'c1', title: 'كورس البرمجة الشامل', icon: 'Rocket' },
-    { id: 'c2', title: 'كورس التصميم الهندسي', icon: 'Settings' }
-];
+
             React.useEffect(() => {
+                React.useEffect(() => {
+    const savedName = localStorage.getItem("gess_user_name");
+    if (savedName) {
+      setStudentName(savedName);
+      setIsLoggedIn(true);
+      setView('student');
+    }
+    
+  }, []);
                 const { auth, db, signInAnonymously, onAuthStateChanged, query, collection, onSnapshot, appId } = window.fb;
                 
                 signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
                 onAuthStateChanged(auth, setUser);
-
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'materials'));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setContents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                });
-                return () => unsubscribe();
-            }, []);
-
+                // التحكم في زر الرجوع بالهاتف
   React.useEffect(() => {
     const handleBackButton = (e) => {
       if (view !== 'login') {
@@ -124,103 +105,68 @@
     return () => window.removeEventListener('popstate', handleBackButton);
   }, [view, path, selectedItem]);
 
-          
+                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'materials'));
+                const unsubscribe = onSnapshot(q, (snapshot) => {
+                    setContents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+                });
+                return () => unsubscribe();
+            }, []);
+
             React.useEffect(() => { lucide.createIcons(); });
 
-           const handleLogin = (e) => {
+            const handleLogin = (e) => {
     e.preventDefault();
-    if (e.target.password.value === "Gess@123") {
+    if (e.target.password.value === "Hala@123") {
       const name = e.target.name.value;
       setStudentName(name);
-     
       localStorage.setItem("gess_user_name", name); 
       setIsLoggedIn(true);
       setView('student');
-       setToast({ show: true, message: `أهلاً بك يا ${name} في منصة GESS EDU` });
-        setTimeout(() => setToast({ show: false, message: '' }), 3000);
+      alert(`أهلاً بك يا ${name} في منصة GESS EDU`);
     } else {
-      setToast({ show: true, message: "⚠️ عذراً، كلمة المرور غير صحيحة" });
-setTimeout(() => setToast({ show: false, message: '' }), 3000);
+      alert("كلمة المرور غير صحيحة!");
     }
   };
-    
-React.useEffect(() => {
-  const handlePopState = (event) => {
-    if (view === 'admin') {
-      event.preventDefault();
-      setView('student');
-      window.history.pushState(null, null, window.location.pathname); 
-    } 
-    else if (path.length > 0) {
-      event.preventDefault();
-      setPath(prev => prev.slice(0, -1));
-      window.history.pushState(null, null, window.location.pathname); 
-    }
-  };
-  window.history.pushState(null, null, window.location.pathname);
-  window.addEventListener('popstate', handlePopState);
-  return () => {
-    window.removeEventListener('popstate', handlePopState);
-  };
-}, [path, view]);
-            
 
-            const [newAdminPass, setNewAdminPass] = React.useState('');
-            const [newLoginPass, setNewLoginPass] = React.useState('');
             const checkAdminAuth = (e) => {
                 e.preventDefault();
-                const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'Gess@123';
-            if (adminPassInput === savedAdminPass) {
+                if (adminPassInput === "Hala@123") {
                     setView('admin');
                     setShowAdminAuth(false);
                     setAdminPassInput("");
                     setPath([]);
                 } else {
-                   setToast({ show: true, message: "🚫 خطأ: كلمة مرور الإدارة غير صحيحة" });
-                    setTimeout(() => setToast({ show: false, message: '' }), 3000);
+                    alert("كلمة مرور الإدارة خاطئة!");
                 }
             };
 
             const addMaterial = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    
-    const newDoc = {
-        subject: formData.get('subject'),
-        title: formData.get('title'),
-        url: formData.get('url'),
-        type: formData.get('type'),
-        
-        category: adminAddMode === 'academic' ? 'academic' : 'special_course',
-        yearId: adminAddMode === 'academic' ? parseInt(formData.get('yearId')) : null,
-        semesterId: adminAddMode === 'academic' ? parseInt(formData.get('semesterId')) : null,
-        courseName: adminAddMode === 'special_course' ? formData.get('subject') : '',
-        
-        createdAt: new Date()
-    };
-
-    try {
-        await addDoc(collection(db, "artifacts"), newDoc);
-        alert("🚀 تم النشر بنجاح! المحتوى متاح الآن للطلاب.");
-        e.target.reset();
-    } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("❌ حصل خطأ في الاتصال بالقاعدة");
-    }
-};
+                e.preventDefault();
+                const { db, collection, addDoc, appId } = window.fb;
+                const formData = new FormData(e.target);
+                const data = Object.fromEntries(formData.entries());
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'materials'), {
+                    ...data,
+                    yearId: parseInt(data.yearId),
+                    semesterId: parseInt(data.semesterId),
+                    createdAt: new Date().toISOString()
+                });
+                e.target.reset();
+                alert("تمت إضافة المادة بنجاح!");
+            };
 
             if (view === 'login') return (
-                <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
+                <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
                     <div className="absolute inset-0 z-0">
-                       <div className={`absolute inset-0 transition-colors duration-500 ${darkMode ? 'bg-black/60' : 'bg-[#f58220]/10'} mix-blend-multiply z-10`}></div>
+                        <div className="absolute inset-0 bg-[#f58220]/10 mix-blend-multiply z-10"></div>
                         <img src="https://images.unsplash.com/photo-1581092583537-20d51b4b4f1b?q=80&w=1600" className="w-full h-full object-cover blur-md scale-110" />
                     </div>
-                    <div className={`relative z-20 transition-all duration-500 p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border backdrop-blur-xl ${darkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/80 border-white/50'}`}>
+                    <div className="relative z-20 bg-white/80 backdrop-blur-xl p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border border-white/50 animate-in">
                         <div className="flex flex-col items-center mb-8">
                             <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg p-2 mb-4 border-2 border-[#f58220]">
                                 <img src={GESS_LOGO} className="w-full h-full object-contain rounded-full" />
                             </div>
-                            <h1 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>GESS EDU PLATFORM</h1>
+                            <h1 className="text-2xl font-black text-gray-800">GESS EDU PLATFORM</h1>
                             <p className="text-[#f58220] font-bold text-sm tracking-widest mt-1">هندسة المساحة - جامعة الخرطوم</p>
                         </div>
                         <form onSubmit={handleLogin} className="space-y-5">
@@ -239,10 +185,10 @@ React.useEffect(() => {
             );
 
             return (
-                <div className={`min-h-screen pb-20 transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#fafafa]'}`}>
+                <div className="min-h-screen pb-20">
                     {showAdminAuth && (
                         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                            <div className={`p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}>
+                            <div className="bg-white p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border border-gray-100 animate-in">
                                 <div className="flex justify-between items-center mb-6">
                                     <h3 className="font-black text-[#f58220] flex items-center gap-2"><i data-lucide="shield-check"></i> الإدارة فقط</h3>
                                     <button onClick={() => setShowAdminAuth(false)} className="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x"></i></button>
@@ -256,119 +202,61 @@ React.useEffect(() => {
                         </div>
                     )}
 
-                   <header className={`sticky top-0 z-50 border-b h-20 flex items-center transition-all ${darkMode ? 'bg-gray-800 border-gray-700 shadow-xl' : 'bg-white border-gray-100 shadow-sm'}`}>
+                    <header className="bg-white sticky top-0 z-50 border-b border-gray-100 shadow-sm h-20 flex items-center">
                         <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
                             <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setView('student'); setPath([]); setSelectedItem(null);}}>
-                               <div className={`w-12 h-12 border rounded-lg p-1 transition-all ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-100'}`}>
+                                <div className="w-12 h-12 border border-gray-100 rounded-lg p-1 bg-white">
                                     <img src={GESS_LOGO} className="w-full h-full object-contain" />
+                                    <div className="flex items-center gap-2 bg-[#f58220]/5 px-4 py-2 rounded-xl text-[#f58220]">
+    <i data-lucide="user" class="w-4 h-4"></i>
+    <span className="text-sm font-black italic">
+        {studentName ? studentName : "طالب زائر"}
+    </span>
+</div>
                                 </div>
                                 <div>
-                                    <h1 className={`text-lg font-black leading-none transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>GESS EDU</h1>
+                                    <h1 className="text-lg font-black leading-none text-gray-800">GESS EDU</h1>
                                     <p className="text-[10px] text-[#f58220] font-bold mt-1">نحو آفاق هندسية أوسع</p>
                                 </div>
                             </div>
                             <div className="flex items-center gap-4">
-                               <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-[#f58220]/5 text-[#f58220]'}`}>
+                                <div className="hidden md:flex items-center gap-2 bg-[#f58220]/5 px-4 py-2 rounded-xl text-[#f58220]">
                                     <i data-lucide="user" class="w-4 h-4"></i>
                                     <span className="text-sm font-black italic">{studentName}</span>
                                 </div>
-                                <div className={`flex gap-1 p-1 rounded-xl transition-colors ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
+                                <div className="flex gap-1 bg-gray-50 p-1 rounded-xl">
                                     <button onClick={() => view === 'admin' ? setView('student') : setShowAdminAuth(true)} className={`p-3 rounded-lg ${view === 'admin' ? 'bg-[#f58220] text-white' : 'text-gray-400'}`}><i data-lucide="settings"></i></button>
-                                  <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-all ${darkMode ? 'bg-gray-600 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}><i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i></button>
-                                    <button onClick={() => {localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
+                                    <button onClick={() => window.location.reload()} className="p-3 text-red-400"><i data-lucide="log-out"></i></button>
                                 </div>
                             </div>
                         </div>
                     </header>
 
-                    <main className={`max-w-6xl mx-auto px-4 py-8 transition-colors ${darkMode ? 'text-white' : ''}`}>
+                    <main className="max-w-6xl mx-auto px-4 py-8">
                         {view === 'admin' ? (
                             <div className="max-w-4xl mx-auto animate-in">
-                                <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
-                                   <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i> إضافة مادة</h2> 
+                                <div className="bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100 mb-8">
+                                    <h2 className="text-xl font-black mb-6 border-b pb-4 flex items-center gap-2"><i data-lucide="layout-dashboard" class="text-[#f58220]"></i> مركز التحكم</h2>
                                     <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                        <div className="flex gap-4 mb-6 p-1 bg-gray-100 rounded-lg">
-    <button 
-        onClick={() => setAdminAddMode('academic')}
-        className={`flex-1 py-2 rounded-md transition ${adminAddMode === 'academic' ? 'bg-white shadow text-orange-600 font-bold' : 'text-gray-500'}`}
-    >
-        مادة دراسية (جامعة)
-    </button>
-    <button 
-        onClick={() => setAdminAddMode('special_course')}
-        className={`flex-1 py-2 rounded-md transition ${adminAddMode === 'special_course' ? 'bg-white shadow text-orange-600 font-bold' : 'text-gray-500'}`}
-    >
-        كورس تدريبي خارجي
-    </button>
-</div>
-                                        <input name="subject" required placeholder={adminAddMode === 'academic' ? "اسم المادة" : "اسم الكورس (مثلاً: كورس جافا)"} className="w-full p-4 rounded-2xl border-2 transition-all outline-none focus:border-[#f58220]" />
-                                        <input name="title" required placeholder="عنوان الدرس" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
-                                        <input name="url" required placeholder="الرابط المباشر" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
-                                        {adminAddMode === 'academic' && (<>
-                                        <select name="yearId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
+                                        <input name="subject" required placeholder="اسم المادة" className="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#f58220] font-bold" />
+                                        <input name="title" required placeholder="عنوان الدرس" className="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#f58220] font-bold" />
+                                        <input name="url" required placeholder="الرابط المباشر" className="w-full p-4 bg-gray-50 rounded-2xl outline-none focus:ring-2 focus:ring-[#f58220] font-bold text-left" />
+                                        <select name="yearId" className="w-full p-4 bg-gray-50 rounded-2xl font-bold">
                                             {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
                                         </select>
-                                        <select name="semesterId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
+                                        <select name="semesterId" className="w-full p-4 bg-gray-50 rounded-2xl font-bold">
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                                        </select></>)}
-                                        <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
+                                        </select>
+                                        <select name="type" className="w-full p-4 bg-gray-50 rounded-2xl font-bold">
                                             <option value="video">محاضرة فيديو</option>
                                             <option value="pdf">ملف ملخص</option>
                                         </select>
                                         <button className="md:col-span-3 bg-[#f58220] text-white p-5 rounded-2xl font-black">نشر المحتوى</button>
                                     </form>
                                 </div>
-                                <div className="mt-12 pt-8 border-t-2 border-gray-100">
-    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
-        <i data-lucide="shield-check" className="text-orange-500"></i>
-        إعدادات الأمان وتغيير كلمات المرور
-    </h3>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* تغيير باسورد الدخول للموقع */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-            <label className="block mb-2 font-bold text-sm text-gray-600">كلمة مرور دخول الموقع (Login)</label>
-            <input 
-                type="password" 
-                placeholder="كلمة المرور الجديدة" 
-                className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500"
-                onChange={(e) => setNewLoginPass(e.target.value)}
-            />
-            <button 
-                onClick={() => {
-                    localStorage.setItem('gess_login_pass', newLoginPass);
-                    alert('✅ تم تغيير كلمة مرور الدخول بنجاح');
-                }}
-                className="w-full bg-gray-800 text-white p-3 rounded-xl hover:bg-black transition"
-            >
-                تحديث كلمة مرور الدخول
-            </button>
-        </div>
-
-        {/* تغيير باسورد لوحة الأدمن */}
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-            <label className="block mb-2 font-bold text-sm text-gray-600">كلمة مرور لوحة الأدمن</label>
-            <input 
-                type="password" 
-                placeholder="كلمة المرور الجديدة" 
-                className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500"
-                onChange={(e) => setNewAdminPass(e.target.value)}
-            />
-            <button 
-                onClick={() => {
-                    localStorage.setItem('gess_admin_pass', newAdminPass);
-                    alert('✅ تم تغيير كلمة مرور الأدمن بنجاح');
-                }}
-                className="w-full bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition"
-            >
-                تحديث كلمة مرور الأدمن
-            </button>
-        </div>
-    </div>
-</div>
                             </div>
                         ) : (
-                            <div className={`animate-in transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                            <div className="animate-in">
                                 {(path.length > 0 || selectedItem) && (
                                     <button onClick={() => selectedItem ? setSelectedItem(null) : setPath(path.slice(0, -1))} className="mb-8 flex items-center gap-2 text-[#f58220] font-black bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-50">
                                         <i data-lucide="chevron-left" class="rotate-180"></i> رجوع
@@ -377,89 +265,37 @@ React.useEffect(() => {
 
                                 {path.length === 0 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <>
                                         {years.map(y => (
-                                           <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
+                                            <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className="bg-white p-12 rounded-[2.5rem] border border-gray-100 shadow-sm hover:border-[#f58220] transition-all text-right relative overflow-hidden group">
                                                 <i data-lucide="graduation-cap" class="w-12 h-12 text-[#f58220] mb-4"></i>
-                                               <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{y.title}</h3>
+                                                <h3 className="text-2xl font-black">{y.title}</h3>
                                                 <p className="text-gray-400 text-sm mt-2">عرض المواد الدراسية</p>
                                             </button>
                                         ))}
-                                            <button 
-                                                onClick={() => setPath([{ id: 'courses', title: 'الكورسات التدريبية', type: 'courses_section' }])}
-                                                className={`p-8 rounded-2xl cursor-pointer shadow-lg transform transition hover:scale-105 text-center flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 text-white`}>
-                                                <i data-lucide="rocket" class="w-12 h-12 mb-4"></i>
-                                                <h3 className="text-2xl font-black">الكورسات التدريبية</h3>
-                                                <p className="text-white/80 text-sm mt-2">تطوير المهارات والبرامج الخارجية</p>
-                                            </button>
-                                        </>
                                     </div>
-                                    
                                 )}
 
-                                {path.length === 1 && path[0].type === 'year' && (
+                                {path.length === 1 && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                                         {semesters.map(s => (
-                                            <button key={s.id} onClick={() => setPath([...path, {type: 'semester', ...s}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
+                                            <button key={s.id} onClick={() => setPath([...path, {type: 'semester', ...s}])} className="bg-white p-16 rounded-[3rem] shadow-xl text-center hover:scale-105 transition-all">
                                                 <i data-lucide="book-open" class="w-16 h-16 text-[#f58220] mx-auto mb-4"></i>
-                                                <h3 className={`text-3xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{s.title}</h3>
+                                                <h3 className="text-3xl font-black">{s.title}</h3>
                                             </button>
                                         ))}
                                     </div>
                                 )}
 
-                                {/* عرض الكورسات المضافة من الأدمن فقط */}
-{path.length === 1 && path[0].id === 'courses' && (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
-        {/* هنجيب الكورسات من الـ contents اللي نوعها course */}
-        {[...new Set(contents.filter(c => c.category === 'special_course').map(c => c.courseName))].map(courseName => (
-            <button 
-                key={courseName}
-                onClick={() => setPath([...path, { id: courseName, title: courseName, type: 'inside_course' }])}
-                className="p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl hover:scale-105 transition text-center border-2 border-orange-500"
-            >
-                <i data-lucide="book" class="w-12 h-12 mb-4 text-orange-500"></i>
-                <h3 className="text-2xl font-bold">{courseName}</h3>
-                <p className="text-gray-500 text-sm">اضغط لعرض المحتويات</p>
-            </button>
-        ))}
-        
-        {/* لو مفيش كورسات لسه */}
-        {contents.filter(c => c.category === 'special_course').length === 0 && (
-            <div className="col-span-full text-center p-10 opacity-50">
-                <p>لا توجد كورسات مضافة حالياً..</p>
-            </div>
-        )}
-    </div>
-)}
-
                                 {path.length === 2 && (
-    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-        {/* كرت الفيديوهات */}
-        <button onClick={() => setView('videos')} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
-            <i data-lucide="video" class="w-10 h-10 mb-2 text-blue-600"></i>
-            <span className="font-bold">فيديوهات</span>
-        </button>
-
-        {/* كرت الملفات */}
-        <button onClick={() => setView('pdfs')} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
-            <i data-lucide="file-text" class="w-10 h-10 mb-2 text-red-600"></i>
-            <span className="font-bold">ملفات PDF</span>
-        </button>
-
-        {/* كرت الامتحانات */}
-        <button onClick={() => setView('exams')} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
-            <i data-lucide="clipboard-list" class="w-10 h-10 mb-2 text-green-600"></i>
-            <span className="font-bold">امتحانات</span>
-        </button>
-
-        {/* كرت المراجع */}
-        <button onClick={() => setView('refs')} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
-            <i data-lucide="external-link" class="w-10 h-10 mb-2 text-purple-600"></i>
-            <span className="font-bold">المراجع</span>
-        </button>
-    </div>
-)}
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                        {Array.from(new Set(contents.filter(c => c.yearId === path[0].id && c.semesterId === path[1].id).map(c => c.subject))).map(sub => (
+                                            <button key={sub} onClick={() => setPath([...path, {type: 'subject', title: sub}])} className="bg-white p-8 rounded-[2rem] border hover:bg-[#f58220]/5 text-center">
+                                                <i data-lucide="folder-open" class="w-10 h-10 text-[#f58220] mx-auto mb-2"></i>
+                                                <span className="font-black text-gray-700">{sub}</span>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
 
                                 {path.length === 3 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -509,14 +345,6 @@ React.useEffect(() => {
                     <footer className="fixed bottom-0 left-0 right-0 h-10 bg-white/50 backdrop-blur-md border-t flex items-center justify-center">
                         <p className="text-[10px] font-black text-gray-400">GESS • UNIVERSITY OF KHARTOUM • GEOMATICS ENGINEERING</p>
                     </footer>
-                    {toast.show && (
-  <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-bounce">
-    <div className="bg-gray-800 text-white px-6 py-3 rounded-2xl shadow-2xl border border-gray-700 flex items-center gap-3">
-      <div className="w-2 h-2 rounded-full bg-[#f58220]"></div>
-      <span className="font-bold text-sm">{toast.message}</span>
-    </div>
-  </div>
-)}
                 </div>
             );
         }
