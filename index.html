@@ -75,6 +75,9 @@
             const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
             const [toast, setToast] = React.useState({ show: false, message: '' });
             const [adminAddMode, setAdminAddMode] = React.useState('academic');
+            const [selectedSemester, setSelectedSemester] = React.useState(null);
+            const [selectedSubject, setSelectedSubject] = React.useState(null);
+            const [viewType, setViewType] = React.useState(null);
 
   React.useEffect(() => {
     if (darkMode) {
@@ -331,6 +334,8 @@ React.useEffect(() => {
                                         <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             <option value="video">محاضرة فيديو</option>
                                             <option value="pdf">ملف ملخص</option>
+                                            <option value="pdf">امتحان</option>
+                                            <option value="pdf">مرجع</option>
                                         </select>
                                         <button className={`md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg ${
   darkMode 
