@@ -307,7 +307,6 @@ React.useEffect(() => {
     مادة دراسية
   </button>
 
-  {/* 3. زرار كورس تدريب */}
   <button
     type="button"
     onClick={() => setAdminAddMode('special_course')}
@@ -333,7 +332,11 @@ React.useEffect(() => {
                                             <option value="video">محاضرة فيديو</option>
                                             <option value="pdf">ملف ملخص</option>
                                         </select>
-                                        <button className="md:col-span-3 bg-[#f58220] text-white p-5 rounded-2xl font-black">نشر المحتوى</button>
+                                        <button className={`md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg ${
+  darkMode 
+    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20' 
+    : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
+}`}>نشر المحتوى</button>
                                     </form>
                                 </div>
                                 <div className="mt-12 pt-8 border-t-2 border-gray-100">
@@ -343,30 +346,34 @@ React.useEffect(() => {
     </h3>
 
     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {/* تغيير باسورد الدخول للموقع */}
+       
         <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
             <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
     <div className="flex justify-between items-center mb-2">
         <label className="font-bold text-sm text-gray-600">كلمة مرور دخول الموقع</label>
-        {/* العين السحرية هنا */}
-        <span 
-            className="text-xs bg-gray-200 px-2 py-1 rounded cursor-pointer hover:bg-gray-300 transition"
-            title="انقر لإظهار الكلمة الحالية"
-            onClick={(e) => {
-                const current = localStorage.getItem('gess_login_pass') || 'Gess@123';
-                e.target.innerText = e.target.innerText === '👁️ كلمة المرور الحالية' ? `كلمة المرور الحالية للموقع: ${current}` : '👁️ كلمة المرور الحالية';
-            }}
-        >
-            👁️ كلمة المرور الحالية
-        </span>
+      
+         <span 
+    onClick={(e) => {
+      const current = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+      e.target.innerText = e.target.innerText.includes('إظهار') ? `الحالية: ${current}` : '👁️ إظهار كلمة المرور';
+    }}
+    className={`text-[10px] px-2 py-1 rounded-lg cursor-pointer transition-all ${
+      darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+    }`}
+  >
+    👁️ إظهار كلمة المرور
+  </span>
     </div>
     <input 
-        type="password" 
-        placeholder="كلمة المرور الجديدة" 
-        className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500 text-black"
-        onChange={(e) => setNewLoginPass(e.target.value)}
-    />
-    {/* باقي الزرار كما هو... */}
+  type="password" 
+  placeholder="كلمة المرور الجديدة"
+  onChange={(e) => setNewAdminPass(e.target.value)}
+  className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-4 ${
+    darkMode 
+      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
+      : 'bg-white border-gray-100 text-black'
+  } focus:border-orange-500`}
+/>
 </div>
            
             <button 
@@ -374,35 +381,42 @@ React.useEffect(() => {
                     localStorage.setItem('gess_login_pass', newLoginPass);
                     alert('✅ تم تغيير كلمة مرور الدخول بنجاح');
                 }}
-                className="w-full bg-gray-800 text-white p-3 rounded-xl hover:bg-black transition"
+                className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 ${
+  darkMode 
+    ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 shadow-lg' 
+    : 'bg-gray-900 hover:bg-black text-white shadow-md'
+}`}
             >
                 تحديث كلمة مرور الدخول
             </button>
         </div>
 
-        {/* تغيير باسورد لوحة الأدمن */}
         <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
            <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
     <div className="flex justify-between items-center mb-2">
         <label className="font-bold text-sm text-gray-600">كلمة مرور لوحة الأدمن</label>
         <span 
-            className="text-xs bg-gray-200 px-2 py-1 rounded cursor-pointer hover:bg-gray-300 transition"
-            title="انقر لإظهار الكلمة الحالية"
-            onClick={(e) => {
-                const current = localStorage.getItem('gess_admin_pass') || 'Gess@123';
-                e.target.innerText = e.target.innerText === '👁️ كلمة المرور الحالية' ? `كلمة المرور الحالية للأدمن: ${current}` : '👁️ كلمة المرور الحالية';
-            }}
-        >
-            👁️ كلمة المرور الحالية
-        </span>
+    onClick={(e) => {
+      const current = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+      e.target.innerText = e.target.innerText.includes('إظهار') ? `الحالية: ${current}` : '👁️ إظهار كلمة المرور';
+    }}
+    className={`text-[10px] px-2 py-1 rounded-lg cursor-pointer transition-all ${
+      darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
+    }`}
+  >
+    👁️ إظهار كلمة المرور
+  </span>
     </div>
-    <input 
-        type="password" 
-        placeholder="كلمة المرور الجديدة" 
-        className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500 text-black"
-        onChange={(e) => setNewAdminPass(e.target.value)}
-    />
-    {/* باقي الزرار كما هو... */}
+   <input 
+  type="password" 
+  placeholder="كلمة المرور الجديدة"
+  onChange={(e) => setNewAdminPass(e.target.value)}
+  className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-4 ${
+    darkMode 
+      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
+      : 'bg-white border-gray-100 text-black'
+  } focus:border-orange-500`}
+/>
 </div>
            
             <button 
@@ -410,7 +424,11 @@ React.useEffect(() => {
                     localStorage.setItem('gess_admin_pass', newAdminPass);
                     alert('✅ تم تغيير كلمة مرور الأدمن بنجاح');
                 }}
-                className="w-full bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition"
+              className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 shadow-lg ${
+  darkMode 
+    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20' 
+    : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
+}`}
             >
                 تحديث كلمة مرور الأدمن
             </button>
