@@ -74,7 +74,8 @@
             const [selectedItem, setSelectedItem] = React.useState(null);
             const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
             const [toast, setToast] = React.useState({ show: false, message: '' });
-            
+            const [adminAddMode, setAdminAddMode] = React.useState('academic');
+
   React.useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
@@ -86,7 +87,10 @@
   }, [darkMode]);  
             const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` }));
             const semesters = [{ id: 1, title: 'السمستر الأول' }, { id: 2, title: 'السمستر الثاني' }];
-
+            const extraCourses = [
+    { id: 'c1', title: 'كورس البرمجة الشامل', icon: 'Rocket' },
+    { id: 'c2', title: 'كورس التصميم الهندسي', icon: 'Settings' }
+];
             React.useEffect(() => {
                 const { auth, db, signInAnonymously, onAuthStateChanged, query, collection, onSnapshot, appId } = window.fb;
                 
@@ -160,9 +164,13 @@ React.useEffect(() => {
   };
 }, [path, view]);
             
+
+            const [newAdminPass, setNewAdminPass] = React.useState('');
+            const [newLoginPass, setNewLoginPass] = React.useState('');
             const checkAdminAuth = (e) => {
                 e.preventDefault();
-                if (adminPassInput === "Gess@123") {
+                const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+            if (adminPassInput === savedAdminPass) {
                     setView('admin');
                     setShowAdminAuth(false);
                     setAdminPassInput("");
@@ -174,19 +182,32 @@ React.useEffect(() => {
             };
 
             const addMaterial = async (e) => {
-                e.preventDefault();
-                const { db, collection, addDoc, appId } = window.fb;
-                const formData = new FormData(e.target);
-                const data = Object.fromEntries(formData.entries());
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'materials'), {
-                    ...data,
-                    yearId: parseInt(data.yearId),
-                    semesterId: parseInt(data.semesterId),
-                    createdAt: new Date().toISOString()
-                });
-                e.target.reset();
-                alert("تمت إضافة المادة بنجاح!");
-            };
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    const newDoc = {
+        subject: formData.get('subject'),
+        title: formData.get('title'),
+        url: formData.get('url'),
+        type: formData.get('type'),
+        
+        category: adminAddMode === 'academic' ? 'academic' : 'special_course',
+        yearId: adminAddMode === 'academic' ? parseInt(formData.get('yearId')) : null,
+        semesterId: adminAddMode === 'academic' ? parseInt(formData.get('semesterId')) : null,
+        courseName: adminAddMode === 'special_course' ? formData.get('subject') : '',
+        
+        createdAt: new Date()
+    };
+
+    try {
+        await addDoc(collection(db, "artifacts"), newDoc);
+        alert("🚀 تم النشر بنجاح! المحتوى متاح الآن للطلاب.");
+        e.target.reset();
+    } catch (error) {
+        console.error("Error adding document: ", error);
+        alert("❌ حصل خطأ في الاتصال بالقاعدة");
+    }
+};
 
             if (view === 'login') return (
                 <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
@@ -266,15 +287,30 @@ React.useEffect(() => {
                                 <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
                                    <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i> إضافة مادة</h2> 
                                     <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                        <input name="subject" required placeholder="اسم المادة" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
+                                        <div className="flex gap-4 mb-6 p-1 bg-gray-100 rounded-lg">
+    <button 
+        onClick={() => setAdminAddMode('academic')}
+        className={`flex-1 py-2 rounded-md transition ${adminAddMode === 'academic' ? 'bg-white shadow text-orange-600 font-bold' : 'text-gray-500'}`}
+    >
+        مادة دراسية (جامعة)
+    </button>
+    <button 
+        onClick={() => setAdminAddMode('special_course')}
+        className={`flex-1 py-2 rounded-md transition ${adminAddMode === 'special_course' ? 'bg-white shadow text-orange-600 font-bold' : 'text-gray-500'}`}
+    >
+        كورس تدريبي خارجي
+    </button>
+</div>
+                                        <input name="subject" required placeholder={adminAddMode === 'academic' ? "اسم المادة" : "اسم الكورس (مثلاً: كورس جافا)"} className="w-full p-4 rounded-2xl border-2 transition-all outline-none focus:border-[#f58220]" />
                                         <input name="title" required placeholder="عنوان الدرس" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
                                         <input name="url" required placeholder="الرابط المباشر" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`} />
+                                        {adminAddMode === 'academic' && (<>
                                         <select name="yearId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
                                         </select>
                                         <select name="semesterId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                                        </select>
+                                        </select></>)}
                                         <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             <option value="video">محاضرة فيديو</option>
                                             <option value="pdf">ملف ملخص</option>
@@ -282,6 +318,54 @@ React.useEffect(() => {
                                         <button className="md:col-span-3 bg-[#f58220] text-white p-5 rounded-2xl font-black">نشر المحتوى</button>
                                     </form>
                                 </div>
+                                <div className="mt-12 pt-8 border-t-2 border-gray-100">
+    <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
+        <i data-lucide="shield-check" className="text-orange-500"></i>
+        إعدادات الأمان وتغيير كلمات المرور
+    </h3>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* تغيير باسورد الدخول للموقع */}
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
+            <label className="block mb-2 font-bold text-sm text-gray-600">كلمة مرور دخول الموقع (Login)</label>
+            <input 
+                type="password" 
+                placeholder="كلمة المرور الجديدة" 
+                className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500"
+                onChange={(e) => setNewLoginPass(e.target.value)}
+            />
+            <button 
+                onClick={() => {
+                    localStorage.setItem('gess_login_pass', newLoginPass);
+                    alert('✅ تم تغيير كلمة مرور الدخول بنجاح');
+                }}
+                className="w-full bg-gray-800 text-white p-3 rounded-xl hover:bg-black transition"
+            >
+                تحديث كلمة مرور الدخول
+            </button>
+        </div>
+
+        {/* تغيير باسورد لوحة الأدمن */}
+        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
+            <label className="block mb-2 font-bold text-sm text-gray-600">كلمة مرور لوحة الأدمن</label>
+            <input 
+                type="password" 
+                placeholder="كلمة المرور الجديدة" 
+                className="w-full p-3 rounded-xl border mb-4 outline-none focus:border-orange-500"
+                onChange={(e) => setNewAdminPass(e.target.value)}
+            />
+            <button 
+                onClick={() => {
+                    localStorage.setItem('gess_admin_pass', newAdminPass);
+                    alert('✅ تم تغيير كلمة مرور الأدمن بنجاح');
+                }}
+                className="w-full bg-orange-500 text-white p-3 rounded-xl hover:bg-orange-600 transition"
+            >
+                تحديث كلمة مرور الأدمن
+            </button>
+        </div>
+    </div>
+</div>
                             </div>
                         ) : (
                             <div className={`animate-in transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>
@@ -293,6 +377,7 @@ React.useEffect(() => {
 
                                 {path.length === 0 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <>
                                         {years.map(y => (
                                            <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                                 <i data-lucide="graduation-cap" class="w-12 h-12 text-[#f58220] mb-4"></i>
@@ -300,10 +385,19 @@ React.useEffect(() => {
                                                 <p className="text-gray-400 text-sm mt-2">عرض المواد الدراسية</p>
                                             </button>
                                         ))}
+                                            <button 
+                                                onClick={() => setPath([{ id: 'courses', title: 'الكورسات التدريبية', type: 'courses_section' }])}
+                                                className={`p-8 rounded-2xl cursor-pointer shadow-lg transform transition hover:scale-105 text-center flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 text-white`}>
+                                                <i data-lucide="rocket" class="w-12 h-12 mb-4"></i>
+                                                <h3 className="text-2xl font-black">الكورسات التدريبية</h3>
+                                                <p className="text-white/80 text-sm mt-2">تطوير المهارات والبرامج الخارجية</p>
+                                            </button>
+                                        </>
                                     </div>
+                                    
                                 )}
 
-                                {path.length === 1 && (
+                                {path.length === 1 && path[0].type === 'year' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
                                         {semesters.map(s => (
                                             <button key={s.id} onClick={() => setPath([...path, {type: 'semester', ...s}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
@@ -314,16 +408,58 @@ React.useEffect(() => {
                                     </div>
                                 )}
 
+                                {/* عرض الكورسات المضافة من الأدمن فقط */}
+{path.length === 1 && path[0].id === 'courses' && (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+        {/* هنجيب الكورسات من الـ contents اللي نوعها course */}
+        {[...new Set(contents.filter(c => c.category === 'special_course').map(c => c.courseName))].map(courseName => (
+            <button 
+                key={courseName}
+                onClick={() => setPath([...path, { id: courseName, title: courseName, type: 'inside_course' }])}
+                className="p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl hover:scale-105 transition text-center border-2 border-orange-500"
+            >
+                <i data-lucide="book" class="w-12 h-12 mb-4 text-orange-500"></i>
+                <h3 className="text-2xl font-bold">{courseName}</h3>
+                <p className="text-gray-500 text-sm">اضغط لعرض المحتويات</p>
+            </button>
+        ))}
+        
+        {/* لو مفيش كورسات لسه */}
+        {contents.filter(c => c.category === 'special_course').length === 0 && (
+            <div className="col-span-full text-center p-10 opacity-50">
+                <p>لا توجد كورسات مضافة حالياً..</p>
+            </div>
+        )}
+    </div>
+)}
+
                                 {path.length === 2 && (
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {Array.from(new Set(contents.filter(c => c.yearId === path[0].id && c.semesterId === path[1].id).map(c => c.subject))).map(sub => (
-                                            <button key={sub} onClick={() => setPath([...path, {type: 'subject', title: sub}])} className="bg-white p-8 rounded-[2rem] border hover:bg-[#f58220]/5 text-center">
-                                                <i data-lucide="folder-open" class="w-10 h-10 text-[#f58220] mx-auto mb-2"></i>
-                                                <span className="font-black text-gray-700">{sub}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        {/* كرت الفيديوهات */}
+        <button onClick={() => setView('videos')} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
+            <i data-lucide="video" class="w-10 h-10 mb-2 text-blue-600"></i>
+            <span className="font-bold">فيديوهات</span>
+        </button>
+
+        {/* كرت الملفات */}
+        <button onClick={() => setView('pdfs')} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
+            <i data-lucide="file-text" class="w-10 h-10 mb-2 text-red-600"></i>
+            <span className="font-bold">ملفات PDF</span>
+        </button>
+
+        {/* كرت الامتحانات */}
+        <button onClick={() => setView('exams')} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
+            <i data-lucide="clipboard-list" class="w-10 h-10 mb-2 text-green-600"></i>
+            <span className="font-bold">امتحانات</span>
+        </button>
+
+        {/* كرت المراجع */}
+        <button onClick={() => setView('refs')} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
+            <i data-lucide="external-link" class="w-10 h-10 mb-2 text-purple-600"></i>
+            <span className="font-bold">المراجع</span>
+        </button>
+    </div>
+)}
 
                                 {path.length === 3 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
