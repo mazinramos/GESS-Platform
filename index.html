@@ -333,8 +333,8 @@ React.useEffect(() => {
         document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
         document.documentElement.lang = newLang;
     }}
-    className={`fixed top-4 left-4 z-50 px-4 py-2 rounded-xl font-bold transition-all duration-300 shadow-lg border ${
-        darkMode 
+    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border ${
+            darkMode
         ? 'bg-gray-800 text-orange-400 border-gray-700 hover:bg-gray-700 shadow-black/40' 
         : 'bg-white text-orange-600 border-gray-100 hover:bg-gray-50 shadow-orange-200'
     }`}
