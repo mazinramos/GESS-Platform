@@ -109,7 +109,9 @@
             const [selectedSemester, setSelectedSemester] = React.useState(null);
             const [selectedSubject, setSelectedSubject] = React.useState(null);
             const [viewType, setViewType] = React.useState(null);
+            const [currentIcon, setCurrentIcon] = React.useState("settings"); 
             const [lang, setLang] = React.useState('ar'); 
+            const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
 
   React.useEffect(() => {
     if (darkMode) {
@@ -188,11 +190,11 @@ if (e.target.password.value === savedLoginPass) {
 setTimeout(() => setToast({ show: false, message: '' }), 3000);
     }
   };
-    const handleLogout = () => {
-    localStorage.removeItem("gess_is_logged_in");
-    localStorage.removeItem("gess_user_name");
-    setIsLoggedIn(false);
-    setView('login');
+    const handleLogOut = () => {
+    localStorage.removeItem('user_token'); 
+    localStorage.removeItem('is_admin'); 
+    setIsLoggedIn(false); 
+    setView('student'); 
 };
 
 React.useEffect(() => {
@@ -311,44 +313,85 @@ React.useEffect(() => {
 
                    <header className={`sticky top-0 z-50 border-b h-20 flex items-center transition-all ${darkMode ? 'bg-gray-800 border-gray-700 shadow-xl' : 'bg-white border-gray-100 shadow-sm'}`}>
                         <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
-                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => {setView('student'); setPath([]); setSelectedItem(null);}}>
-                               <div className={`w-12 h-12 border rounded-lg p-1 transition-all ${darkMode ? 'bg-gray-700 border-gray-600' : 'bg-white border-gray-100'}`}>
-                                    <img src={GESS_LOGO} className="w-full h-full object-contain" />
-                                </div>
-                                <div>
-                                    <h1 className={`text-lg font-black leading-none transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{lang === 'ar' ? "GESS EDU" : "GESS EDU"}</h1>
-                                    <p className="text-[10px] text-[#f58220] font-bold mt-1">{lang === 'ar' ? "نحو آفاق هندسية أوسع" : "Towards Wider Engineering Horizons"}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-4">
-                               <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-[#f58220]/5 text-[#f58220]'}`}>
-                                    <i data-lucide="user" class="w-4 h-4"></i>
-                                    <span className="text-sm font-black italic">{studentName}</span>
-                                </div>
-                                <div className={`flex gap-1 p-1 rounded-xl transition-colors ${darkMode ? 'bg-gray-700' : 'bg-gray-50'}`}>
-                                    <button 
-    onClick={() => {
-        const newLang = lang === 'ar' ? 'en' : 'ar';
-        setLang(newLang);
-        document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-        document.documentElement.lang = newLang;
-    }}
-    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg font-bold text-xs transition-all border ${
-            darkMode
-        ? 'bg-gray-800 text-orange-400 border-gray-700 hover:bg-gray-700 shadow-black/40' 
-        : 'bg-white text-orange-600 border-gray-100 hover:bg-gray-50 shadow-orange-200'
-    }`}
->
-    <div className="flex items-center gap-2">
-        <i data-lucide="languages" className="w-4 h-4"></i>
-        <span>{lang === 'ar' ? 'English' : 'عربي'}</span>
+                            <div className="flex items-center gap-2">
+    {/* اسم الطالب يظهر فقط في الشاشات الكبيرة */}
+    <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-[#f58220]/5 text-[#f58220]'}`}>
+        <i data-lucide="user" className="w-4 h-4"></i>
+        <span className="text-sm font-black italic">{studentName}</span>
     </div>
+
+    <div className="relative">
+        <button 
+            onClick={() => setShowToolsMenu(!showToolsMenu)} 
+            className={`p-3 rounded-xl transition-all ${showToolsMenu ? 'bg-[#f58220] text-white' : (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500')}`}
+        >
+            <i data-lucide="settings" className="w-5 h-5"></i>
+        </button>
+
+        {showToolsMenu && (
+            <div className={`absolute left-0 mt-3 w-56 rounded-2xl shadow-2xl border z-[100] overflow-hidden animate-in fade-in slide-in-from-top-2 ${
+                darkMode ? 'bg-gray-800 border-gray-700 shadow-black/50' : 'bg-white border-gray-100 shadow-orange-100'
+            }`}>
+                <div className="p-2 space-y-1">
+                    {/* 1. تبديل اللغة */}
+                    <button 
+                        onClick={() => {
+                            const newLang = lang === 'ar' ? 'en' : 'ar';
+                            setLang(newLang);
+                            document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+                            setShowToolsMenu(false);
+                        }}
+                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm font-bold ${darkMode ? 'hover:bg-gray-700 text-orange-400' : 'hover:bg-orange-50 text-orange-600'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <i data-lucide="languages" className="w-4 h-4"></i>
+                            {lang === 'ar' ? 'English' : 'عربي'}
+                        </div>
+                    </button>
+
+                    {/* 2. الوضع الليلي */}
+                    <button 
+                        onClick={() => {setDarkMode(!darkMode); setShowToolsMenu(false);}}
+                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600'}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i>
+                            {darkMode ? (lang === 'ar' ? "الوضع الفاتح" : "Light Mode") : (lang === 'ar' ? "الوضع الداكن" : "Dark Mode")}
+                        </div>
+                    </button>
+
+                    {/* 3. لوحة الإدارة */}
+                    <button 
+                        onClick={() => {
+                            view === 'admin' ? setView('student') : setShowAdminAuth(true);
+                            setShowToolsMenu(false);
+                        }}
+                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm ${view === 'admin' ? 'bg-orange-500 text-white' : (darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600')}`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <i data-lucide="shield-check" className="w-4 h-4"></i>
+                            {lang === 'ar' ? "لوحة الإدارة" : "Admin Panel"}
+                        </div>
+                    </button>
+
+                    <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
+
+                    {/* 4. تسجيل الخروج */}
+                    <button 
+    onClick={() => {
+        handleLogOut(); 
+        setShowToolsMenu(false); 
+    }}
+    className="flex items-center gap-2.5 w-full p-3 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
+>
+    <i data-lucide="log-out" className="w-4 h-4"></i>
+    {lang === 'ar' ? "تسجيل الخروج" : "Log Out"}
 </button>
-                                    <button onClick={() => view === 'admin' ? setView('student') : setShowAdminAuth(true)} className={`p-3 rounded-lg ${view === 'admin' ? 'bg-[#f58220] text-white' : 'text-gray-400'}`}><i data-lucide="settings"></i></button>
-                                  <button onClick={() => setDarkMode(!darkMode)} className={`p-2 rounded-lg transition-all ${darkMode ? 'bg-gray-600 text-yellow-400' : 'bg-gray-100 text-gray-600'}`}><i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i></button>
-                                    <button onClick={() => {localStorage.removeItem("gess_user_name"); window.location.reload(); }} className="p-3 text-red-400"> <i data-lucide="log-out"></i></button>
-                                </div>
-                            </div>
+                </div>
+            </div>
+        )}
+    </div>
+</div>
                         </div>
                     </header>
 
