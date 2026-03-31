@@ -311,89 +311,129 @@ React.useEffect(() => {
                         </div>
                     )}
 
-                   <header className={`sticky top-0 z-40 border-b h-20 flex items-center transition-all ${darkMode ? 'bg-gray-900/95 border-gray-800 backdrop-blur-md' : 'bg-white/95 border-gray-100 backdrop-blur-md'}`}>
-                        <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-    {/* اسم الطالب يظهر فقط في الشاشات الكبيرة */}
-    <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${darkMode ? 'bg-gray-700 text-yellow-400' : 'bg-[#f58220]/5 text-[#f58220]'}`}>
-        <i data-lucide="user" className="w-4 h-4"></i>
-        <span className="text-sm font-black italic">{studentName}</span>
-    </div>
-
-    <div className="relative">
-        <button 
-            onClick={() => setShowToolsMenu(!showToolsMenu)} 
-            className={`p-3 rounded-xl transition-all ${showToolsMenu ? 'bg-[#f58220] text-white' : (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-50 text-gray-500')}`}
-        >
-            <i data-lucide="settings" className="w-5 h-5"></i>
-        </button>
-
-        {showToolsMenu && (
-            <div className={`absolute right-0 mt-3 w-56 rounded-2xl shadow-2xl border z-[50] animate-in fade-in zoom-in-95 duration-200 ${
-    darkMode ? 'bg-gray-800 border-gray-700 shadow-black/50' : 'bg-white border-gray-100 shadow-orange-200/50'
+                   <header className={`sticky top-0 z-[100] w-full h-20 flex items-center transition-all ${
+    darkMode ? 'bg-gray-900/95 border-b border-gray-800 backdrop-blur-md' : 'bg-white/95 border-b border-gray-100 backdrop-blur-md'
 }`}>
-                <div className="p-2 space-y-1">
-                    {/* 1. تبديل اللغة */}
-                    <button 
-                        onClick={() => {
-                            const newLang = lang === 'ar' ? 'en' : 'ar';
-                            setLang(newLang);
-                            document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
-                            setShowToolsMenu(false);
-                        }}
-                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm font-bold ${darkMode ? 'hover:bg-gray-700 text-orange-400' : 'hover:bg-orange-50 text-orange-600'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <i data-lucide="languages" className="w-4 h-4"></i>
-                            {lang === 'ar' ? 'English' : 'عربي'}
-                        </div>
-                    </button>
-
-                    {/* 2. الوضع الليلي */}
-                    <button 
-                        onClick={() => {setDarkMode(!darkMode); setShowToolsMenu(false);}}
-                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600'}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i>
-                            {darkMode ? (lang === 'ar' ? "الوضع الفاتح" : "Light Mode") : (lang === 'ar' ? "الوضع الداكن" : "Dark Mode")}
-                        </div>
-                    </button>
-
-                    {/* 3. لوحة الإدارة */}
-                    <button 
-                        onClick={() => {
-                            view === 'admin' ? setView('student') : setShowAdminAuth(true);
-                            setShowToolsMenu(false);
-                        }}
-                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm ${view === 'admin' ? 'bg-orange-500 text-white' : (darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600')}`}
-                    >
-                        <div className="flex items-center gap-3">
-                            <i data-lucide="shield-check" className="w-4 h-4"></i>
-                            {lang === 'ar' ? "لوحة الإدارة" : "Admin Panel"}
-                        </div>
-                    </button>
-
-                    <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
-
-                    {/* 4. تسجيل الخروج */}
-                    <button 
-    onClick={() => {
-        handleLogOut(); 
-        setShowToolsMenu(false); 
-    }}
-    className="flex items-center gap-2.5 w-full p-3 rounded-xl text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40"
->
-    <i data-lucide="log-out" className="w-4 h-4"></i>
-    {lang === 'ar' ? "تسجيل الخروج" : "Log Out"}
-</button>
-                </div>
+    <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
+        
+        {/* القسم الأيمن: اللوجو والشعار */}
+        <div className="flex items-center gap-3">
+            {/* من سطر 321 لـ 323 */}
+<img 
+    src="data:image/jpeg;base64,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" 
+    alt="Logo" 
+    className="w-10 h-10 object-contain rounded-lg shadow-sm"
+/>
+            <div className="flex flex-col">
+                <span className={`font-black text-sm leading-tight ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                    GESS EDU
+                </span>
+                <span className="text-[10px] text-[#f58220] font-bold">
+                    {lang === 'ar' ? 'نحو آفاق هندسية أوسع' : 'Towards Broader Engineering Horizons'}
+                </span>
             </div>
-        )}
-    </div>
-</div>
+        </div>
+
+        {/* القسم الأيسر: اسم المستخدم والقائمة المنسدلة */}
+        <div className="flex items-center gap-2">
+            {/* اسم الطالب: يظهر فقط في الشاشات الكبيرة (md) */}
+            <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-orange-50 text-[#f58220]'
+            }`}>
+                <i data-lucide="user" className="w-4 h-4"></i>
+                <span className="text-sm font-black italic">{studentName}</span>
+            </div>
+
+            {/* حاوية زر الإعدادات والقائمة */}
+            <div className="relative">
+                <button 
+                    onClick={() => setShowToolsMenu(!showToolsMenu)} 
+                    className={`p-3 rounded-xl transition-all shadow-sm border ${
+                        showToolsMenu 
+                        ? 'bg-[#f58220] text-white border-[#f58220]' 
+                        : (darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-gray-50 border-gray-100 text-gray-500')
+                    }`}
+                >
+                    <i data-lucide={showToolsMenu ? "x" : "settings"} className="w-5 h-5"></i>
+                </button>
+
+                {/* القائمة المنسدلة الذكية */}
+                {showToolsMenu && (
+                    <div className={`absolute mt-3 w-56 rounded-2xl shadow-2xl border z-[110] animate-in fade-in zoom-in-95 duration-200 
+                        ${lang === 'ar' ? 'right-0' : 'left-0'} 
+                        ${darkMode ? 'bg-gray-800 border-gray-700 shadow-black/50' : 'bg-white border-gray-100 shadow-orange-200/50'}`}
+                    >
+                        <div className="p-2 space-y-1">
+                            
+                            {/* 1. تبديل اللغة */}
+                            <button 
+                                onClick={() => {
+                                    const newLang = lang === 'ar' ? 'en' : 'ar';
+                                    setLang(newLang);
+                                    document.documentElement.dir = newLang === 'ar' ? 'rtl' : 'ltr';
+                                    setShowToolsMenu(false);
+                                }}
+                                className={`flex items-center justify-between w-full p-3 rounded-xl text-sm font-bold transition-colors ${
+                                    darkMode ? 'hover:bg-gray-700 text-orange-400' : 'hover:bg-orange-50 text-orange-600'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <i data-lucide="languages" className="w-4 h-4"></i>
+                                    {lang === 'ar' ? 'English' : 'عربي'}
+                                </div>
+                            </button>
+
+                            {/* 2. الوضع الليلي */}
+                            <button 
+                                onClick={() => {setDarkMode(!darkMode); setShowToolsMenu(false);}}
+                                className={`flex items-center justify-between w-full p-3 rounded-xl text-sm transition-colors ${
+                                    darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i>
+                                    {darkMode ? (lang === 'ar' ? "الوضع الفاتح" : "Light Mode") : (lang === 'ar' ? "الوضع الداكن" : "Dark Mode")}
+                                </div>
+                            </button>
+
+                            {/* 3. لوحة الإدارة */}
+                            <button 
+                                onClick={() => {
+                                    view === 'admin' ? setView('student') : setShowAdminAuth(true);
+                                    setShowToolsMenu(false);
+                                }}
+                                className={`flex items-center justify-between w-full p-3 rounded-xl text-sm transition-colors ${
+                                    view === 'admin' 
+                                    ? 'bg-orange-500 text-white' 
+                                    : (darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600')
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <i data-lucide="shield-check" className="w-4 h-4"></i>
+                                    {lang === 'ar' ? "لوحة الإدارة" : "Admin Panel"}
+                                </div>
+                            </button>
+
+                            <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
+
+                            {/* 4. تسجيل الخروج */}
+                            <button 
+                                onClick={() => {
+                                    handleLogOut(); 
+                                    setShowToolsMenu(false); 
+                                }}
+                                className="flex items-center gap-3 w-full p-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                            >
+                                <i data-lucide="log-out" className="w-4 h-4"></i>
+                                {lang === 'ar' ? "تسجيل الخروج" : "Log Out"}
+                            </button>
                         </div>
-                    </header>
+                    </div>
+                )}
+            </div>
+        </div>
+    </div>
+</header>
 
                     <main className={`max-w-6xl mx-auto px-4 py-8 transition-colors ${darkMode ? 'text-white' : ''}`}>
                         {view === 'admin' ? (
