@@ -29,29 +29,23 @@
 <body class="bg-[#fafafa]">
     <div id="root"></div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    <!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
-     
-        const firebaseConfig = {
-            apiKey: "ضع_هنا_API_KEY_الخاص_بك", 
-            authDomain: "gess-edu.firebaseapp.com",
-            projectId: "gess-edu",
-            storageBucket: "gess-edu.appspot.com",
-            messagingSenderId: "123456789",
-            appId: "1:123456789:web:abcdef"
-        };
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSy...",
+    authDomain: "gess-platform.firebaseapp.com",
+    projectId: "gess-platform",
+    storageBucket: "gess-platform.firebasestorage.app",
+    messagingSenderId: "794482265366",
+    appId: "1:794482265366:web:0108b0cae375d8efd3d437"
+  };
 
-       
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const auth = getAuth(app);
-        const appId = 'gess-edu-platform';
-
-        window.fb = { db, auth, collection, addDoc, onSnapshot, deleteDoc, doc, query, orderBy, signInAnonymously, onAuthStateChanged, appId };
-    </script>
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+</script>
 
     <script type="text/babel">
         const { 
@@ -101,7 +95,6 @@
             const [showAdminAuth, setShowAdminAuth] = React.useState(false);
             const [adminPassInput, setAdminPassInput] = React.useState("");
             const [path, setPath] = React.useState([]);
-            const [contents, setContents] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
             const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
             const [toast, setToast] = React.useState({ show: false, message: '' });
@@ -112,6 +105,21 @@
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
             const [lang, setLang] = React.useState('ar'); 
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
+            const [contents, setContents] = React.useState([]);
+
+            React.useEffect(() => {
+  const unsubscribe = db.collection("materials")
+    .orderBy("createdAt", "desc")
+    .onSnapshot(snapshot => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setContents(data);
+    });
+
+  return () => unsubscribe();
+}, []);
 
   React.useEffect(() => {
     if (darkMode) {
@@ -136,18 +144,6 @@
         icon: 'Settings' 
     }
 ];
-            React.useEffect(() => {
-                const { auth, db, signInAnonymously, onAuthStateChanged, query, collection, onSnapshot, appId } = window.fb;
-                
-                signInAnonymously(auth).catch(err => console.error("Auth Error:", err));
-                onAuthStateChanged(auth, setUser);
-
-                const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'materials'));
-                const unsubscribe = onSnapshot(q, (snapshot) => {
-                    setContents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-                });
-                return () => unsubscribe();
-            }, []);
 
   React.useEffect(() => {
     const handleBackButton = (e) => {
@@ -235,31 +231,28 @@ React.useEffect(() => {
             };
 
             const addMaterial = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    
-    const newDoc = {
-        subject: formData.get('subject'),
-        title: formData.get('title'),
-        url: formData.get('url'),
-        type: formData.get('type'),
-        
-        category: adminAddMode === 'academic' ? 'academic' : 'special_course',
-        yearId: adminAddMode === 'academic' ? parseInt(formData.get('yearId')) : null,
-        semesterId: adminAddMode === 'academic' ? parseInt(formData.get('semesterId')) : null,
-        courseName: adminAddMode === 'special_course' ? formData.get('subject') : '',
-        
-        createdAt: new Date()
-    };
+  e.preventDefault();
+  const formData = new FormData(e.target);
 
-    try {
-        await addDoc(collection(db, "artifacts"), newDoc);
-        alert("🚀 تم النشر بنجاح! المحتوى متاح الآن للطلاب.");
-        e.target.reset();
-    } catch (error) {
-        console.error("Error adding document: ", error);
-        alert("❌ حصل خطأ في الاتصال بالقاعدة");
-    }
+  const newDoc = {
+    subject: formData.get('subject'),
+    title: formData.get('title'),
+    url: formData.get('url'),
+    type: formData.get('type'),
+    category: adminAddMode === 'academic' ? 'academic' : 'special_course',
+    yearId: adminAddMode === 'academic' ? parseInt(formData.get('yearId')) : null,
+    semesterId: adminAddMode === 'academic' ? parseInt(formData.get('semesterId')) : null,
+    courseName: adminAddMode === 'special_course' ? formData.get('subject') : '',
+    createdAt: new Date()
+  };
+
+  try {
+    await db.collection("materials").add(newDoc);
+    alert("✅ تم رفع المحتوى في Firebase");
+  } catch (error) {
+    console.error(error);
+    alert("❌ حصل خطأ");
+  }
 };
 
             if (view === 'login') return (
