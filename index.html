@@ -748,17 +748,17 @@ React.useEffect(() => {
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
     {contents
-      .filter(c =>
-        c.yearId === path[0].id &&
-        c.semesterId === path[1].id &&
-        c.subject === path[2].title &&
-        (
-          (view === 'videos' && c.type === 'video') ||
-          (view === 'pdfs' && c.type === 'pdf') ||
-          (view === 'exams' && c.type === 'exam') ||
-          (view === 'refs' && c.type === 'reference')
-        )
-      )
+  .filter(c =>
+    String(c.yearId) === String(path[0].id) &&
+    String(c.semesterId) === String(path[1].id) &&
+    c.subject?.trim() === path[2].title?.trim() &&
+    (
+      (view === 'videos' && c.type === 'video') ||
+      (view === 'pdfs' && c.type === 'pdf') ||
+      (view === 'exams' && c.type === 'exam') ||
+      (view === 'refs' && c.type === 'reference')
+    )
+  )
       .map(item => (
 
         <button
