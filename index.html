@@ -7,7 +7,57 @@
     <meta name="description" content="منصة GESS EDU توفر محاضرات PDF، . طلاب جامعه الخرطوم . جامعة الخرطوم, هندسة جامعة الخرطوم ,gess ,هندسة المساحة . طلاب هندسة المساحة جامعة الخرطوم . فيديوهات،, Gess Edu, gess sudan ,Gess edu, امتحانات ومراجع لطلاب الهندسة لجميع السمسترات.">
     <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
     <link rel="apple-touch-icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
-    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-ca{path.length === 4 && !selectedItem && (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+    {console.log("CONTENTS:", contents)}
+    {console.log("PATH:", path)}
+
+    {contents
+      .filter(c =>
+        String(c.yearId) === String(path[0].id) &&
+        String(c.semesterId) === String(path[1].id) &&
+        c.subject === path[2].title &&
+        (
+          (view === 'videos' && c.type === 'video') ||
+          (view === 'pdfs' && c.type === 'pdf') ||
+          (view === 'exams' && c.type === 'exam') ||
+          (view === 'refs' && c.type === 'reference')
+        )
+      )
+      .map(item => (
+
+        <button
+          key={item.id}
+          onClick={() => setSelectedItem(item)}
+          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all text-right"
+        >
+          <div className="flex items-center gap-4">
+            <div className={`p-4 rounded-xl ${
+              item.type === 'video'
+                ? 'bg-red-50 text-red-500'
+                : 'bg-indigo-50 text-indigo-500'
+            }`}>
+              {item.type === 'video'
+                ? <i data-lucide="video"></i>
+                : <i data-lucide="file-text"></i>}
+            </div>
+
+            <div>
+              <h4 className="font-black text-lg">{item.title}</h4>
+              <p className="text-[10px] font-bold text-gray-400 uppercase">
+                {item.type}
+              </p>
+            </div>
+          </div>
+
+          <i data-lucide="chevron-left" className="text-gray-300"></i>
+        </button>
+
+      ))}
+
+  </div>
+)}pable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22GESS%20EDU%22,%22short_name%22:%22GESS%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22icons%22:[{%22src%22:%22https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
     <title>GESS EDU | منصة المواد الهندسية والكمبيوتر</title>
