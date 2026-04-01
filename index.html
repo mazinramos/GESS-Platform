@@ -241,28 +241,26 @@ React.useEffect(() => {
 
   const subject = customSubject || form.subject.value;
 
+  const yearId = form.yearId?.value || null;
+  const semesterId = form.semesterId?.value || null;
+
   const data = {
     subject,
     title: form.title.value,
     url: form.url.value,
     type: form.type.value,
-    yearId: form.yearId?.value || null,
-    semesterId: form.semesterId?.value || null,
+    yearId,
+    semesterId,
     category: adminAddMode,
     createdAt: new Date()
   };
 
   try {
-    await db.collection("materials").add(data); // ✅ الحل هنا
-
+    await db.collection("materials").add(data);
     alert("✅ تم رفع المحتوى");
-
-    form.reset();
-    setCustomSubject("");
-
   } catch (error) {
     console.error(error);
-    alert(error.message);
+    alert("❌ حصل خطأ");
   }
 };
 
@@ -747,18 +745,20 @@ React.useEffect(() => {
                                 {path.length === 4 && !selectedItem && (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-    {contents
-      .filter(c =>
-        c.yearId === path[0].id &&
-        c.semesterId === path[1].id &&
-        c.subject === path[2].title &&
-        (
-          (view === 'videos' && c.type === 'video') ||
-          (view === 'pdfs' && c.type === 'pdf') ||
-          (view === 'exams' && c.type === 'exam') ||
-          (view === 'refs' && c.type === 'reference')
-        )
-      )
+    console.log("CONTENTS:", contents);
+    console.log("PATH:", path);
+    
+    {contents.filter(c =>
+  String(c.yearId) === String(path[0].id) &&
+  String(c.semesterId) === String(path[1].id) &&
+  c.subject === path[2].title &&
+  (
+    (view === 'videos' && c.type === 'video') ||
+    (view === 'pdfs' && c.type === 'pdf') ||
+    (view === 'exams' && c.type === 'exam') ||
+    (view === 'refs' && c.type === 'reference')
+  )
+)
       .map(item => (
 
         <button
