@@ -10,7 +10,7 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22GESS%20EDU%22,%22short_name%22:%22GESS%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22icons%22:[{%22src%22:%22https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
-    <title>GESS EDU | منصة المواد الهندسية والكمبيوتر</title>
+    <title>GESS EDU | منصة هندسة المساحة - جامعة الخرطوم  </title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
@@ -100,14 +100,10 @@
             const [toast, setToast] = React.useState({ show: false, message: '' });
             const [adminAddMode, setAdminAddMode] = React.useState('academic');
             const [selectedSemester, setSelectedSemester] = React.useState(null);
-            
+            const [selectedSubject, setSelectedSubject] = React.useState(null);
             const [viewType, setViewType] = React.useState(null);
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
             const [lang, setLang] = React.useState('ar'); 
-        
-const [customSubject, setCustomSubject] = React.useState('');
-const [selectedYear, setSelectedYear] = React.useState('');
-
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
             const [contents, setContents] = React.useState([]);
 
@@ -234,35 +230,28 @@ React.useEffect(() => {
                 }
             };
 
-           const addMaterial = async (e) => {
+            const addMaterial = async (e) => {
   e.preventDefault();
+  const formData = new FormData(e.target);
 
-  const form = e.target;
-
-  const subject = customSubject || form.subject.value;
-
-  const data = {
-    subject,
-    title: form.title.value,
-    url: form.url.value,
-    type: form.type.value,
-    yearId: form.yearId?.value || null,
-    semesterId: form.semesterId?.value || null,
-    category: adminAddMode,
+  const newDoc = {
+    subject: formData.get('subject'),
+    title: formData.get('title'),
+    url: formData.get('url'),
+    type: formData.get('type'),
+    category: adminAddMode === 'academic' ? 'academic' : 'special_course',
+    yearId: adminAddMode === 'academic' ? parseInt(formData.get('yearId')) : null,
+    semesterId: adminAddMode === 'academic' ? parseInt(formData.get('semesterId')) : null,
+    courseName: adminAddMode === 'special_course' ? formData.get('subject') : '',
     createdAt: new Date()
   };
 
   try {
-    await db.collection("materials").add(data); // ✅ الحل هنا
-
-    alert("✅ تم رفع المحتوى");
-
-    form.reset();
-    setCustomSubject("");
-
+    await db.collection("materials").add(newDoc);
+    alert("✅ تم رفع المحتوى في Firebase");
   } catch (error) {
     console.error(error);
-    alert(error.message);
+    alert("❌ حصل خطأ");
   }
 };
 
@@ -450,59 +439,14 @@ React.useEffect(() => {
   </button>
 
 </div>
-                                        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-
-  {/* اختيار مادة موجودة */}
-  <select
-    onChange={(e) => {
-      setSelectedSubject(e.target.value);
-      setCustomSubject('');
-    }}
-    className={`p-4 rounded-2xl border-2 ${
-      darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'
-    }`}
-  >
-    <option value="">
-      {lang === 'ar' ? "اختر مادة موجودة" : "Select Existing Subject"}
-    </option>
-
-    {[...new Set(
-      contents
-        .filter(c =>
-          c.yearId === selectedYear &&
-          c.semesterId === selectedSemester
-        )
-        .map(c => c.subject)
-    )].map(subject => (
-      <option key={subject} value={subject}>
-        {subject}
-      </option>
-    ))}
-
-  </select>
-
-  {/* إدخال مادة جديدة */}
-  <input
-    type="text"
-    placeholder={lang === 'ar' ? "أو اكتب مادة جديدة" : "Or enter new subject"}
-    value={customSubject}
-    onChange={(e) => {
-      setCustomSubject(e.target.value);
-      setSelectedSubject('');
-    }}
-    className={`p-4 rounded-2xl border-2 ${
-      darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'
-    }`}
-  />
-
-</div>
+                                        <input name="subject" required placeholder={lang === 'ar' ? (adminAddMode === 'academic' ? "اسم المادة" : "اسم الكورس") : "Subject Name"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         <input name="title" required placeholder={lang === 'ar' ? "عنوان الدرس" : "Lesson Title"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         <input name="url" required placeholder={lang === 'ar' ? "الرابط المباشر" : "Direct Link"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         {adminAddMode === 'academic' && (<>
-                                        <select name="yearId" onChange={(e) => setSelectedYear(e.target.value)}>
+                                        <select name="yearId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
                                         </select>
-                                        <select name="semesterId" onChange={(e) => setSelectedSemester(e.target.value)}>
+                                        <select name="semesterId" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                         </select></>)}
                                         <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
@@ -683,115 +627,52 @@ React.useEffect(() => {
     </div>
 )}
 
-                               {path.length === 2 && (
-  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-    {[...new Set(
-      contents
-        .filter(c =>
-          c.yearId === path[0].id &&
-          c.semesterId === path[1].id
-        )
-        .map(c => c.subject)
-    )].map(subject => (
-
-      <button
-        key={subject}
-        onClick={() => setPath([...path, { title: subject, type: 'subject' }])}
-        className="p-6 rounded-2xl bg-white dark:bg-gray-800 shadow-xl hover:scale-105 transition border-2 border-orange-500"
-      >
-        <h3 className="text-xl font-bold">{subject}</h3>
-        <p>{lang === 'ar' ? "اضغط لعرض المحتوى" : "Click to view contents"}</p>
-      </button>
-
-    ))}
-
-  </div>
-)}
-
-                                {path.length === 3 && path[2].type === 'subject' && !selectedItem && (
-  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-
-    <button onClick={() => {setView('videos');setPath([...path, { type: 'contentType' }]);}} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
-      <i data-lucide="video" className="w-10 h-10 mb-2 text-blue-600"></i>
-      <span className="font-bold">{lang === 'ar' ? "فيديوهات" : "Videos"}</span>
-    </button>
-
-    <button onClick={() => {
-  setView('pdfs');
-  setPath([...path, { type: 'contentType' }]);
-}} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
-      <i data-lucide="file-text" className="w-10 h-10 mb-2 text-red-600"></i>
-      <span className="font-bold">{lang === 'ar' ? "ملفات PDF" : "PDF Files"}</span>
-    </button>
-
-    <button onClick={() => {
-  setView('exams');
-  setPath([...path, { type: 'contentType' }]);
-}} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
-      <i data-lucide="clipboard-list" className="w-10 h-10 mb-2 text-green-600"></i>
-      <span className="font-bold">{lang === 'ar' ? "امتحانات" : "Exams"}</span>
-    </button>
-
-    <button onClick={() => {
-  setView('refs');
-  setPath([...path, { type: 'contentType' }]);
-}} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
-      <i data-lucide="external-link" className="w-10 h-10 mb-2 text-purple-600"></i>
-      <span className="font-bold">{lang === 'ar' ? "المراجع" : "References"}</span>
-    </button>
-
-  </div>
-)}
-
-                                {path.length === 4 && !selectedItem && (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-    {contents
-  .filter(c =>
-    String(c.yearId) === String(path[0].id) &&
-    String(c.semesterId) === String(path[1].id) &&
-    c.subject?.trim() === path[2].title?.trim() &&
-    (
-      (view === 'videos' && c.type === 'video') ||
-      (view === 'pdfs' && c.type === 'pdf') ||
-      (view === 'exams' && c.type === 'exam') ||
-      (view === 'refs' && c.type === 'reference')
-    )
-  )
-      .map(item => (
-
-        <button
-          key={item.id}
-          onClick={() => setSelectedItem(item)}
-          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all text-right"
-        >
-          <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-xl ${
-              item.type === 'video'
-                ? 'bg-red-50 text-red-500'
-                : 'bg-indigo-50 text-indigo-500'
-            }`}>
-              {item.type === 'video'
-                ? <i data-lucide="video"></i>
-                : <i data-lucide="file-text"></i>}
-            </div>
-
-            <div>
-              <h4 className="font-black text-lg">{item.title}</h4>
-              <p className="text-[10px] font-bold text-gray-400 uppercase">
-                {item.type}
-              </p>
-            </div>
-          </div>
-
-          <i data-lucide="chevron-left" className="text-gray-300"></i>
+                                {path.length === 2 && (
+    <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
+        {/* كرت الفيديوهات */}
+        <button onClick={() => setView('videos')} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
+            <i data-lucide="video" class="w-10 h-10 mb-2 text-blue-600"></i>
+            <span className="font-bold">{lang === 'ar' ? "فيديوهات" : "Videos"}</span>
         </button>
 
-      ))}
+        {/* كرت الملفات */}
+        <button onClick={() => setView('pdfs')} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
+            <i data-lucide="file-text" class="w-10 h-10 mb-2 text-red-600"></i>
+            <span className="font-bold">{lang === 'ar' ? "ملفات PDF" : "PDF Files"}</span>
+        </button>
 
-  </div>
+        {/* كرت الامتحانات */}
+        <button onClick={() => setView('exams')} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
+            <i data-lucide="clipboard-list" class="w-10 h-10 mb-2 text-green-600"></i>
+            <span className="font-bold">{lang === 'ar' ? "امتحانات" : "Exams"}</span>
+        </button>
+
+        {/* كرت المراجع */}
+        <button onClick={() => setView('refs')} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
+            <i data-lucide="external-link" class="w-10 h-10 mb-2 text-purple-600"></i>
+           <span className="font-bold">{lang === 'ar' ? "المراجع" : "References"}</span>
+        </button>
+    </div>
 )}
+
+                                {path.length === 3 && !selectedItem && (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        {contents.filter(c => c.yearId === path[0].id && c.semesterId === path[1].id && c.subject === path[2].title).map(item => (
+                                            <button key={item.id} onClick={() => setSelectedItem(item)} className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all text-right">
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-4 rounded-xl ${item.type === 'video' ? 'bg-red-50 text-red-500' : 'bg-indigo-50 text-indigo-500'}`}>
+                                                        {item.type === 'video' ? <i data-lucide="video"></i> : <i data-lucide="file-text"></i>}
+                                                    </div>
+                                                    <div>
+                                                        <h4 className="font-black text-lg">{item.title}</h4>
+                                                        <p className="text-[10px] font-bold text-gray-400 italic uppercase">{item.type}</p>
+                                                    </div>
+                                                </div>
+                                                <i data-lucide="chevron-left" class="text-gray-300"></i>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
 
                                 {selectedItem && (
                                     <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in">
