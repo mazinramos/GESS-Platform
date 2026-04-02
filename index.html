@@ -469,8 +469,8 @@ React.useEffect(() => {
     {[...new Set(
       contents
         .filter(c =>
-          c.yearId === selectedYear &&
-          c.semesterId === selectedSemester
+          c.yearId == selectedYear &&
+          c.semesterId == selectedSemester
         )
         .map(c => c.subject)
     )].map(subject => (
@@ -660,10 +660,14 @@ React.useEffect(() => {
                                     </div>
                                 )}
 
-{path.length === 1 && path[0].id === 'courses' && (
+{path.length == 1 && path[0].id == 'courses' && (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
 
-        {[...new Set(contents.filter(c => c.category === 'special_course').map(c => c.courseName))].map(courseName => (
+        {[...new Set(
+  contents
+    .filter(c => c.category === 'special_course')
+    .map(c => c.courseName)
+)].map(courseName => (
             <button 
                 key={courseName}
                 onClick={() => setPath([...path, { id: courseName, title: courseName, type: 'inside_course' }])}
@@ -675,7 +679,7 @@ React.useEffect(() => {
             </button>
         ))}
         
-        {contents.filter(c => c.category === 'special_course').length === 0 && (
+        {contents.filter(c => c.category == 'special_course').length == 0 && (
             <div className="col-span-full text-center p-10 opacity-50">
                <p>{lang === 'ar' ? "..لا توجد كورسات مضافة حالياً" : "No courses added yet.."}</p>
             </div>
@@ -683,14 +687,14 @@ React.useEffect(() => {
     </div>
 )}
 
-                               {path.length === 2 && (
+                               {path.length == 2 && (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
     {[...new Set(
       contents
         .filter(c =>
-          c.yearId === path[0].id &&
-          c.semesterId === path[1].id
+          c.yearId == path[0].id &&
+          c.semesterId == path[1].id
         )
         .map(c => c.subject)
     )].map(subject => (
@@ -709,7 +713,7 @@ React.useEffect(() => {
   </div>
 )}
 
-                                {path.length === 3 && path[2].type === 'subject' && !selectedItem && (
+                                {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
     <button onClick={() => {setView('videos');setPath([...path, { type: 'contentType' }]);}} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
@@ -744,21 +748,21 @@ React.useEffect(() => {
   </div>
 )}
 
-                                {path.length === 4 && !selectedItem && (
+                                {path.length == 4 && !selectedItem && (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
     {contents
-      .filter(c =>
-        c.yearId === path[0].id &&
-        c.semesterId === path[1].id &&
-        c.subject === path[2].title &&
-        (
-          (view === 'videos' && c.type === 'video') ||
-          (view === 'pdfs' && c.type === 'pdf') ||
-          (view === 'exams' && c.type === 'exam') ||
-          (view === 'refs' && c.type === 'reference')
-        )
-      )
+  .filter(c =>
+    String(c.yearId) == String(path[0].id) &&
+    String(c.semesterId) == String(path[1].id) &&
+    c.subject?.trim() == path[2].title?.trim() &&
+    (
+      (view == 'videos' && c.type == 'video') ||
+      (view == 'pdfs' && c.type == 'pdf') ||
+      (view == 'exams' && c.type == 'exam') ||
+      (view == 'refs' && c.type == 'reference')
+    )
+  )
       .map(item => (
 
         <button
