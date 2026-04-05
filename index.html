@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -253,7 +254,7 @@ React.useEffect(() => {
   };
 
   try {
-    await db.collection("materials").add(data); // ✅ الحل هنا
+    await db.collection("materials").add(data); 
 
     alert("✅ تم رفع المحتوى");
 
@@ -452,7 +453,6 @@ React.useEffect(() => {
 </div>
                                         <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-  {/* اختيار مادة موجودة */}
   <select
     onChange={(e) => {
       setSelectedSubject(e.target.value);
@@ -481,7 +481,6 @@ React.useEffect(() => {
 
   </select>
 
-  {/* إدخال مادة جديدة */}
   <input
     type="text"
     placeholder={lang === 'ar' ? "أو اكتب مادة جديدة" : "Or enter new subject"}
