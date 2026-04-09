@@ -100,7 +100,7 @@
             const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
             const [toast, setToast] = React.useState({ show: false, message: '' });
             const [adminAddMode, setAdminAddMode] = React.useState('academic');
-            const [selectedSemester, setSelectedSemester] = React.useState(null);
+            const [selectedSemester, setSelectedSemester] = React.useState("1");
             const [loginType, setLoginType] = React.useState('student'); 
             const [viewType, setViewType] = React.useState(null);
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
@@ -108,10 +108,13 @@
             const [isModalOpen, setIsModalOpen] = React.useState(false);
 const [modalSubjectData, setModalSubjectData] = React.useState(null); 
 const [customSubject, setCustomSubject] = React.useState('');
-const [selectedYear, setSelectedYear] = React.useState('');
-
+const [selectedYear, setSelectedYear] = React.useState('1');
+const [searchQuery, setSearchQuery] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
             const [contents, setContents] = React.useState([]);
+            
+
+
 
             React.useEffect(() => {
   const unsubscribe = db.collection("materials")
@@ -174,24 +177,31 @@ const [selectedYear, setSelectedYear] = React.useState('');
           
             React.useEffect(() => { lucide.createIcons(); });
 
-           const handleLogin = (e) => {
-    e.preventDefault();
-    const savedLoginPass = localStorage.getItem('gess_login_pass') || 'Gess@123';
-if (e.target.password.value === savedLoginPass) {
-      const name = e.target.name.value;
-      setStudentName(name);
-     
-    localStorage.setItem("gess_is_logged_in", "true"); 
-      localStorage.setItem("gess_user_name", name);
-      setIsLoggedIn(true);
-      setView('student');
-       setToast({ show: true, message: `أهلاً بك يا ${name} في منصة GESS EDU` });
-        setTimeout(() => setToast({ show: false, message: '' }), 3000);
+           const handleLogin = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const user = formData.get('username');
+  const pass = formData.get('password');
+
+  if (loginType === 'admin') {
+    // منطق دخول الأدمن
+    if (user === "admin" && pass === "123456") { // حط بيانات الأدمن بتاعتك هنا
+      setIsAdmin(true); // نرفع صلاحية الأدمن
+      setView('admin_dashboard'); // نفتح صفحة الأدمن طوالي
+      setToast({ show: true, message: lang === 'ar' ? "مرحباً بك أيها المسؤول" : "Welcome Admin" });
     } else {
-      setToast({ show: true, message: "⚠️ عذراً، كلمة المرور غير صحيحة" });
-setTimeout(() => setToast({ show: false, message: '' }), 3000);
+      alert("بيانات الأدمن غير صحيحة");
     }
-  };
+  } else {
+   
+    setIsAdmin(false);
+    setView('user_dashboard'); 
+    setToast({ show: true, message: lang === 'ar' ? "مرحباً بك يا بطل" : "Welcome Student" });
+  }
+
+  // إخفاء التوست
+  setTimeout(() => setToast({ show: false, message: '' }), 3000);
+};
     const handleLogOut = () => {
     localStorage.removeItem('user_token'); 
     localStorage.removeItem('is_admin'); 
@@ -283,62 +293,55 @@ React.useEffect(() => {
                             <p className="text-[#f58220] font-bold text-sm tracking-widest mt-1">{lang === 'ar' ? "هندسة المساحة - جامعة الخرطوم" : "Geomatics Engineering - U of K"}</p>
                         </div>
                         <form onSubmit={handleLogin} className="space-y-5">
-                            {/* أزرار التبديل بين الطالب والأدمن */}
+                         
+                            {/* أزرار التبديل - تأكد إنها موجودة فوق الفورم */}
 <div className={`flex p-1 rounded-2xl mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-    <button 
-        type="button"
-        onClick={() => setLoginType('student')}
-        className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${loginType === 'student' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow-md' : 'bg-white text-orange-500 shadow-sm') : 'text-gray-400 hover:text-gray-500'}`}
-    >
-        <i data-lucide="graduation-cap" className="w-5 h-5"></i>
-        {lang === 'ar' ? 'بوابة الطلاب' : 'Student Portal'}
-    </button>
-    <button 
-        type="button"
-        onClick={() => setLoginType('admin')}
-        className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${loginType === 'admin' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow-md' : 'bg-white text-orange-500 shadow-sm') : 'text-gray-400 hover:text-gray-500'}`}
-    >
-        <i data-lucide="shield-check" className="w-5 h-5"></i>
-        {lang === 'ar' ? 'الإدارة' : 'Administration'}
-    </button>
+  <button 
+    type="button"
+    onClick={() => setLoginType('student')}
+    className={`flex-1 py-3 rounded-xl font-bold transition-all ${loginType === 'student' ? 'bg-white shadow-sm text-orange-500' : 'text-gray-500'}`}
+  >
+    {lang === 'ar' ? 'طالب' : 'Student'}
+  </button>
+  <button 
+    type="button"
+    onClick={() => setLoginType('admin')}
+    className={`flex-1 py-3 rounded-xl font-bold transition-all ${loginType === 'admin' ? 'bg-white shadow-sm text-orange-500' : 'text-gray-500'}`}
+  >
+    {lang === 'ar' ? 'أدمن' : 'Admin'}
+  </button>
 </div>
 
-{/* حقول الإدخال تتغير حسب نوع الدخول */}
-{loginType === 'student' ? (
-    <div className="relative mb-4">
-        <i data-lucide="user" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
-        <input 
-            type="text" 
-            name="studentId" 
-            placeholder={lang === 'ar' ? "الرقم الجامعي" : "Student ID"} 
-            className={`w-full ps-12 p-4 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold transition-all text-right ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
-            required 
-        />
-    </div>
-) : (
-    <div className="relative mb-4">
-        <i data-lucide="shield" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
-        <input 
-            type="text" 
-            name="adminUser" 
-            placeholder={lang === 'ar' ? "اسم المستخدم (الأدمن)" : "Admin Username"} 
-            className={`w-full ps-12 p-4 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold transition-all text-right ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
-            required 
-        />
-    </div>
-)}
-{/* ... هنا يكمل حقل كلمة المرور وزر الدخول ... */}
-                            <div className="relative group">
-                                <i data-lucide="user" className="absolute right-4 top-4 text-gray-400 group-focus-within:text-[#f58220]"></i>
-                                <input name="name" required 
-  placeholder={lang === 'ar' ? 'اسم المستخدم' : 'Username'} 
- className="w-full ps-12 p-4 bg-white border-2 border-transparent focus:border-[#f58220] rounded-2xl outline-none font-bold shadow-inner" />
-                            </div>
-                            <div className="relative group">
-                                <i data-lucide="lock" className="absolute right-4 top-4 text-gray-400 group-focus-within:text-[#f58220]"></i>
-                                <input name="password" type="password" required placeholder={lang === 'ar' ? "كلمة المرور" : "Password"} className="w-full pr-12 p-4 bg-white border-2 border-transparent focus:border-[#f58220] rounded-2xl outline-none font-bold shadow-inner" />
-                            </div>
-                            <button className="w-full bg-[#f58220] text-white p-4 rounded-2xl font-black shadow-lg shadow-[#f58220]/30 hover:bg-[#d96e1a] transition-all">{lang === 'ar' ? "دخول للمنصة" : "Login to Platform"}</button>
+{/* حقول الإدخال المتغيرة */}
+<div className="space-y-4">
+  <div>
+    <label className="block text-sm font-bold mb-2 opacity-70">
+      {loginType === 'student' 
+        ? (lang === 'ar' ? "اسم الطالب" : "Student Name")
+        : (lang === 'ar' ? "اسم الأدمن" : "Admin Name")
+      }
+    </label>
+    <input 
+      type="text" 
+      name="username" // نستخدم اسم موحد عشان يسهل علينا في الدالة
+      className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
+      required 
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm font-bold mb-2 opacity-70">
+      {lang === 'ar' ? "كلمة المرور" : "Password"}
+    </label>
+    <input 
+      type="password" 
+      name="password" 
+      className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
+      required 
+    />
+  </div>
+</div>
+
                         </form>
                     </div>
                 </div>
@@ -499,57 +502,75 @@ React.useEffect(() => {
 </div>
                                         <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-  {/* قسم عرض المواد الموجودة لإضافة الدروس إليها */}
-<div className="mt-8">
-    <div className="flex items-center justify-between mb-4">
-        <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-            {lang === 'ar' ? "إدارة المواد الموجودة" : "Manage Existing Subjects"}
-        </h3>
-        <p className="text-sm text-gray-400">
-            {lang === 'ar' ? "اختر مادة لإضافة محاضراتها (حتى 7 محاضرات)" : "Select subject to add lectures"}
-        </p>
+ <div className="mt-8 space-y-6">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {lang === 'ar' ? "إدارة المواد" : "Manage Subjects"}
+            </h3>
+            <p className="text-sm text-gray-400">
+                {lang === 'ar' ? "فلتر المواد حسب السنة والسمستر" : "Filter subjects by year and semester"}
+            </p>
+        </div>
+
+        {/* خانة البحث السريع بالاسم */}
+        <div className="relative">
+            <i data-lucide="search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+            <input 
+                type="text"
+                placeholder={lang === 'ar' ? "بحث عن مادة..." : "Search subject..."}
+                onChange={(e) => setSearchQuery(e.target.value)} // لازم تعرف setSearchQuery في الـ State فوق
+                className={`ps-10 p-3 rounded-xl border-2 outline-none transition-all text-sm w-full md:w-64 ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-500'}`}
+            />
+        </div>
     </div>
 
-    {/* شبكة الكروت للمواد */}
+    {/* شبكة الكروت بعد الفلترة الذكية */}
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contents && contents
-            .filter(c => c.category === 'academic')
-            // تجميع المواد لمنع التكرار وعرضها ككروت
+            .filter(c => 
+                c.category === 'academic' && 
+                String(c.yearId) === String(selectedYear) && 
+                String(c.semesterId) === String(selectedSemester) &&
+                (c.subject.toLowerCase().includes(searchQuery.toLowerCase())) // فلتر البحث
+            )
             .reduce((acc, current) => {
                 const x = acc.find(item => item.subject === current.subject);
                 if (!x) return acc.concat([current]);
                 return acc;
             }, [])
             .map((subjectItem, index) => (
-                <div key={index} className={`p-5 rounded-2xl border-2 flex flex-col justify-between transition-all hover:border-orange-500 hover:shadow-lg ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                    <div>
-                        <div className="flex items-center gap-2 mb-2">
-                            <span className="p-2 bg-orange-100 text-orange-600 rounded-lg dark:bg-orange-900/30">
-                                <i data-lucide="book-open" className="w-5 h-5"></i>
-                            </span>
-                            <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
+                <div key={index} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all hover:shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
+                            <i data-lucide="book-marked" className="w-5 h-5"></i>
                         </div>
-                        <p className="text-xs text-gray-400 mb-4">
-                            السنة: {subjectItem.yearId} | السمستر: {subjectItem.semesterId}
-                        </p>
+                        <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
                     </div>
                     
-                    {/* الزر اللي بيفتح النافذة */}
                     <button 
                         type="button"
                         onClick={() => {
-                            setModalSubjectData(subjectItem); // نمرر بيانات المادة للنافذة
-                            setIsModalOpen(true); // نفتح النافذة
+                            setModalSubjectData(subjectItem);
+                            setIsModalOpen(true);
                         }}
-                        className="w-full py-2 bg-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-600 transition-all"
+                        className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
                     >
-                        <i data-lucide="plus-circle" className="w-4 h-4"></i>
-                        {lang === 'ar' ? "إضافة محاضرة" : "Add Lecture"}
+                        <i data-lucide="plus" className="w-4 h-4"></i>
                     </button>
                 </div>
             ))
         }
     </div>
+
+    {/* رسالة في حال مفيش مواد مطابقة للفلتر */}
+    {(!contents || contents.filter(c => c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester)).length === 0) && (
+        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
+            <p className="text-gray-400 font-bold">
+                {lang === 'ar' ? "لا توجد مواد مضافة لهذه السنة/السمستر" : "No subjects for this year/semester"}
+            </p>
+        </div>
+    )}
 </div>
 
   <input
@@ -926,26 +947,44 @@ React.useEffect(() => {
                 </p>
             </div>
 
-            {/* فورم إضافة المحاضرة داخل النافذة */}
-            <form onSubmit={(e) => {
-                e.preventDefault();
-                // هنا تستدعي دالة إضافة البيانات للفايربيز بتاعتك
-                // وتاخد معاها بيانات modalSubjectData (السنة، السمستر، اسم المادة)
-                const formData = new FormData(e.target);
-                
-                // مثال للتوضيح:
-                /* addDoc(collection(db, 'contents'), {
-                    title: formData.get('title'),
-                    url: formData.get('url'),
-                    type: formData.get('type'),
-                    category: 'academic',
-                    subject: modalSubjectData.subject,
-                    yearId: modalSubjectData.yearId,
-                    semesterId: modalSubjectData.semesterId,
-                    createdAt: new Date()
-                }).then(() => { alert('تم إضافة المحاضرة بنجاح!'); e.target.reset(); });
-                */
-            }} className="space-y-4">
+          <form onSubmit={async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    
+    // تجهيز البيانات
+    const newLecture = {
+        title: formData.get('title'),
+        url: formData.get('url'),
+        type: formData.get('type'), // فيديو، pdf، exam، reference
+        category: 'academic',
+        subject: modalSubjectData.subject,
+        yearId: String(modalSubjectData.yearId),
+        semesterId: String(modalSubjectData.semesterId),
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() // توقيت عالمي
+    };
+
+    try {
+        // استخدام db المعرف عندك في السكريبت الأول
+        // تأكد أن اسم الكولكشن 'materials' مطابق للـ useEffect في سطر 116
+        await db.collection("materials").add(newLecture);
+
+        setToast({ 
+            show: true, 
+            message: lang === 'ar' ? "تمت إضافة المحاضرة بنجاح" : "Lecture added successfully" 
+        });
+        
+        setIsModalOpen(false);
+        e.target.reset();
+        
+        // إخفاء التوست بعد 3 ثواني
+        setTimeout(() => setToast({ show: false, message: '' }), 3000);
+
+    } catch (error) {
+        console.error("Firebase Error:", error);
+        alert(lang === 'ar' ? "فشل الحفظ: " + error.message : "Save failed: " + error.message);
+    }
+}} className="space-y-4">
+
                 
                 <div>
                     <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
