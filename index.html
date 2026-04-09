@@ -177,27 +177,27 @@ const [searchQuery, setSearchQuery] = React.useState('');
           
             React.useEffect(() => { lucide.createIcons(); });
 
-           const handleLogin = (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const user = formData.get('username');
-    const pass = formData.get('password');
+           const handleLogin = async (e) => {
+  e.preventDefault();
+  const formData = new FormData(e.target);
+  const user = formData.get('username');
+  const pass = formData.get('password');
 
-    if (loginType === 'admin') {
-        // بيانات الأدمن (غيرها حسب رغبتك)
-        if (user === "admin" && pass === "123456") {
-            setIsAdmin(true);
-            setView('admin_dashboard'); // دي اللي بتفتح لوحة التحكم فوراً
-            setToast({ show: true, message: "تم الدخول بنجاح يا مدير" });
-        } else {
-            alert("اسم الأدمن أو الباسورد غلط يا هندسة");
-        }
+  if (loginType === 'admin') {
+    // منطق دخول الأدمن
+    if (user === "admin" && pass === "123456") { // حط بيانات الأدمن بتاعتك هنا
+      setIsAdmin(true); // نرفع صلاحية الأدمن
+      setView('admin_dashboard'); // نفتح صفحة الأدمن طوالي
+      setToast({ show: true, message: lang === 'ar' ? "مرحباً بك أيها المسؤول" : "Welcome Admin" });
     } else {
-        // دخول الطالب
-        setView('user_dashboard'); // بيفتح صفحة المواد للطلاب
-        setToast({ show: true, message: "مرحباً بك في منصة GESS" });
+      alert("بيانات الأدمن غير صحيحة");
     }
-};
+  } else {
+   
+    setIsAdmin(false);
+    setView('user_dashboard'); 
+    setToast({ show: true, message: lang === 'ar' ? "مرحباً بك يا بطل" : "Welcome Student" });
+  }
 
   // إخفاء التوست
   setTimeout(() => setToast({ show: false, message: '' }), 3000);
@@ -339,12 +339,6 @@ React.useEffect(() => {
       className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
       required 
     />
-    <button 
-    type="submit" 
-    className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl text-lg shadow-lg shadow-orange-500/30 transition-all mt-6 active:scale-95"
->
-    {lang === 'ar' ? (loginType === 'student' ? "دخول الطالب" : "دخول الأدمن") : "Login"}
-</button>
   </div>
 </div>
 
