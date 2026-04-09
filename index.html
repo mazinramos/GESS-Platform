@@ -1013,10 +1013,12 @@ React.useEffect(() => {
                     <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         نوع الملف
                     </label>
-                    <select name="type" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}>
-                        <option value="video">فيديو</option>
-                        <option value="pdf">ملف PDF</option>
-                    </select>
+                   <select name="type" className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}>
+    <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
+    <option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
+    <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
+    <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+</select>
                 </div>
 
                 <button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
