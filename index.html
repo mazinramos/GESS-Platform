@@ -177,27 +177,30 @@ const [searchQuery, setSearchQuery] = React.useState('');
           
             React.useEffect(() => { lucide.createIcons(); });
 
-           const handleLogin = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const user = formData.get('username');
-  const pass = formData.get('password');
+           const handleLogin = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const enteredUser = formData.get('username');
+    const enteredPass = formData.get('password');
 
-  if (loginType === 'admin') {
-    // منطق دخول الأدمن
-    if (user === "admin" && pass === "123456") { // حط بيانات الأدمن بتاعتك هنا
-      setIsAdmin(true); // نرفع صلاحية الأدمن
-      setView('admin_dashboard'); // نفتح صفحة الأدمن طوالي
-      setToast({ show: true, message: lang === 'ar' ? "مرحباً بك أيها المسؤول" : "Welcome Admin" });
+    if (loginType === 'admin') {
+    if (enteredUser === 'admin' && enteredPass === adminPass) {
+        setIsAdmin(true);
+        setView('admin_dashboard'); // التوجيه لصفحة الإدارة فوراً
+            setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير" : "Welcome Admin" });
+        } else {
+            alert(lang === 'ar' ? "خطأ في بيانات الأدمن" : "Admin credentials error");
+        }
     } else {
-      alert("بيانات الأدمن غير صحيحة");
+        // دخول الطالب (ممكن تربط باسوورد الطالب بنفس الطريقة لو حبيت)
+        const savedStudentPass = localStorage.getItem('gess_login_pass') || '123456';
+        
+        if (enteredPass === savedStudentPass) {
+            setView('user_dashboard');
+        } else {
+            alert(lang === 'ar' ? "كلمة مرور الطالب غير صحيحة" : "Incorrect Student Password");
+        }
     }
-  } else {
-   
-    setIsAdmin(false);
-    setView('user_dashboard'); 
-    setToast({ show: true, message: lang === 'ar' ? "مرحباً بك يا بطل" : "Welcome Student" });
-  }
 
   // إخفاء التوست
   setTimeout(() => setToast({ show: false, message: '' }), 3000);
@@ -339,6 +342,12 @@ React.useEffect(() => {
       className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
       required 
     />
+       <button 
+    type="submit" 
+    className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl text-lg shadow-lg shadow-orange-500/30 transition-all mt-6 active:scale-95"
+>
+    {lang === 'ar' ? (loginType === 'student' ? "دخول الطالب" : "دخول الأدمن") : "Login"}
+</button>
   </div>
 </div>
 
