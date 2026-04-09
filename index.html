@@ -339,6 +339,12 @@ React.useEffect(() => {
       className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
       required 
     />
+    <button 
+    type="submit" 
+    className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl text-lg shadow-lg shadow-orange-500/30 transition-all mt-6 active:scale-95"
+>
+    {lang === 'ar' ? (loginType === 'student' ? "دخول الطالب" : "دخول الأدمن") : "Login"}
+</button>
   </div>
 </div>
 
