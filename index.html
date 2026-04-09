@@ -112,9 +112,21 @@ const [selectedYear, setSelectedYear] = React.useState('1');
 const [searchQuery, setSearchQuery] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
             const [contents, setContents] = React.useState([]);
+            const [newLoginPass, setNewLoginPass] = React.useState('');
+            const [newAdminPass, setNewAdminPass] = React.useState('');
+            
             
 
 
+            React.useEffect(() => {
+  if (!localStorage.getItem('gess_login_pass')) {
+    localStorage.setItem('gess_login_pass', '123456');
+  }
+
+  if (!localStorage.getItem('gess_admin_pass')) {
+    localStorage.setItem('gess_admin_pass', 'admin123');
+  }
+}, []);
 
             React.useEffect(() => {
   const unsubscribe = db.collection("materials")
@@ -184,7 +196,9 @@ const [searchQuery, setSearchQuery] = React.useState('');
     const enteredPass = formData.get('password');
 
     if (loginType === 'admin') {
-    if (enteredUser === 'admin' && enteredPass === adminPass) {
+   const savedAdminPass = localStorage.getItem('gess_admin_pass');
+
+if (enteredUser === 'admin' && enteredPass === savedAdminPass) {
         setIsAdmin(true);
         setView('admin_dashboard'); // التوجيه لصفحة الإدارة فوراً
             setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير" : "Welcome Admin" });
@@ -193,13 +207,13 @@ const [searchQuery, setSearchQuery] = React.useState('');
         }
     } else {
         // دخول الطالب (ممكن تربط باسوورد الطالب بنفس الطريقة لو حبيت)
-        const savedStudentPass = localStorage.getItem('gess_login_pass') || '123456';
+      const savedStudentPass = localStorage.getItem('gess_login_pass');
         
-        if (enteredPass === savedStudentPass) {
-            setView('user_dashboard');
-        } else {
-            alert(lang === 'ar' ? "كلمة مرور الطالب غير صحيحة" : "Incorrect Student Password");
-        }
+       if (enteredPass === savedStudentPass) {
+  setView('user_dashboard');
+} else {
+  alert("كلمة المرور غير صحيحة");
+}
     }
 
   // إخفاء التوست
@@ -233,11 +247,9 @@ React.useEffect(() => {
 }, [path, view]);
             
 
-            const [newAdminPass, setNewAdminPass] = React.useState('');
-            const [newLoginPass, setNewLoginPass] = React.useState('');
             const checkAdminAuth = (e) => {
                 e.preventDefault();
-                const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+               const savedAdminPass = localStorage.getItem('gess_admin_pass');
             if (adminPassInput === savedAdminPass) {
                     setView('admin');
                     setShowAdminAuth(false);
@@ -281,7 +293,7 @@ React.useEffect(() => {
   }
 };
 
-            if (view === 'login') return (
+            if (view === '') return (
                 <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
                     <div className="absolute inset-0 z-0">
                        <div className={`absolute inset-0 transition-colors duration-500 ${darkMode ? 'bg-black/60' : 'bg-[#f58220]/10'} mix-blend-multiply z-10`}></div>
@@ -633,7 +645,7 @@ React.useEffect(() => {
       
          <span 
     onClick={(e) => {
-      const current = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+     const current = localStorage.getItem('gess_admin_pass');
       e.target.innerText = e.target.innerText.includes(lang === 'ar' ? 'إظهار' : 'Show') 
     ? `${lang === 'ar' ? 'كلمة المرور الحالية' : 'Current Password'}: ${current} 👁️` 
     : (lang === 'ar' ? '👁️ إظهار كلمة المرور' : '👁️ Show Password');
@@ -648,7 +660,7 @@ React.useEffect(() => {
     <input 
   type="password" 
   placeholder={lang === 'ar' ? "كلمة المرور الجديدة" : "New Password"}
-  onChange={(e) => setNewAdminPass(e.target.value)}
+  onChange={(e) => setNewLoginPass(e.target.value)}
   className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-4 ${
     darkMode 
       ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
@@ -658,10 +670,10 @@ React.useEffect(() => {
 </div>
            
             <button 
-                onClick={() => {
-                    localStorage.setItem('gess_login_pass', newLoginPass);
-                   alert(lang === 'ar' ? '✅ تم تغيير كلمة مرور الدخول بنجاح' : '✅ Login password changed successfully');
-                }}
+               onClick={() => {
+  localStorage.setItem('gess_login_pass', newLoginPass);
+  alert('✅ تم تغيير كلمة المرور');
+}}
                 className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 ${
   darkMode 
     ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 shadow-lg' 
@@ -678,7 +690,7 @@ React.useEffect(() => {
         <label className="font-bold text-sm text-gray-600">{lang === 'ar' ? "كلمة مرور لوحة الأدمن" : "Admin Panel Password"}</label>
         <span 
     onClick={(e) => {
-      const current = localStorage.getItem('gess_admin_pass') || 'Gess@123';
+     const current = localStorage.getItem('gess_admin_pass');
       e.target.innerText = e.target.innerText.includes(lang === 'ar' ? 'إظهار' : 'Show') 
     ? `${lang === 'ar' ? 'الحالية' : 'Current'}: ${current} 👁️` 
     : (lang === 'ar' ? '👁️ إظهار كلمة المرور' : '👁️ Show Password');
@@ -704,9 +716,9 @@ React.useEffect(() => {
            
             <button 
                 onClick={() => {
-                    localStorage.setItem('gess_admin_pass', newAdminPass);
-                    alert(lang === 'ar' ? '✅ تم تغيير كلمة مرور الأدمن بنجاح' : '✅ Admin password changed successfully');
-                }}
+  localStorage.setItem('gess_admin_pass', newAdminPass);
+  alert('✅ تم تغيير كلمة مرور الأدمن');
+}}
               className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 shadow-lg ${
   darkMode 
     ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20' 
