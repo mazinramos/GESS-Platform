@@ -101,11 +101,12 @@
             const [toast, setToast] = React.useState({ show: false, message: '' });
             const [adminAddMode, setAdminAddMode] = React.useState('academic');
             const [selectedSemester, setSelectedSemester] = React.useState(null);
-            
+            const [loginType, setLoginType] = React.useState('student'); 
             const [viewType, setViewType] = React.useState(null);
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
             const [lang, setLang] = React.useState('ar'); 
-        
+            const [isModalOpen, setIsModalOpen] = React.useState(false);
+const [modalSubjectData, setModalSubjectData] = React.useState(null); 
 const [customSubject, setCustomSubject] = React.useState('');
 const [selectedYear, setSelectedYear] = React.useState('');
 
@@ -282,6 +283,51 @@ React.useEffect(() => {
                             <p className="text-[#f58220] font-bold text-sm tracking-widest mt-1">{lang === 'ar' ? "هندسة المساحة - جامعة الخرطوم" : "Geomatics Engineering - U of K"}</p>
                         </div>
                         <form onSubmit={handleLogin} className="space-y-5">
+                            {/* أزرار التبديل بين الطالب والأدمن */}
+<div className={`flex p-1 rounded-2xl mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+    <button 
+        type="button"
+        onClick={() => setLoginType('student')}
+        className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${loginType === 'student' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow-md' : 'bg-white text-orange-500 shadow-sm') : 'text-gray-400 hover:text-gray-500'}`}
+    >
+        <i data-lucide="graduation-cap" className="w-5 h-5"></i>
+        {lang === 'ar' ? 'بوابة الطلاب' : 'Student Portal'}
+    </button>
+    <button 
+        type="button"
+        onClick={() => setLoginType('admin')}
+        className={`flex-1 py-3 rounded-xl font-bold transition-all flex items-center justify-center gap-2 ${loginType === 'admin' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow-md' : 'bg-white text-orange-500 shadow-sm') : 'text-gray-400 hover:text-gray-500'}`}
+    >
+        <i data-lucide="shield-check" className="w-5 h-5"></i>
+        {lang === 'ar' ? 'الإدارة' : 'Administration'}
+    </button>
+</div>
+
+{/* حقول الإدخال تتغير حسب نوع الدخول */}
+{loginType === 'student' ? (
+    <div className="relative mb-4">
+        <i data-lucide="user" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+        <input 
+            type="text" 
+            name="studentId" 
+            placeholder={lang === 'ar' ? "الرقم الجامعي" : "Student ID"} 
+            className={`w-full ps-12 p-4 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold transition-all text-right ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+            required 
+        />
+    </div>
+) : (
+    <div className="relative mb-4">
+        <i data-lucide="shield" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5"></i>
+        <input 
+            type="text" 
+            name="adminUser" 
+            placeholder={lang === 'ar' ? "اسم المستخدم (الأدمن)" : "Admin Username"} 
+            className={`w-full ps-12 p-4 border-2 border-transparent focus:border-orange-500 rounded-2xl outline-none font-bold transition-all text-right ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-900'}`}
+            required 
+        />
+    </div>
+)}
+{/* ... هنا يكمل حقل كلمة المرور وزر الدخول ... */}
                             <div className="relative group">
                                 <i data-lucide="user" className="absolute right-4 top-4 text-gray-400 group-focus-within:text-[#f58220]"></i>
                                 <input name="name" required 
@@ -453,33 +499,58 @@ React.useEffect(() => {
 </div>
                                         <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
 
-  <select
-    onChange={(e) => {
-      setSelectedSubject(e.target.value);
-      setCustomSubject('');
-    }}
-    className={`p-4 rounded-2xl border-2 ${
-      darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'
-    }`}
-  >
-    <option value="">
-      {lang === 'ar' ? "اختر مادة موجودة" : "Select Existing Subject"}
-    </option>
+  {/* قسم عرض المواد الموجودة لإضافة الدروس إليها */}
+<div className="mt-8">
+    <div className="flex items-center justify-between mb-4">
+        <h3 className={`font-bold text-lg ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+            {lang === 'ar' ? "إدارة المواد الموجودة" : "Manage Existing Subjects"}
+        </h3>
+        <p className="text-sm text-gray-400">
+            {lang === 'ar' ? "اختر مادة لإضافة محاضراتها (حتى 7 محاضرات)" : "Select subject to add lectures"}
+        </p>
+    </div>
 
-    {[...new Set(
-      contents
-        .filter(c =>
-          c.yearId == selectedYear &&
-          c.semesterId == selectedSemester
-        )
-        .map(c => c.subject)
-    )].map(subject => (
-      <option key={subject} value={subject}>
-        {subject}
-      </option>
-    ))}
-
-  </select>
+    {/* شبكة الكروت للمواد */}
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {contents && contents
+            .filter(c => c.category === 'academic')
+            // تجميع المواد لمنع التكرار وعرضها ككروت
+            .reduce((acc, current) => {
+                const x = acc.find(item => item.subject === current.subject);
+                if (!x) return acc.concat([current]);
+                return acc;
+            }, [])
+            .map((subjectItem, index) => (
+                <div key={index} className={`p-5 rounded-2xl border-2 flex flex-col justify-between transition-all hover:border-orange-500 hover:shadow-lg ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                    <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="p-2 bg-orange-100 text-orange-600 rounded-lg dark:bg-orange-900/30">
+                                <i data-lucide="book-open" className="w-5 h-5"></i>
+                            </span>
+                            <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
+                        </div>
+                        <p className="text-xs text-gray-400 mb-4">
+                            السنة: {subjectItem.yearId} | السمستر: {subjectItem.semesterId}
+                        </p>
+                    </div>
+                    
+                    {/* الزر اللي بيفتح النافذة */}
+                    <button 
+                        type="button"
+                        onClick={() => {
+                            setModalSubjectData(subjectItem); // نمرر بيانات المادة للنافذة
+                            setIsModalOpen(true); // نفتح النافذة
+                        }}
+                        className="w-full py-2 bg-orange-500 text-white rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-orange-600 transition-all"
+                    >
+                        <i data-lucide="plus-circle" className="w-4 h-4"></i>
+                        {lang === 'ar' ? "إضافة محاضرة" : "Add Lecture"}
+                    </button>
+                </div>
+            ))
+        }
+    </div>
+</div>
 
   <input
     type="text"
@@ -832,6 +903,80 @@ React.useEffect(() => {
       <span className="font-bold text-sm">{toast.message}</span>
     </div>
   </div>
+)}
+{/* النافذة المنبثقة لإضافة المحاضرات */}
+{isModalOpen && modalSubjectData && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}>
+            
+            {/* زر الإغلاق */}
+            <button 
+                onClick={() => setIsModalOpen(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
+            >
+                <i data-lucide="x" className="w-6 h-6"></i>
+            </button>
+
+            <div className="mb-6">
+                <h2 className="text-2xl font-black text-orange-500 mb-1">
+                    {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
+                </h2>
+                <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    المادة المحددة: <strong className={darkMode ? 'text-white' : 'text-black'}>{modalSubjectData.subject}</strong>
+                </p>
+            </div>
+
+            {/* فورم إضافة المحاضرة داخل النافذة */}
+            <form onSubmit={(e) => {
+                e.preventDefault();
+                // هنا تستدعي دالة إضافة البيانات للفايربيز بتاعتك
+                // وتاخد معاها بيانات modalSubjectData (السنة، السمستر، اسم المادة)
+                const formData = new FormData(e.target);
+                
+                // مثال للتوضيح:
+                /* addDoc(collection(db, 'contents'), {
+                    title: formData.get('title'),
+                    url: formData.get('url'),
+                    type: formData.get('type'),
+                    category: 'academic',
+                    subject: modalSubjectData.subject,
+                    yearId: modalSubjectData.yearId,
+                    semesterId: modalSubjectData.semesterId,
+                    createdAt: new Date()
+                }).then(() => { alert('تم إضافة المحاضرة بنجاح!'); e.target.reset(); });
+                */
+            }} className="space-y-4">
+                
+                <div>
+                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        عنوان المحاضرة (مثال: المحاضرة الأولى)
+                    </label>
+                    <input name="title" required type="text" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
+                </div>
+
+                <div>
+                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        رابط المحاضرة (درايف / يوتيوب)
+                    </label>
+                    <input name="url" required type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
+                </div>
+
+                <div>
+                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                        نوع الملف
+                    </label>
+                    <select name="type" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}>
+                        <option value="video">فيديو</option>
+                        <option value="pdf">ملف PDF</option>
+                    </select>
+                </div>
+
+                <button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
+                    حفظ المحاضرة
+                </button>
+            </form>
+        </div>
+    </div>
 )}
                 </div>
             );
