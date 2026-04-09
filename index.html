@@ -177,27 +177,27 @@ const [searchQuery, setSearchQuery] = React.useState('');
           
             React.useEffect(() => { lucide.createIcons(); });
 
-           const handleLogin = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
-  const user = formData.get('username');
-  const pass = formData.get('password');
+           const handleLogin = (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const user = formData.get('username');
+    const pass = formData.get('password');
 
-  if (loginType === 'admin') {
-    // منطق دخول الأدمن
-    if (user === "admin" && pass === "123456") { // حط بيانات الأدمن بتاعتك هنا
-      setIsAdmin(true); // نرفع صلاحية الأدمن
-      setView('admin_dashboard'); // نفتح صفحة الأدمن طوالي
-      setToast({ show: true, message: lang === 'ar' ? "مرحباً بك أيها المسؤول" : "Welcome Admin" });
+    if (loginType === 'admin') {
+        // بيانات الأدمن (غيرها حسب رغبتك)
+        if (user === "admin" && pass === "123456") {
+            setIsAdmin(true);
+            setView('admin_dashboard'); // دي اللي بتفتح لوحة التحكم فوراً
+            setToast({ show: true, message: "تم الدخول بنجاح يا مدير" });
+        } else {
+            alert("اسم الأدمن أو الباسورد غلط يا هندسة");
+        }
     } else {
-      alert("بيانات الأدمن غير صحيحة");
+        // دخول الطالب
+        setView('user_dashboard'); // بيفتح صفحة المواد للطلاب
+        setToast({ show: true, message: "مرحباً بك في منصة GESS" });
     }
-  } else {
-   
-    setIsAdmin(false);
-    setView('user_dashboard'); 
-    setToast({ show: true, message: lang === 'ar' ? "مرحباً بك يا بطل" : "Welcome Student" });
-  }
+};
 
   // إخفاء التوست
   setTimeout(() => setToast({ show: false, message: '' }), 3000);
