@@ -195,29 +195,20 @@ const [searchQuery, setSearchQuery] = React.useState('');
            const handleLogin = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const enteredUser = formData.get('username');
-    const enteredPass = formData.get('password');
+    const enteredPass = String(formData.get('password')).trim(); // تحويل لنص ومسح المسافات
+    const adminPassStr = String(adminPass).trim(); // تحويل باسوورد الأدمن لنص
 
     if (loginType === 'admin') {
-   const savedAdminPass = localStorage.getItem('gess_admin_pass');
-
-if (enteredUser === 'admin' && enteredPass === savedAdminPass) {
-        setIsAdmin(true);
-        setView('admin_dashboard'); // التوجيه لصفحة الإدارة فوراً
-            setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير" : "Welcome Admin" });
+        // المقارنة بعد التأكد إنهم نصوص
+        if (enteredPass === adminPassStr) {
+            setIsAdmin(true);
+            setView('admin_dashboard');
         } else {
-            alert(lang === 'ar' ? "خطأ في بيانات الأدمن" : "Admin credentials error");
+            alert("خطأ: الباسوورد المبرمج هو " + adminPassStr + " وأنت كتبت " + enteredPass);
         }
-    } else {
-        // دخول الطالب (ممكن تربط باسوورد الطالب بنفس الطريقة لو حبيت)
-      const savedStudentPass = localStorage.getItem('gess_login_pass');
-        
-       if (enteredPass === savedStudentPass) {
-  setView('user_dashboard');
-} else {
-  alert("كلمة المرور غير صحيحة");
-}
     }
+};
+
 
   // إخفاء التوست
   setTimeout(() => setToast({ show: false, message: '' }), 3000);
