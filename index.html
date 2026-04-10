@@ -251,19 +251,28 @@ React.useEffect(() => {
 }, [path, view]);
             
 
-            const checkAdminAuth = (e) => {
-                e.preventDefault();
-               const savedAdminPass = localStorage.getItem('gess_admin_pass');
-            if (adminPassInput === savedAdminPass) {
-                    setView('admin');
-                    setShowAdminAuth(false);
-                    setAdminPassInput("");
-                    setPath([]);
-                } else {
-                   setToast({ show: true, message: "🚫 خطأ: كلمة مرور الإدارة غير صحيحة" });
-                    setTimeout(() => setToast({ show: false, message: '' }), 3000);
-                }
-            };
+           const checkAdminAuth = (e) => {
+    e.preventDefault();
+    
+    // الباسوورد اللي إنت عايزه يكون ثابت
+    const hardcodedPass = "12345"; 
+    
+    // adminPassInput هو المتغير اللي شايل اللي اتكتب في الخانة
+    if (adminPassInput === hardcodedPass) {
+        setView('admin');
+        setShowAdminAuth(false);
+        setAdminPassInput("");
+        setPath([]);
+        // اختياري: حفظه في الجهاز عشان ما يطلبه كل مرة
+        localStorage.setItem('gess_admin_pass', hardcodedPass);
+    } else {
+        setToast({ 
+            show: true, 
+            message: lang === 'ar' ? "خطأ: كلمة مرور الإدارة غير صحيحة" : "Incorrect Admin Password" 
+        });
+        setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    }
+};
 
            const addMaterial = async (e) => {
   e.preventDefault();
