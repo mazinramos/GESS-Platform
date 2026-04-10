@@ -92,6 +92,9 @@
             const [user, setUser] = React.useState(null);
             const [isLoggedIn, setIsLoggedIn] = React.useState(localStorage.getItem("gess_is_logged_in") === "true");
             const [studentName, setStudentName] = React.useState(localStorage.getItem("gess_user_name") || "");
+// تعديل السطر 115 في ملفك
+const [adminPass, setAdminPass] = React.useState('12345'); 
+
             const [view, setView] = React.useState(localStorage.getItem("gess_is_logged_in") === "true" ? "student" : "login");
             const [showAdminAuth, setShowAdminAuth] = React.useState(false);
             const [adminPassInput, setAdminPassInput] = React.useState("");
