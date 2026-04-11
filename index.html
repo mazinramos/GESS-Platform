@@ -168,42 +168,50 @@ const [searchQuery, setSearchQuery] = React.useState('');
         icon: 'Settings' 
     }
 ];
-            // دالة الحذف
+           // دالة الحذف
 const handleDelete = async (collectionName, docId) => {
-    const isConfirmed = window.confirm("هل أنت متأكد من حذف هذا العنصر نهائياً؟");
-    if (isConfirmed) {
+    if (!docId) {
+        alert("خطأ: لم يتم العثور على معرف الدرس (ID). تأكد من تحديث دالة الجلب.");
+        return;
+    }
+
+    if (window.confirm("هل أنت متأكد من حذف هذا الدرس نهائياً؟")) {
         try {
-            const { doc, deleteDoc } = window.firebaseFirestore;
-            await deleteDoc(doc(window.db, collectionName, docId));
-            // ممكن تضيف رسالة نجاح هنا لو شغال بـ Toast
-            alert("تم الحذف بنجاح!");
+            // استخدام db المعرف عندك في الكود
+            await db.collection(collectionName).doc(docId).delete();
+            alert("تم الحذف بنجاح");
         } catch (error) {
-            console.error("خطأ في الحذف: ", error);
-            alert("حصل خطأ أثناء الحذف");
+            console.error("Error deleting document: ", error);
+            alert("فشل الحذف: " + error.message);
         }
     }
 };
 
-// دالة التعديل (باستخدام Prompt للسرعة والسهولة)
+// دالة التعديل
 const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
+    if (!docId) {
+        alert("خطأ في المعرف (ID)");
+        return;
+    }
+
     const newTitle = window.prompt("تعديل الاسم:", currentTitle);
     const newUrl = window.prompt("تعديل الرابط:", currentUrl);
 
-    // لو ضغط Cancel أو خلى الخانات فاضية، ما تعمل حاجة
     if (newTitle && newUrl) {
         try {
-            const { doc, updateDoc } = window.firebaseFirestore;
-            await updateDoc(doc(window.db, collectionName, docId), {
+            await db.collection(collectionName).doc(docId).update({
                 title: newTitle,
                 url: newUrl
             });
-            alert("تم التعديل بنجاح!");
+            alert("تم التعديل بنجاح");
         } catch (error) {
-            console.error("خطأ في التعديل: ", error);
-            alert("حصل خطأ أثناء التعديل");
+            console.error("Error updating document: ", error);
+            alert("فشل التعديل: " + error.message);
         }
     }
 };
+
+
 
 React.useEffect(() => {
     // دالة بتشتغل لما الطالبة تدوس زرار الرجوع في موبايلها
@@ -330,35 +338,49 @@ React.useEffect(() => {
     }
 };
 
-           const addMaterial = async (e) => {
+          const addMaterial = async (e) => {
   e.preventDefault();
 
   const form = e.target;
 
-  const subject = customSubject || form.subject.value;
+  // 1. تحديد اسم المادة (سواء من المودال أو الفورم العادي)
+  const subjectName = modalSubjectData ? modalSubjectData.subject : (customSubject || form.subject?.value || "عام");
 
+  // 2. قراءة الرابط والنوع (دول بس اللي بنحتاجهم من الأدمن)
+  const urlValue = form.url?.value;
+  const typeValue = form.type?.value || "pdf";
+
+  if (!urlValue) {
+    alert("يا هندسة، الرابط وين؟ لازم تضع الرابط أولاً");
+    return;
+  }
+
+  // 3. تجهيز البيانات (هنا بنحط اسم تلقائي للدرس عشان الفايربيز ما يزعل)
   const data = {
-    subject,
-    title: form.title.value,
-    url: form.url.value,
-    type: form.type.value,
-    yearId: form.yearId?.value || null,
-    semesterId: form.semesterId?.value || null,
-    category: adminAddMode,
+    subject: subjectName,
+    // حيسمي الدرس تلقائياً باسم المادة + " - محتوى جديد"
+    title: subjectName + " - محتوى جديد", 
+    url: urlValue,
+    type: typeValue,
+    yearId: modalSubjectData ? String(modalSubjectData.yearId) : (form.yearId?.value || null),
+    semesterId: modalSubjectData ? String(modalSubjectData.semesterId) : (form.semesterId?.value || null),
+    category: adminAddMode || 'academic',
     createdAt: new Date()
   };
 
   try {
+    // 4. الرفع المباشر
     await db.collection("materials").add(data); 
 
-    alert("✅ تم رفع المحتوى");
+    alert("✅ تم الرفع بنجاح بدون الحاجة لاسم الدرس");
 
+    // تنظيف الفورم وقفل المودال
     form.reset();
-    setCustomSubject("");
+    if(typeof setIsModalOpen === 'function') setIsModalOpen(false);
 
   } catch (error) {
-    console.error(error);
-    alert(error.message);
+    console.error("Firebase Error:", error);
+    alert("فشل الرفع: " + error.message);
   }
 };
 
@@ -1017,10 +1039,20 @@ React.useEffect(() => {
 )}
 {/* النافذة المنبثقة لإضافة المحاضرات */}
 {isModalOpen && modalSubjectData && (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-        <div className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}>
+    /* السطر اللي تحت ده هو اللي بيقفل المودال لما تضغط في الفراغ */
+    <div 
+        onClick={(e) => {
+            if (e.target === e.currentTarget) setIsModalOpen(false);
+        }}
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+    >
+        {/* المربع الأبيض (محتوى المودال) - أضفنا stopPropagation عشان ما يقفلش لما تضغط جواه */}
+        <div 
+            onClick={(e) => e.stopPropagation()} 
+            className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
+        >
             
-            {/* زر الإغلاق */}
+            {/* زر الإغلاق (الـ X) */}
             <button 
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
@@ -1028,6 +1060,7 @@ React.useEffect(() => {
                 <i data-lucide="x" className="w-6 h-6"></i>
             </button>
 
+            {/* باقي كود الفورم وعرض الدروس اللي إنت كاتبه يكمل هنا عادي... */}
             <div className="mb-6">
                 <h2 className="text-2xl font-black text-orange-500 mb-1">
                     {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
@@ -1129,8 +1162,7 @@ React.useEffect(() => {
                     </div>
                     
                     <div className="flex gap-2">
-                        {/* زر التعديل */}
-                        <button 
+                              <button 
                             onClick={() => handleEdit("materials", lecture.id, lecture.title, lecture.url)}
                             className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
                             title="تعديل"
