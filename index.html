@@ -621,7 +621,7 @@ React.useEffect(() => {
   />
 
 </div>
-                                        <input name="title" required placeholder={lang === 'ar' ? "عنوان الدرس" : "Lesson Title"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                       
                                         <input name="url" required placeholder={lang === 'ar' ? "الرابط المباشر" : "Direct Link"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         {adminAddMode === 'academic' && (<>
                                         <select name="yearId" onChange={(e) => setSelectedYear(e.target.value)}>
