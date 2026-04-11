@@ -168,6 +168,42 @@ const [searchQuery, setSearchQuery] = React.useState('');
         icon: 'Settings' 
     }
 ];
+            // دالة الحذف
+const handleDelete = async (collectionName, docId) => {
+    const isConfirmed = window.confirm("هل أنت متأكد من حذف هذا العنصر نهائياً؟");
+    if (isConfirmed) {
+        try {
+            const { doc, deleteDoc } = window.firebaseFirestore;
+            await deleteDoc(doc(window.db, collectionName, docId));
+            // ممكن تضيف رسالة نجاح هنا لو شغال بـ Toast
+            alert("تم الحذف بنجاح!");
+        } catch (error) {
+            console.error("خطأ في الحذف: ", error);
+            alert("حصل خطأ أثناء الحذف");
+        }
+    }
+};
+
+// دالة التعديل (باستخدام Prompt للسرعة والسهولة)
+const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
+    const newTitle = window.prompt("تعديل الاسم:", currentTitle);
+    const newUrl = window.prompt("تعديل الرابط:", currentUrl);
+
+    // لو ضغط Cancel أو خلى الخانات فاضية، ما تعمل حاجة
+    if (newTitle && newUrl) {
+        try {
+            const { doc, updateDoc } = window.firebaseFirestore;
+            await updateDoc(doc(window.db, collectionName, docId), {
+                title: newTitle,
+                url: newUrl
+            });
+            alert("تم التعديل بنجاح!");
+        } catch (error) {
+            console.error("خطأ في التعديل: ", error);
+            alert("حصل خطأ أثناء التعديل");
+        }
+    }
+};
 
   React.useEffect(() => {
     const handleBackButton = (e) => {
@@ -1049,7 +1085,73 @@ React.useEffect(() => {
                 <button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
                     حفظ المحاضرة
                 </button>
+
             </form>
+            {/* بداية كود عرض الدروس والحذف والتعديل */}
+<div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
+    <h3 className={`text-lg font-black mb-4 ${darkMode ? 'text-orange-400' : 'text-gray-700'}`}>
+        {lang === 'ar' ? "الدروس المضافة حالياً:" : "Current Lectures:"}
+    </h3>
+    
+    <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+        {contents
+            .filter(c => 
+                c.subject === modalSubjectData.subject && 
+                String(c.yearId) === String(modalSubjectData.yearId) && 
+                String(c.semesterId) === String(modalSubjectData.semesterId)
+            )
+            .sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
+            .map((lecture, index) => (
+                <div key={lecture.id || index} className={`p-4 rounded-2xl flex justify-between items-center border transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100 hover:bg-white hover:shadow-md'}`}>
+                    <div className="flex flex-col">
+                        <span className={`font-bold text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>{lecture.title}</span>
+                        <span className="text-[10px] text-orange-500 font-bold uppercase">{lecture.type}</span>
+                    </div>
+                    
+                    <div className="flex gap-2">
+                        {/* زر التعديل */}
+                        <button 
+                            onClick={() => handleEdit("materials", lecture.id, lecture.title, lecture.url)}
+                            className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
+                            title="تعديل"
+                        >
+                            <i data-lucide="edit-3" className="w-4 h-4"></i>
+                            <span className="text-[10px] ml-1">تعديل</span>
+                        </button>
+                        
+                        {/* زر الحذف */}
+                        <button 
+                            onClick={() => handleDelete("materials", lecture.id)}
+                            className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors"
+                            title="حذف"
+                        >
+                            <i data-lucide="trash-2" className="w-4 h-4"></i>
+                            <span className="text-[10px] ml-1">حذف</span>
+                        </button>
+
+                        {/* زر المعاينة */}
+                        <a 
+                            href={lecture.url} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="p-2 bg-gray-200 text-gray-600 rounded-xl hover:bg-gray-300 transition-colors"
+                        >
+                            <i data-lucide="external-link" className="w-4 h-4"></i>
+                        </a>
+                    </div>
+                </div>
+            ))
+        }
+
+        {/* رسالة في حال لا توجد دروس */}
+        {contents.filter(c => c.subject === modalSubjectData.subject).length === 0 && (
+            <p className="text-center py-4 text-gray-400 text-sm italic">
+                {lang === 'ar' ? "لا توجد دروس مضافة لهذه المادة بعد" : "No lectures added for this subject yet"}
+            </p>
+        )}
+    </div>
+</div>
+{/* نهاية الكود */}
         </div>
     </div>
 )}
