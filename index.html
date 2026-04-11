@@ -205,6 +205,26 @@ const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
     }
 };
 
+React.useEffect(() => {
+    // دالة بتشتغل لما الطالبة تدوس زرار الرجوع في موبايلها
+    const handleBack = (event) => {
+        if (selectedItem) {
+            setSelectedItem(null); // لو فاتحة فيديو أو PDF تقفله
+            window.history.pushState(null, null, window.location.pathname);
+        } else if (path.length > 0) {
+            setPath(prev => prev.slice(0, -1)); // لو داخلة مادة ترجع للسيمستر
+            window.history.pushState(null, null, window.location.pathname);
+        }
+    };
+
+    window.addEventListener('popstate', handleBack);
+    
+    // سطر مهم عشان "نخدع" المتصفح ونخليه يفتكر إن في صفحة قديمة
+    window.history.pushState(null, null, window.location.pathname);
+
+    return () => window.removeEventListener('popstate', handleBack);
+}, [path, selectedItem]);
+
   React.useEffect(() => {
     const handleBackButton = (e) => {
       if (view !== 'login') {
