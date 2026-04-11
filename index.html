@@ -35,14 +35,18 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
+ const firebaseConfig = {
     apiKey: "AIzaSy...",
     authDomain: "gess-platform.firebaseapp.com",
     projectId: "gess-platform",
     storageBucket: "gess-platform.firebasestorage.app",
     messagingSenderId: "794482265366",
-    appId: "1:794482265366:web:0108b0cae375d8efd3d437"
+    appId: "1:794482265366:web:0108b0cae375d8efd3d437",
+    measurementId: "G-JGMGBK6CVW"
   };
+  import { getAnalytics } from "firebase/analytics";
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
