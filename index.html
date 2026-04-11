@@ -922,7 +922,7 @@ React.useEffect(() => {
                                 {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
-    <button onClick={() => {setView('videos');setPath([...path, { type: 'contentType' }]);}} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
+    <button onClick={() => {setView('videos');setPath([...path, { type: 'contentType' }]); firebase.analytics().logEvent('select_category', { category: 'videos' });}} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
       <i data-lucide="video" className="w-10 h-10 mb-2 text-blue-600"></i>
       <span className="font-bold">{lang === 'ar' ? "فيديوهات" : "Videos"}</span>
     </button>
@@ -930,6 +930,7 @@ React.useEffect(() => {
     <button onClick={() => {
   setView('pdfs');
   setPath([...path, { type: 'contentType' }]);
+  firebase.analytics().logEvent('select_category', { category: 'pdfs' });
 }} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
       <i data-lucide="file-text" className="w-10 h-10 mb-2 text-red-600"></i>
       <span className="font-bold">{lang === 'ar' ? "ملفات PDF" : "PDF Files"}</span>
@@ -938,6 +939,7 @@ React.useEffect(() => {
     <button onClick={() => {
   setView('exams');
   setPath([...path, { type: 'contentType' }]);
+  firebase.analytics().logEvent('select_category', { category: 'exams' });
 }} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
       <i data-lucide="clipboard-list" className="w-10 h-10 mb-2 text-green-600"></i>
       <span className="font-bold">{lang === 'ar' ? "امتحانات" : "Exams"}</span>
@@ -946,6 +948,7 @@ React.useEffect(() => {
     <button onClick={() => {
   setView('refs');
   setPath([...path, { type: 'contentType' }]);
+  firebase.analytics().logEvent('select_category', { category: 'references' });
 }} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
       <i data-lucide="external-link" className="w-10 h-10 mb-2 text-purple-600"></i>
       <span className="font-bold">{lang === 'ar' ? "المراجع" : "References"}</span>
@@ -972,10 +975,22 @@ React.useEffect(() => {
       .map(item => (
 
         <button
-          key={item.id}
-          onClick={() => setSelectedItem(item)}
-          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all text-right"
-        >
+  key={item.id}
+  onClick={() => {
+    // 1. الوظيفة القديمة (فتح تفاصيل الدرس)
+    setSelectedItem(item);
+
+    // 2. الوظيفة الجديدة (تبليغ جوجل أن الطالب فتح هذا الدرس)
+    if (typeof firebase !== 'undefined') {
+      firebase.analytics().logEvent('view_lecture', {
+        lecture_title: item.title,
+        subject: item.subject,
+        type: item.type
+      });
+    }
+  }}
+  className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+>
           <div className="flex items-center gap-4">
             <div className={`p-4 rounded-xl ${
               item.type === 'video'
