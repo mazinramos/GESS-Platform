@@ -49,13 +49,9 @@
   // الطريقة الصحيحة لنظامك الحالي:
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
-  const analytics = firebase.analytics();
-
-// كود إضافي عشان نحدد الموبايل بوضوح
-analytics.setUserProperties({
-  device_type: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) ? 'Mobile' : 'Desktop',
-  browser_language: navigator.language
-});
+  const analytics = firebase.analytics(); // تشغيل التحليلات بدون استيراد معقد
+  // إضافة اختيارية للتأكد من الإرسال الفوري
+firebase.analytics().setUserProperties({ debug_mode: true });
 </script>
 
     <script type="text/babel">
