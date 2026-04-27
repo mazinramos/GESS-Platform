@@ -1,11 +1,11 @@
 
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google-site-verification" content="IH_dYUXH_BQW7TR7uUDlCoLQvJy0kQdNy503aXl8W8w" />
-    <meta name="description" content="منصة GESS EDU توفر محاضرات PDF، . طلاب جامعه الخرطوم . جامعة الخرطوم, هندسة جامعة الخرطوم ,gess ,هندسة المساحة . طلاب هندسة المساحة جامعة الخرطوم . فيديوهات،, Gess Edu, gess sudan ,Gess edu, امتحانات ومراجع لطلاب الهندسة لجميع السمسترات.">
+    <meta name="description" content="المنصة الأكاديمية الرسمية لجمعية طلاب قسم هندسة المساحة جامعة الخرطوم GESS">
     <link rel="icon" type="image/png" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
     <link rel="apple-touch-icon" href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s" />
     <meta name="mobile-web-app-capable" content="yes">
@@ -60,8 +60,7 @@ firebase.analytics().setUserProperties({ debug_mode: true });
             ChevronLeft, GraduationCap, FolderOpen, User, Lock, Settings, 
             LayoutDashboard, X, ShieldCheck, Search, Bell, Menu 
         } = lucide;
-
-        const t = {
+const t = {
     ar: {
         title: "منصة GESS EDU",
         subtitle: "هندسة المساحة - جامعة الخرطوم",
@@ -74,7 +73,13 @@ firebase.analytics().setUserProperties({ debug_mode: true });
         pdf: "ملفات PDF",
         video: "فيديوهات",
         exam: "امتحانات",
-        ref: "المراجع"
+        ref: "المراجع",
+        // إضافة ترجمة السنين هنا
+        y1: "السنة الأولى",
+        y2: "السنة الثانية",
+        y3: "السنة الثالثة",
+        y4: "السنة الرابعة",
+        y5: "السنة الخامسة"
     },
     en: {
         title: "GESS EDU PLATFORM",
@@ -88,7 +93,13 @@ firebase.analytics().setUserProperties({ debug_mode: true });
         pdf: "PDF Files",
         video: "Videos",
         exam: "Exams",
-        ref: "References"
+        ref: "References",
+        // هنا التعديل اللي إنت عايزه بالظبط
+        y1: "First Year",
+        y2: "Second Year",
+        y3: "Third Year",
+        y4: "Fourth Year",
+        y5: "Fifth Year"
     }
 };
 
@@ -113,7 +124,7 @@ const [adminPass, setAdminPass] = React.useState('12345');
             const [loginType, setLoginType] = React.useState('student'); 
             const [viewType, setViewType] = React.useState(null);
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
-            const [lang, setLang] = React.useState('ar'); 
+            const [lang, setLang] = React.useState('en');
             const [isModalOpen, setIsModalOpen] = React.useState(false);
 const [modalSubjectData, setModalSubjectData] = React.useState(null); 
 const [customSubject, setCustomSubject] = React.useState('');
@@ -139,12 +150,22 @@ const [searchQuery, setSearchQuery] = React.useState('');
 
             React.useEffect(() => {
   const unsubscribe = db.collection("materials")
-    .orderBy("createdAt", "desc")
+   
     .onSnapshot(snapshot => {
-      const data = snapshot.docs.map(doc => ({
+      let data = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
+
+     
+      data.sort((a, b) => {
+   
+        const subjectSort = (a.subject || "").localeCompare((b.subject || ""), undefined, { numeric: true });
+        if (subjectSort !== 0) return subjectSort;
+
+        return (a.title || "").localeCompare((b.title || ""), undefined, { numeric: true });
+      });
+
       setContents(data);
     });
 
@@ -160,7 +181,10 @@ const [searchQuery, setSearchQuery] = React.useState('');
       localStorage.setItem("gess_theme", "light");
     }
   }, [darkMode]);  
-           const years = [1, 2, 3, 4, 5].map(y => ({ id: y, title: lang === 'ar' ? `السنة ${y === 1 ? 'الأولى' : y === 2 ? 'الثانية' : y === 3 ? 'الثالثة' : y === 4 ? 'الرابعة' : 'الخامسة'}` : `Year ${y}` }));
+          const years = [1, 2, 3, 4, 5].map(y => ({ 
+    id: y, 
+    title: t[lang][`y${y}`]
+}));
             const semesters = [{ id: 1, title: lang === 'ar' ? 'السمستر الأول' : 'First Semester' },{ id: 2, title: lang === 'ar' ? 'السمستر الثاني' : 'Second Semester' }]; 
             const extraCourses = [
     { 
@@ -183,7 +207,7 @@ const handleDelete = async (collectionName, docId) => {
 
     if (window.confirm("هل أنت متأكد من حذف هذا الدرس نهائياً؟")) {
         try {
-            // استخدام db المعرف عندك في الكود
+           
             await db.collection(collectionName).doc(docId).delete();
             alert("تم الحذف بنجاح");
         } catch (error) {
@@ -220,20 +244,20 @@ const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
 
 
 React.useEffect(() => {
-    // دالة بتشتغل لما الطالبة تدوس زرار الرجوع في موبايلها
+  
     const handleBack = (event) => {
         if (selectedItem) {
-            setSelectedItem(null); // لو فاتحة فيديو أو PDF تقفله
+            setSelectedItem(null); 
             window.history.pushState(null, null, window.location.pathname);
         } else if (path.length > 0) {
-            setPath(prev => prev.slice(0, -1)); // لو داخلة مادة ترجع للسيمستر
+            setPath(prev => prev.slice(0, -1));
             window.history.pushState(null, null, window.location.pathname);
         }
     };
 
     window.addEventListener('popstate', handleBack);
     
-    // سطر مهم عشان "نخدع" المتصفح ونخليه يفتكر إن في صفحة قديمة
+   
     window.history.pushState(null, null, window.location.pathname);
 
     return () => window.removeEventListener('popstate', handleBack);
@@ -273,13 +297,13 @@ React.useEffect(() => {
 
 if (enteredUser === 'admin' && enteredPass === savedAdminPass) {
         setIsAdmin(true);
-        setView('admin_dashboard'); // التوجيه لصفحة الإدارة فوراً
+        setView('admin_dashboard'); 
             setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير" : "Welcome Admin" });
         } else {
             alert(lang === 'ar' ? "خطأ في بيانات الأدمن" : "Admin credentials error");
         }
     } else {
-        // دخول الطالب (ممكن تربط باسوورد الطالب بنفس الطريقة لو حبيت)
+      
       const savedStudentPass = localStorage.getItem('gess_login_pass');
         
        if (enteredPass === savedStudentPass) {
@@ -324,16 +348,16 @@ React.useEffect(() => {
            const checkAdminAuth = (e) => {
     e.preventDefault();
     
-    // الباسوورد اللي إنت عايزه يكون ثابت
+   
     const hardcodedPass = "12345"; 
     
-    // adminPassInput هو المتغير اللي شايل اللي اتكتب في الخانة
+  
     if (adminPassInput === hardcodedPass) {
         setView('admin');
         setShowAdminAuth(false);
         setAdminPassInput("");
         setPath([]);
-        // اختياري: حفظه في الجهاز عشان ما يطلبه كل مرة
+     
         localStorage.setItem('gess_admin_pass', hardcodedPass);
     } else {
         setToast({ 
@@ -349,10 +373,10 @@ React.useEffect(() => {
 
   const form = e.target;
 
-  // 1. تحديد اسم المادة (سواء من المودال أو الفورم العادي)
+
   const subjectName = modalSubjectData ? modalSubjectData.subject : (customSubject || form.subject?.value || "عام");
 
-  // 2. قراءة الرابط والنوع (دول بس اللي بنحتاجهم من الأدمن)
+ 
   const urlValue = form.url?.value;
   const typeValue = form.type?.value || "pdf";
 
@@ -361,10 +385,10 @@ React.useEffect(() => {
     return;
   }
 
-  // 3. تجهيز البيانات (هنا بنحط اسم تلقائي للدرس عشان الفايربيز ما يزعل)
+ 
   const data = {
     subject: subjectName,
-    // حيسمي الدرس تلقائياً باسم المادة + " - محتوى جديد"
+   
     title: subjectName + " - محتوى جديد", 
     url: urlValue,
     type: typeValue,
@@ -375,12 +399,12 @@ React.useEffect(() => {
   };
 
   try {
-    // 4. الرفع المباشر
+   
     await db.collection("materials").add(data); 
 
     alert("✅ تم الرفع بنجاح بدون الحاجة لاسم الدرس");
 
-    // تنظيف الفورم وقفل المودال
+  
     form.reset();
     if(typeof setIsModalOpen === 'function') setIsModalOpen(false);
 
@@ -406,7 +430,7 @@ React.useEffect(() => {
                         </div>
                         <form onSubmit={handleLogin} className="space-y-5">
                          
-                            {/* أزرار التبديل - تأكد إنها موجودة فوق الفورم */}
+                       
 <div className={`flex p-1 rounded-2xl mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
   <button 
     type="button"
@@ -424,7 +448,7 @@ React.useEffect(() => {
   </button>
 </div>
 
-{/* حقول الإدخال المتغيرة */}
+
 <div className="space-y-4">
   <div>
     <label className="block text-sm font-bold mb-2 opacity-70">
@@ -435,7 +459,7 @@ React.useEffect(() => {
     </label>
     <input 
       type="text" 
-      name="username" // نستخدم اسم موحد عشان يسهل علينا في الدالة
+      name="username" 
       className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
       required 
     />
@@ -631,26 +655,26 @@ React.useEffect(() => {
             </p>
         </div>
 
-        {/* خانة البحث السريع بالاسم */}
+    
         <div className="relative">
             <i data-lucide="search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
             <input 
                 type="text"
                 placeholder={lang === 'ar' ? "بحث عن مادة..." : "Search subject..."}
-                onChange={(e) => setSearchQuery(e.target.value)} // لازم تعرف setSearchQuery في الـ State فوق
+                onChange={(e) => setSearchQuery(e.target.value)} 
                 className={`ps-10 p-3 rounded-xl border-2 outline-none transition-all text-sm w-full md:w-64 ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-500'}`}
             />
         </div>
     </div>
 
-    {/* شبكة الكروت بعد الفلترة الذكية */}
+ 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contents && contents
             .filter(c => 
                 c.category === 'academic' && 
                 String(c.yearId) === String(selectedYear) && 
                 String(c.semesterId) === String(selectedSemester) &&
-                (c.subject.toLowerCase().includes(searchQuery.toLowerCase())) // فلتر البحث
+                (c.subject.toLowerCase().includes(searchQuery.toLowerCase())) 
             )
             .reduce((acc, current) => {
                 const x = acc.find(item => item.subject === current.subject);
@@ -681,7 +705,7 @@ React.useEffect(() => {
         }
     </div>
 
-    {/* رسالة في حال مفيش مواد مطابقة للفلتر */}
+   
     {(!contents || contents.filter(c => c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester)).length === 0) && (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
             <p className="text-gray-400 font-bold">
@@ -906,7 +930,9 @@ React.useEffect(() => {
           c.semesterId == path[1].id
         )
         .map(c => c.subject)
-    )].map(subject => (
+    )]
+   
+    .map(subject => (
 
       <button
         key={subject}
@@ -980,10 +1006,7 @@ React.useEffect(() => {
         <button
   key={item.id}
   onClick={() => {
-    // 1. الوظيفة القديمة (فتح تفاصيل الدرس)
     setSelectedItem(item);
-
-    // 2. الوظيفة الجديدة (تبليغ جوجل أن الطالب فتح هذا الدرس)
     if (typeof firebase !== 'undefined') {
       firebase.analytics().logEvent('view_lecture', {
         lecture_title: item.title,
@@ -1058,22 +1081,21 @@ React.useEffect(() => {
     </div>
   </div>
 )}
-{/* النافذة المنبثقة لإضافة المحاضرات */}
+
 {isModalOpen && modalSubjectData && (
-    /* السطر اللي تحت ده هو اللي بيقفل المودال لما تضغط في الفراغ */
+
     <div 
         onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
         }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
-        {/* المربع الأبيض (محتوى المودال) - أضفنا stopPropagation عشان ما يقفلش لما تضغط جواه */}
         <div 
             onClick={(e) => e.stopPropagation()} 
             className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
         >
             
-            {/* زر الإغلاق (الـ X) */}
+        
             <button 
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
@@ -1081,7 +1103,7 @@ React.useEffect(() => {
                 <i data-lucide="x" className="w-6 h-6"></i>
             </button>
 
-            {/* باقي كود الفورم وعرض الدروس اللي إنت كاتبه يكمل هنا عادي... */}
+      
             <div className="mb-6">
                 <h2 className="text-2xl font-black text-orange-500 mb-1">
                     {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
@@ -1094,23 +1116,20 @@ React.useEffect(() => {
           <form onSubmit={async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    
-    // تجهيز البيانات
+
     const newLecture = {
         title: formData.get('title'),
         url: formData.get('url'),
-        type: formData.get('type'), // فيديو، pdf، exam، reference
+        type: formData.get('type'), 
         category: 'academic',
         subject: modalSubjectData.subject,
         yearId: String(modalSubjectData.yearId),
         semesterId: String(modalSubjectData.semesterId),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp() // توقيت عالمي
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
     try {
-        // استخدام db المعرف عندك في السكريبت الأول
-        // تأكد أن اسم الكولكشن 'materials' مطابق للـ useEffect في سطر 116
-        await db.collection("materials").add(newLecture);
+          await db.collection("materials").add(newLecture);
 
         setToast({ 
             show: true, 
@@ -1161,7 +1180,7 @@ React.useEffect(() => {
                 </button>
 
             </form>
-            {/* بداية كود عرض الدروس والحذف والتعديل */}
+      
 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
     <h3 className={`text-lg font-black mb-4 ${darkMode ? 'text-orange-400' : 'text-gray-700'}`}>
         {lang === 'ar' ? "الدروس المضافة حالياً:" : "Current Lectures:"}
@@ -1216,7 +1235,7 @@ React.useEffect(() => {
             ))
         }
 
-        {/* رسالة في حال لا توجد دروس */}
+     
         {contents.filter(c => c.subject === modalSubjectData.subject).length === 0 && (
             <p className="text-center py-4 text-gray-400 text-sm italic">
                 {lang === 'ar' ? "لا توجد دروس مضافة لهذه المادة بعد" : "No lectures added for this subject yet"}
@@ -1224,7 +1243,7 @@ React.useEffect(() => {
         )}
     </div>
 </div>
-{/* نهاية الكود */}
+
         </div>
     </div>
 )}
