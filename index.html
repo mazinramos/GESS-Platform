@@ -1081,21 +1081,22 @@ React.useEffect(() => {
     </div>
   </div>
 )}
-
+{/* النافذة المنبثقة لإضافة المحاضرات */}
 {isModalOpen && modalSubjectData && (
-
+    /* السطر اللي تحت ده هو اللي بيقفل المودال لما تضغط في الفراغ */
     <div 
         onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
         }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
+        {/* المربع الأبيض (محتوى المودال) - أضفنا stopPropagation عشان ما يقفلش لما تضغط جواه */}
         <div 
             onClick={(e) => e.stopPropagation()} 
             className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
         >
             
-        
+            {/* زر الإغلاق (الـ X) */}
             <button 
                 onClick={() => setIsModalOpen(false)}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
@@ -1103,7 +1104,7 @@ React.useEffect(() => {
                 <i data-lucide="x" className="w-6 h-6"></i>
             </button>
 
-      
+            {/* باقي كود الفورم وعرض الدروس اللي إنت كاتبه يكمل هنا عادي... */}
             <div className="mb-6">
                 <h2 className="text-2xl font-black text-orange-500 mb-1">
                     {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
@@ -1116,20 +1117,23 @@ React.useEffect(() => {
           <form onSubmit={async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-
+    
+    // تجهيز البيانات
     const newLecture = {
         title: formData.get('title'),
         url: formData.get('url'),
-        type: formData.get('type'), 
+        type: formData.get('type'), // فيديو، pdf، exam، reference
         category: 'academic',
         subject: modalSubjectData.subject,
         yearId: String(modalSubjectData.yearId),
         semesterId: String(modalSubjectData.semesterId),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp() // توقيت عالمي
     };
 
     try {
-          await db.collection("materials").add(newLecture);
+        // استخدام db المعرف عندك في السكريبت الأول
+        // تأكد أن اسم الكولكشن 'materials' مطابق للـ useEffect في سطر 116
+        await db.collection("materials").add(newLecture);
 
         setToast({ 
             show: true, 
@@ -1180,7 +1184,7 @@ React.useEffect(() => {
                 </button>
 
             </form>
-      
+            {/* بداية كود عرض الدروس والحذف والتعديل */}
 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
     <h3 className={`text-lg font-black mb-4 ${darkMode ? 'text-orange-400' : 'text-gray-700'}`}>
         {lang === 'ar' ? "الدروس المضافة حالياً:" : "Current Lectures:"}
@@ -1235,7 +1239,7 @@ React.useEffect(() => {
             ))
         }
 
-     
+        {/* رسالة في حال لا توجد دروس */}
         {contents.filter(c => c.subject === modalSubjectData.subject).length === 0 && (
             <p className="text-center py-4 text-gray-400 text-sm italic">
                 {lang === 'ar' ? "لا توجد دروس مضافة لهذه المادة بعد" : "No lectures added for this subject yet"}
@@ -1243,7 +1247,7 @@ React.useEffect(() => {
         )}
     </div>
 </div>
-
+{/* نهاية الكود */}
         </div>
     </div>
 )}
