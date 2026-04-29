@@ -1013,6 +1013,16 @@ React.useEffect(() => {
       <span className="font-bold">Labs</span>
     </button>
 
+{/* 🔥 Sheets */}
+<button onClick={() => {
+  setView('sheets');
+  setPath([...path, { type: 'contentType' }]);
+  firebase.analytics().logEvent('select_category', { category: 'sheets' });
+}} className="p-6 rounded-xl bg-green-100 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-200">
+  <i data-lucide="table" className="w-10 h-10 mb-2 text-green-700"></i>
+  <span className="font-bold">Sheets</span>
+</button>
+
   </div>
 )}
 
