@@ -948,10 +948,11 @@ React.useEffect(() => {
   </div>
 )}
 
+
                               {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
+                                
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
-    {/* 🎨 STYLE مشترك */}
     {[
       { key: 'videos', icon: 'video', labelAr: 'فيديوهات', labelEn: 'Videos' },
       { key: 'pdfs', icon: 'file-text', labelAr: 'ملفات PDF', labelEn: 'PDF Files' },
@@ -962,25 +963,31 @@ React.useEffect(() => {
       { key: 'labs', icon: 'flask-conical', labelAr: 'معامل', labelEn: 'Labs' },
       { key: 'sheets', icon: 'table', labelAr: 'شيتات', labelEn: 'Sheets' },
     ].map(item => (
-      
-      <button
-        key={item.key}
-        onClick={() => {
-          setView(item.key);
-          setPath([...path, { type: 'contentType' }]);
-          firebase.analytics().logEvent('select_category', { category: item.key });
-        }}
-        className="p-6 rounded-xl 
-        bg-gradient-to-br from-orange-400 to-yellow-300 
-        dark:from-orange-600 dark:to-yellow-500
-        flex flex-col items-center shadow-md border border-orange-200
-        hover:scale-105 transition duration-200"
-      >
-        <i data-lucide={item.icon} className="w-10 h-10 mb-2 text-white"></i>
-        <span className="font-bold text-white">
-          {lang === 'ar' ? item.labelAr : item.labelEn}
-        </span>
-      </button>
+
+      <div key={item.key} className="p-[2px] rounded-xl bg-gradient-to-r from-orange-500 to-yellow-400">
+        
+        <button
+          onClick={() => {
+            setView(item.key);
+            setPath([...path, { type: 'contentType' }]);
+            firebase.analytics().logEvent('select_category', { category: item.key });
+          }}
+          className="w-full h-full bg-white dark:bg-gray-900 rounded-xl p-6 flex flex-col items-center shadow-sm hover:shadow-md transition"
+        >
+          
+          {/* 🎨 أيقونة متدرجة */}
+         <i 
+  data-lucide={item.icon} 
+  className="w-10 h-10 mb-2 text-orange-500"
+></i>
+
+          <span className="font-bold text-gray-800 dark:text-white">
+            {lang === 'ar' ? item.labelAr : item.labelEn}
+          </span>
+
+        </button>
+
+      </div>
 
     ))}
 
