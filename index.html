@@ -948,7 +948,7 @@ React.useEffect(() => {
   </div>
 )}
 
-                                {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
+                               {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
     <button onClick={() => {setView('videos');setPath([...path, { type: 'contentType' }]); firebase.analytics().logEvent('select_category', { category: 'videos' });}} className="p-6 rounded-xl bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center shadow-sm border border-blue-100">
@@ -957,30 +957,60 @@ React.useEffect(() => {
     </button>
 
     <button onClick={() => {
-  setView('pdfs');
-  setPath([...path, { type: 'contentType' }]);
-  firebase.analytics().logEvent('select_category', { category: 'pdfs' });
-}} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
+      setView('pdfs');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'pdfs' });
+    }} className="p-6 rounded-xl bg-red-50 dark:bg-red-900/20 flex flex-col items-center shadow-sm border border-red-100">
       <i data-lucide="file-text" className="w-10 h-10 mb-2 text-red-600"></i>
       <span className="font-bold">{lang === 'ar' ? "ملفات PDF" : "PDF Files"}</span>
     </button>
 
     <button onClick={() => {
-  setView('exams');
-  setPath([...path, { type: 'contentType' }]);
-  firebase.analytics().logEvent('select_category', { category: 'exams' });
-}} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
+      setView('exams');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'exams' });
+    }} className="p-6 rounded-xl bg-green-50 dark:bg-green-900/20 flex flex-col items-center shadow-sm border border-green-100">
       <i data-lucide="clipboard-list" className="w-10 h-10 mb-2 text-green-600"></i>
       <span className="font-bold">{lang === 'ar' ? "امتحانات" : "Exams"}</span>
     </button>
 
     <button onClick={() => {
-  setView('refs');
-  setPath([...path, { type: 'contentType' }]);
-  firebase.analytics().logEvent('select_category', { category: 'references' });
-}} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
+      setView('refs');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'references' });
+    }} className="p-6 rounded-xl bg-purple-50 dark:bg-purple-900/20 flex flex-col items-center shadow-sm border border-purple-100">
       <i data-lucide="external-link" className="w-10 h-10 mb-2 text-purple-600"></i>
       <span className="font-bold">{lang === 'ar' ? "المراجع" : "References"}</span>
+    </button>
+
+    {/* 🔥 PowerPoint */}
+    <button onClick={() => {
+      setView('ppt');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'ppt' });
+    }} className="p-6 rounded-xl bg-orange-50 dark:bg-orange-900/20 flex flex-col items-center shadow-sm border border-orange-100">
+      <i data-lucide="presentation" className="w-10 h-10 mb-2 text-orange-600"></i>
+      <span className="font-bold">PowerPoint</span>
+    </button>
+
+    {/* 🔥 Voice */}
+    <button onClick={() => {
+      setView('voice');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'voice' });
+    }} className="p-6 rounded-xl bg-yellow-50 dark:bg-yellow-900/20 flex flex-col items-center shadow-sm border border-yellow-100">
+      <i data-lucide="mic" className="w-10 h-10 mb-2 text-yellow-600"></i>
+      <span className="font-bold">Voice</span>
+    </button>
+
+    {/* 🔥 Labs */}
+    <button onClick={() => {
+      setView('labs');
+      setPath([...path, { type: 'contentType' }]);
+      firebase.analytics().logEvent('select_category', { category: 'labs' });
+    }} className="p-6 rounded-xl bg-teal-50 dark:bg-teal-900/20 flex flex-col items-center shadow-sm border border-teal-100">
+      <i data-lucide="flask-conical" className="w-10 h-10 mb-2 text-teal-600"></i>
+      <span className="font-bold">Labs</span>
     </button>
 
   </div>
