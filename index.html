@@ -855,9 +855,11 @@ React.useEffect(() => {
                         ) : (
                             <div className={`animate-in transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {(path.length > 0 || selectedItem) && (
-                                    <button onClick={() => selectedItem ? setSelectedItem(null) : setPath(path.slice(0, -1))} className="mb-8 flex items-center gap-2 text-[#f58220] font-black bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-50">
-                                       <i data-lucide="chevron-left" className="rotate-180"></i>{lang === 'ar' ? "رجوع" : "Back"}
-                                    </button>
+                                   <button onClick={() => selectedItem ? setSelectedItem(null) : setPath(path.slice(0, -1))} 
+        className="mb-8 flex items-center gap-2 text-[#f58220] font-black bg-white dark:bg-slate-800 px-6 py-3 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 transition-colors">
+    <i data-lucide="chevron-left" className="rotate-180"></i>
+    {lang === 'ar' ? "رجوع" : "Back"}
+</button>
                                 )}
 
                                 {path.length === 0 && !selectedItem && (
