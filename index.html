@@ -70,17 +70,23 @@ const t = {
         logout: "تسجيل خروج",
         academic: "المحتوى الأكاديمي",
         special: "الكورسات الخاصة",
+
         pdf: "ملفات PDF",
         video: "فيديوهات",
         exam: "امتحانات",
         ref: "المراجع",
-        // إضافة ترجمة السنين هنا
+        ppt: "بوربوينت",
+        voice: "فويس",
+        labs: "معامل",
+        sheets: "شيتات",
+
         y1: "السنة الأولى",
         y2: "السنة الثانية",
         y3: "السنة الثالثة",
         y4: "السنة الرابعة",
         y5: "السنة الخامسة"
     },
+
     en: {
         title: "GESS EDU PLATFORM",
         subtitle: "Geomatics Engineering - U of K",
@@ -90,11 +96,16 @@ const t = {
         logout: "Logout",
         academic: "Academic Content",
         special: "Special Courses",
+
         pdf: "PDF Files",
         video: "Videos",
         exam: "Exams",
         ref: "References",
-        // هنا التعديل اللي إنت عايزه بالظبط
+        ppt: "PowerPoint",
+        voice: "Voice",
+        labs: "Labs",
+        sheets: "Sheets",
+
         y1: "First Year",
         y2: "Second Year",
         y3: "Third Year",
@@ -109,9 +120,7 @@ const t = {
             const [user, setUser] = React.useState(null);
             const [isLoggedIn, setIsLoggedIn] = React.useState(localStorage.getItem("gess_is_logged_in") === "true");
             const [studentName, setStudentName] = React.useState(localStorage.getItem("gess_user_name") || "");
-// تعديل السطر 115 في ملفك
-const [adminPass, setAdminPass] = React.useState('12345'); 
-
+            const [adminPass, setAdminPass] = React.useState('12345'); 
             const [view, setView] = React.useState(localStorage.getItem("gess_is_logged_in") === "true" ? "student" : "login");
             const [showAdminAuth, setShowAdminAuth] = React.useState(false);
             const [adminPassInput, setAdminPassInput] = React.useState("");
@@ -126,14 +135,21 @@ const [adminPass, setAdminPass] = React.useState('12345');
             const [currentIcon, setCurrentIcon] = React.useState("settings"); 
             const [lang, setLang] = React.useState('en');
             const [isModalOpen, setIsModalOpen] = React.useState(false);
-const [modalSubjectData, setModalSubjectData] = React.useState(null); 
-const [customSubject, setCustomSubject] = React.useState('');
-const [selectedYear, setSelectedYear] = React.useState('1');
-const [searchQuery, setSearchQuery] = React.useState('');
+            const [modalSubjectData, setModalSubjectData] = React.useState(null); 
+            const [customSubject, setCustomSubject] = React.useState('');
+            const [selectedYear, setSelectedYear] = React.useState('1');
+            const [searchQuery, setSearchQuery] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
             const [contents, setContents] = React.useState([]);
             const [newLoginPass, setNewLoginPass] = React.useState('');
             const [newAdminPass, setNewAdminPass] = React.useState('');
+            const currentSubject = path[2]?.title;
+            const subjectContents = contents.filter(
+            item => item.subject?.toLowerCase() === currentSubject?.toLowerCase()
+            );
+            const typesAvailable = [...new Set(subjectContents.map(item => item.type))];
+            const filteredContent = contents.filter(item => item.type === view);
+            
             
             
 
@@ -402,7 +418,7 @@ React.useEffect(() => {
    
     await db.collection("materials").add(data); 
 
-    alert("✅ تم الرفع بنجاح بدون الحاجة لاسم الدرس");
+    alert("✅ تم الرفع بنجاح - " + subjectName);
 
   
     form.reset();
@@ -952,19 +968,24 @@ React.useEffect(() => {
 
 
                               {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
-                                
+
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
     {[
-      { key: 'videos', icon: 'video', labelAr: 'فيديوهات', labelEn: 'Videos' },
-      { key: 'pdfs', icon: 'file-text', labelAr: 'ملفات PDF', labelEn: 'PDF Files' },
-      { key: 'exams', icon: 'clipboard-list', labelAr: 'امتحانات', labelEn: 'Exams' },
-      { key: 'refs', icon: 'external-link', labelAr: 'المراجع', labelEn: 'References' },
-      { key: 'ppt', icon: 'presentation', labelAr: 'بوربوينت', labelEn: 'PowerPoint' },
-      { key: 'voice', icon: 'mic', labelAr: 'فويس', labelEn: 'Voice' },
-      { key: 'labs', icon: 'flask-conical', labelAr: 'معامل', labelEn: 'Labs' },
-      { key: 'sheets', icon: 'table', labelAr: 'شيتات', labelEn: 'Sheets' },
-    ].map(item => (
+  { key: 'video', icon: 'video', label: 'video' },
+  { key: 'pdf', icon: 'file-text', label: 'pdf' },
+  { key: 'exam', icon: 'clipboard-list', label: 'exam' },
+  { key: 'reference', icon: 'external-link', label: 'ref' },
+  { key: 'ppt', icon: 'presentation', label: 'ppt' },
+  { key: 'voice', icon: 'mic', label: 'voice' },
+  { key: 'labs', icon: 'flask-conical', label: 'labs' },
+  { key: 'sheets', icon: 'table', label: 'sheets' },
+]
+    
+
+    .filter(item => typesAvailable.includes(item.key)) // 🔥 المهم جداً
+
+    .map(item => (
 
       <button
         key={item.key}
@@ -975,16 +996,15 @@ React.useEffect(() => {
         }}
         className="p-6 rounded-xl bg-white dark:bg-gray-900 flex flex-col items-center shadow-sm hover:shadow-md transition"
       >
-        
-        {/* 🎨 أيقونة متدرجة */}
-       <i 
+
+        <i 
   data-lucide={item.icon} 
   className="w-10 h-10 mb-2 text-orange-500"
   
 ></i>
 
         <span className="font-bold text-gray-800 dark:text-white">
-          {lang === 'ar' ? item.labelAr : item.labelEn}
+          {t[lang][item.label]}
         </span>
 
       </button>
@@ -997,57 +1017,55 @@ React.useEffect(() => {
                                 {path.length == 4 && !selectedItem && (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-    {contents
+  {contents
   .filter(c =>
-    String(c.yearId) == String(path[0].id) &&
-    String(c.semesterId) == String(path[1].id) &&
-    c.subject?.trim() == path[2].title?.trim() &&
-    (
-      (view == 'videos' && c.type == 'video') ||
-      (view == 'pdfs' && c.type == 'pdf') ||
-      (view == 'exams' && c.type == 'exam') ||
-      (view == 'refs' && c.type == 'reference')
-    )
+    String(c.yearId) === String(path[0].id) &&
+    String(c.semesterId) === String(path[1].id) &&
+    c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
+    c.type === view
   )
-      .map(item => (
+  .map(item => (
 
-        <button
-  key={item.id}
-  onClick={() => {
-    setSelectedItem(item);
-    if (typeof firebase !== 'undefined') {
-      firebase.analytics().logEvent('view_lecture', {
-        lecture_title: item.title,
-        subject: item.subject,
-        type: item.type
-      });
-    }
-  }}
-  className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
->
-          <div className="flex items-center gap-4">
-            <div className={`p-4 rounded-xl ${
-              item.type === 'video'
-                ? 'bg-red-50 text-red-500'
-                : 'bg-indigo-50 text-indigo-500'
-            }`}>
-              {item.type === 'video'
-                ? <i data-lucide="video"></i>
-                : <i data-lucide="file-text"></i>}
-            </div>
+    <button
+      key={item.id}
+      onClick={() => {
+        setSelectedItem(item);
+        if (typeof firebase !== 'undefined') {
+          firebase.analytics().logEvent('view_lecture', {
+            lecture_title: item.title,
+            subject: item.subject,
+            type: item.type
+          });
+        }
+      }}
+      className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+    >
+      <div className="flex items-center gap-4">
+        
+        <div className={`p-4 rounded-xl ${
+          item.type === 'video'
+            ? 'bg-red-50 text-red-500'
+            : 'bg-indigo-50 text-indigo-500'
+        }`}>
+          {item.type === 'video'
+            ? <i data-lucide="video"></i>
+            : <i data-lucide="file-text"></i>}
+        </div>
 
-            <div>
-              <h4 className="font-black text-lg">{item.title}</h4>
-              <p className="text-[10px] font-bold text-gray-400 uppercase">
-                {item.type}
-              </p>
-            </div>
-          </div>
+        <div>
+          <h4 className="font-black text-lg">{item.title}</h4>
+          <p className="text-[10px] font-bold text-gray-400 uppercase">
+            {item.type}
+          </p>
+        </div>
 
-          <i data-lucide="chevron-left" className="text-gray-300"></i>
-        </button>
+      </div>
 
-      ))}
+      <i data-lucide="chevron-left" className="text-gray-300"></i>
+
+    </button>
+
+))}
 
   </div>
 )}
@@ -1179,11 +1197,22 @@ React.useEffect(() => {
                     <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
                         نوع الملف
                     </label>
-                   <select name="type" className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}>
-    <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
-    <option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
-    <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
-    <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+                  <select 
+  name="type" 
+  className={`w-full p-4 rounded-2xl border-2 outline-none ${
+    darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'
+  }`}
+>
+  <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
+  <option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
+  <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
+  <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+
+  {/* 🔥 الجديد */}
+  <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
+  <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
+  <option value="labs">{lang === 'ar' ? "معمل" : "Labs"}</option>
+  <option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
 </select>
                 </div>
 
