@@ -1088,17 +1088,25 @@ React.useEffect(() => {
                                             <span className="text-xs font-black text-gray-500">{selectedItem.subject}</span>
                                             <button onClick={() => setSelectedItem(null)} className="p-2 bg-white rounded-full"><i data-lucide="x"></i></button>
                                         </div>
-                                       {selectedItem.type === 'video' ? (
-    /* 1. عرض الفيديو */
-    <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-lg">
+                                      {selectedItem.type === 'video' ? (
+    /* 1. عرض الفيديو - معالجة ذكية لمنع الشاشة السوداء */
+    <div className="aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
         <iframe 
-            src={selectedItem.url.replace("watch?v=", "embed/")} 
+            src={
+                selectedItem.url.includes('drive.google.com') 
+                ? selectedItem.url
+                    .replace('/view', '/preview') 
+                    .replace('/edit', '/preview') 
+                    .split('?')[0] + '?autoplay=0' // تنظيف الرابط لضمان التشغيل
+                : selectedItem.url.replace("watch?v=", "embed/") // دعم يوتيوب
+            } 
             className="w-full h-full border-none" 
+            allow="autoplay; scroll-background; picture-in-picture"
             allowFullScreen
         ></iframe>
     </div>
 ) : selectedItem.type === 'voice' ? (
-    /* 2. عرض مشغل الصوت (Voice) - الحل الجديد لمنع التداخل */
+    /* 2. عرض الصوت - تحويل تلقائي لرابط مباشر من قوقل درايف */
     <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-700">
         <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-6 animate-pulse">
             <i data-lucide="mic" className="w-10 h-10 text-orange-500"></i>
@@ -1113,25 +1121,36 @@ React.useEffect(() => {
         </p>
 
         <audio controls className="w-full max-w-md shadow-sm rounded-full">
-            <source src={selectedItem.url} type="audio/mpeg" />
-            Your browser does not support the audio element.
-        </audio>
+    <source 
+        src={
+            selectedItem.url.includes('drive.google.com') 
+            ? selectedItem.url
+                .split('/view')[0] // بياخد الجزء اللي قبل كلمة view تماماً
+                .replace('file/d/', 'uc?export=download&id=') 
+            : selectedItem.url
+        } 
+        type="audio/mpeg" 
+    />
+    Your browser does not support the audio element.
+</audio>
         
         <div className="mt-8 flex items-center gap-2 text-xs text-green-500 font-bold">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-            {lang === 'ar' ? "متصل الآن" : "Online Now"}
+            {lang === 'ar' ? "جاهز للاستماع" : "Ready to Stream"}
         </div>
     </div>
 ) : (
-    /* 3. عرض الملفات الأخرى (PDF, Exams, etc.) */
-    <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem] border border-dashed border-gray-100 dark:border-gray-700">
-        <i data-lucide="file-text" className="w-20 h-20 text-[#f58220]/20 mx-auto mb-6"></i>
+    /* 3. عرض الملفات الأخرى (PDF, Exams, Sheets) */
+    <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-700">
+        <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="file-text" className="w-10 h-10 text-orange-500/50"></i>
+        </div>
         <h3 className="text-2xl font-black mb-10 text-gray-800 dark:text-white">{selectedItem.title}</h3>
         <a 
             href={selectedItem.url} 
             target="_blank" 
             rel="noreferrer"
-            className="bg-[#f58220] text-white px-10 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
+            className="bg-[#f58220] text-white px-12 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
         >
             {lang === 'ar' ? "تحميل / فتح الملف" : "Download / Open File"}
         </a>
