@@ -1043,14 +1043,26 @@ React.useEffect(() => {
       <div className="flex items-center gap-4">
         
         <div className={`p-4 rounded-xl ${
-          item.type === 'video'
-            ? 'bg-red-50 text-red-500'
-            : 'bg-indigo-50 text-indigo-500'
-        }`}>
-          {item.type === 'video'
-            ? <i data-lucide="video"></i>
-            : <i data-lucide="file-text"></i>}
-        </div>
+  item.type === 'video' ? 'bg-red-50 text-red-500' :
+  item.type === 'pdf' ? 'bg-indigo-50 text-indigo-500' :
+  item.type === 'exam' ? 'bg-green-50 text-green-500' :
+  item.type === 'voice' ? 'bg-orange-50 text-orange-500' :
+  item.type === 'ppt' ? 'bg-yellow-50 text-yellow-600' :
+  item.type === 'labs' ? 'bg-purple-50 text-purple-500' :
+  item.type === 'sheets' ? 'bg-emerald-50 text-emerald-600' :
+  'bg-gray-50 text-gray-500' 
+}`}>
+  {
+    item.type === 'video' ? <i data-lucide="video"></i> :
+    item.type === 'pdf' ? <i data-lucide="file-text"></i> :
+    item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+    item.type === 'voice' ? <i data-lucide="mic"></i> :
+    item.type === 'ppt' ? <i data-lucide="presentation"></i> :
+    item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+    item.type === 'sheets' ? <i data-lucide="table"></i> :
+    <i data-lucide="external-link"></i>
+  }
+</div>
 
         <div>
           <h4 className="font-black text-lg">{item.title}</h4>
@@ -1076,17 +1088,55 @@ React.useEffect(() => {
                                             <span className="text-xs font-black text-gray-500">{selectedItem.subject}</span>
                                             <button onClick={() => setSelectedItem(null)} className="p-2 bg-white rounded-full"><i data-lucide="x"></i></button>
                                         </div>
-                                        {selectedItem.type === 'video' ? (
-                                            <div className="aspect-video bg-black">
-                                                <iframe src={selectedItem.url.replace("watch?v=", "embed/")} className="w-full h-full border-none" allowFullScreen></iframe>
-                                            </div>
-                                        ) : (
-                                            <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent">
-                                                <i data-lucide="file-text" class="w-20 h-20 text-[#f58220]/20 mx-auto mb-6"></i>
-                                                <h3 className="text-2xl font-black mb-10">{selectedItem.title}</h3>
-                                                <a href={selectedItem.url} target="_blank" className="bg-[#f58220] text-white px-10 py-4 rounded-full font-black shadow-xl">تحميل / فتح الملف</a>
-                                            </div>
-                                        )}
+                                       {selectedItem.type === 'video' ? (
+    /* 1. عرض الفيديو */
+    <div className="aspect-video bg-black rounded-2xl overflow-hidden shadow-lg">
+        <iframe 
+            src={selectedItem.url.replace("watch?v=", "embed/")} 
+            className="w-full h-full border-none" 
+            allowFullScreen
+        ></iframe>
+    </div>
+) : selectedItem.type === 'voice' ? (
+    /* 2. عرض مشغل الصوت (Voice) - الحل الجديد لمنع التداخل */
+    <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-700">
+        <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-6 animate-pulse">
+            <i data-lucide="mic" className="w-10 h-10 text-orange-500"></i>
+        </div>
+        
+        <h3 className="text-xl font-black text-gray-800 dark:text-white mb-2 text-center">
+            {selectedItem.title}
+        </h3>
+        
+        <p className="text-sm text-gray-400 mb-8 uppercase tracking-widest font-bold">
+            {lang === 'ar' ? "محاضرة صوتية" : "Audio Lecture"}
+        </p>
+
+        <audio controls className="w-full max-w-md shadow-sm rounded-full">
+            <source src={selectedItem.url} type="audio/mpeg" />
+            Your browser does not support the audio element.
+        </audio>
+        
+        <div className="mt-8 flex items-center gap-2 text-xs text-green-500 font-bold">
+            <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
+            {lang === 'ar' ? "متصل الآن" : "Online Now"}
+        </div>
+    </div>
+) : (
+    /* 3. عرض الملفات الأخرى (PDF, Exams, etc.) */
+    <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem] border border-dashed border-gray-100 dark:border-gray-700">
+        <i data-lucide="file-text" className="w-20 h-20 text-[#f58220]/20 mx-auto mb-6"></i>
+        <h3 className="text-2xl font-black mb-10 text-gray-800 dark:text-white">{selectedItem.title}</h3>
+        <a 
+            href={selectedItem.url} 
+            target="_blank" 
+            rel="noreferrer"
+            className="bg-[#f58220] text-white px-10 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
+        >
+            {lang === 'ar' ? "تحميل / فتح الملف" : "Download / Open File"}
+        </a>
+    </div>
+)}
                                         <div className="p-10">
                                             <h2 className="text-3xl font-black text-gray-900">{selectedItem.title}</h2>
                                             <p className="mt-4 text-gray-500 font-medium">{lang === 'ar' ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}</p>
