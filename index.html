@@ -1024,58 +1024,51 @@ React.useEffect(() => {
     c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
     c.type === view
   )
-  .map(item => (
+ .map(item => (
 
-    <button
-      key={item.id}
-      onClick={() => {
-        setSelectedItem(item);
-        if (typeof firebase !== 'undefined') {
-          firebase.analytics().logEvent('view_lecture', {
-            lecture_title: item.title,
-            subject: item.subject,
-            type: item.type
-          });
+  <button
+    key={item.id}
+    onClick={() => {
+      setSelectedItem(item);
+      if (typeof firebase !== 'undefined') {
+        firebase.analytics().logEvent('view_lecture', {
+          lecture_title: item.title,
+          subject: item.subject,
+          type: item.type
+        });
+      }
+    }}
+    className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+  >
+
+    <div className="flex items-center gap-4">
+      
+      {/* 🔥 أيقونة موحدة بالبرتقالي */}
+      <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
+        {
+          item.type === 'video' ? <i data-lucide="video"></i> :
+          item.type === 'pdf' ? <i data-lucide="file-text"></i> :
+          item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+          item.type === 'voice' ? <i data-lucide="mic"></i> :
+          item.type === 'ppt' ? <i data-lucide="presentation"></i> :
+          item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+          item.type === 'sheets' ? <i data-lucide="table"></i> :
+          <i data-lucide="external-link"></i>
         }
-      }}
-      className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
-    >
-      <div className="flex items-center gap-4">
-        
-        <div className={`p-4 rounded-xl ${
-  item.type === 'video' ? 'bg-red-50 text-red-500' :
-  item.type === 'pdf' ? 'bg-indigo-50 text-indigo-500' :
-  item.type === 'exam' ? 'bg-green-50 text-green-500' :
-  item.type === 'voice' ? 'bg-orange-50 text-orange-500' :
-  item.type === 'ppt' ? 'bg-yellow-50 text-yellow-600' :
-  item.type === 'labs' ? 'bg-purple-50 text-purple-500' :
-  item.type === 'sheets' ? 'bg-emerald-50 text-emerald-600' :
-  'bg-gray-50 text-gray-500' 
-}`}>
-  {
-    item.type === 'video' ? <i data-lucide="video"></i> :
-    item.type === 'pdf' ? <i data-lucide="file-text"></i> :
-    item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
-    item.type === 'voice' ? <i data-lucide="mic"></i> :
-    item.type === 'ppt' ? <i data-lucide="presentation"></i> :
-    item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
-    item.type === 'sheets' ? <i data-lucide="table"></i> :
-    <i data-lucide="external-link"></i>
-  }
-</div>
-
-        <div>
-          <h4 className="font-black text-lg">{item.title}</h4>
-          <p className="text-[10px] font-bold text-gray-400 uppercase">
-            {item.type}
-          </p>
-        </div>
-
       </div>
 
-      <i data-lucide="chevron-left" className="text-gray-300"></i>
+      <div>
+        <h4 className="font-black text-lg">{item.title}</h4>
+        <p className="text-[10px] font-bold text-gray-400 uppercase">
+          {item.type}
+        </p>
+      </div>
 
-    </button>
+    </div>
+
+    <i data-lucide="chevron-left" className="text-gray-300"></i>
+
+  </button>
 
 ))}
 
@@ -1138,6 +1131,18 @@ React.useEffect(() => {
             <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
             {lang === 'ar' ? "جاهز للاستماع" : "Ready to Stream"}
         </div>
+    </div>
+) : selectedItem.type === 'ppt' ? (
+    /* 3. البوربوينت - الحل الأقوى لمشكلة Not Found */
+    <div className="w-full h-[80vh] rounded-2xl overflow-hidden shadow-lg border border-gray-100">
+        <iframe 
+            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                selectedItem.url.includes('google.com') 
+                ? `https://drive.google.com/uc?export=download&id=${selectedItem.url.match(/[-\w]{25,}/)}`
+                : selectedItem.url
+            )}`} 
+            className="w-full h-full border-none"
+        ></iframe>
     </div>
 ) : (
     /* 3. عرض الملفات الأخرى (PDF, Exams, Sheets) */
