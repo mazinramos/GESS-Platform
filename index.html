@@ -144,11 +144,11 @@ const t = {
             const [newLoginPass, setNewLoginPass] = React.useState('');
             const [newAdminPass, setNewAdminPass] = React.useState('');
             const currentSubject = path[2]?.title;
-            const subjectContents = contents.filter(
-            item => item.subject?.toLowerCase() === currentSubject?.toLowerCase()
-            );
+            const subjectContents = contents.filter(item => item.subject?.toLowerCase() === currentSubject?.toLowerCase());
             const typesAvailable = [...new Set(subjectContents.map(item => item.type))];
             const filteredContent = contents.filter(item => item.type === view);
+            const [selectedType, setSelectedType] = React.useState('video');
+            
             
             
             
@@ -981,7 +981,8 @@ React.useEffect(() => {
   { key: 'labs', icon: 'flask-conical', label: 'labs' },
   { key: 'sheets', icon: 'table', label: 'sheets' },
   { key: 'tutorials', icon: 'book-open', label: 'tutorials' }, 
-  { key: 'quizzes', icon: 'check-square', label: 'quizzes' },   
+  { key: 'quizzes', icon: 'check-square', label: 'quizzes' }, 
+  { key: 'summaries', icon: 'file-spreadsheet', label: 'summaries' }  
 ]
 
     .filter(item => typesAvailable.includes(item.key)) 
@@ -1012,6 +1013,7 @@ React.useEffect(() => {
  item.label === 'sheets' ? (lang === 'ar' ? "شيتات" : "Sheets") :
  item.label === 'tutorials' ? (lang === 'ar' ? "شروحات" : "Tutorials") :
  item.label === 'quizzes' ? (lang === 'ar' ? "كويزات" : "Quizzes") :
+ item.label === 'summaries' ? (lang === 'ar' ? "ملخصات" : "Summaries") :
  (lang === 'ar' ? "رابط خارجي" : "Link")}
         </span>
 
@@ -1063,6 +1065,7 @@ item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
 item.type === 'sheets' ? <i data-lucide="table"></i> :
 item.type === 'tutorials' ? <i data-lucide="book-open"></i> : 
 item.type === 'quizzes' ? <i data-lucide="check-square"></i> : 
+item.type === 'summaries' ? <i data-lucide="file-spreadsheet" ></i> :
 <i data-lucide="external-link"></i>
         }
       </div>
@@ -1154,11 +1157,59 @@ item.type === 'quizzes' ? <i data-lucide="check-square"></i> :
             className="w-full h-full border-none"
         ></iframe>
     </div>
+
+) : selectedItem.type === 'labs' ? (
+    /* 4. المعامل الذكي - يعرض الفيديو أولاً (لو متوفر) وتحته زر تحميل أو فتح شيت الـ PDF */
+    <div className="p-6 md:p-10 flex flex-col gap-6 bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem]">
+        
+        {/* أ) إذا تم رفع رابط فيديو للمعمل، يتم تشغيله هنا بشكل ذكي بدون شاشة سوداء */}
+        {selectedItem.videoUrl && (
+            <div className="w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
+                <iframe 
+                    src={
+                        selectedItem.videoUrl.includes('drive.google.com') 
+                        ? selectedItem.videoUrl.replace('/view', '/preview').replace('/edit', '/preview').split('?')[0] + '?autoplay=0'
+                        : selectedType.videoUrl.includes('watch?v=')
+                        ? selectedItem.videoUrl.replace("watch?v=", "embed/")
+                        : selectedItem.videoUrl
+                    } 
+                    className="w-full h-full border-none" 
+                    allowFullScreen
+                    title="Lab Video"
+                ></iframe>
+            </div>
+        )}
+
+        {/* ب) عرض بيانات الشيت وزر فتح الـ PDF للمعمل */}
+        <div className="py-10 text-center bg-white dark:bg-gray-800 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-700 shadow-sm">
+            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="flask-conical" className="w-10 h-10 text-orange-500"></i>
+            </div>
+            <h3 className="text-2xl font-black mb-2 text-gray-800 dark:text-white">{selectedItem.title}</h3>
+            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">
+                {selectedItem.videoUrl ? (lang === 'ar' ? "فيديو الشرح + شيت المعمل" : "Lab Video & Sheet") : (lang === 'ar' ? "شيت المعمل فقط" : "Lab Sheet Only")}
+            </p>
+            <a 
+                href={selectedItem.url} 
+                target="_blank" 
+                rel="noreferrer"
+                className="bg-[#f58220] text-white px-12 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
+            >
+                {lang === 'ar' ? "فتح شيت المعمل (PDF)" : "Open Lab Sheet (PDF)"}
+            </a>
+        </div>
+    </div>
 ) : (
-    /* 3. عرض الملفات الأخرى (PDF, Exams, Sheets) */
+    /* 5. عرض الملفات الأخرى التقليدية (PDF, Exams, Sheets, Summaries) */
     <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-700">
         <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i data-lucide="file-text" className="w-10 h-10 text-orange-500/50"></i>
+            <i 
+                data-lucide={
+                    selectedItem.type === 'quizzes' ? 'check-square' : 
+                    selectedItem.type === 'summaries' ? 'file-spreadsheet' : 'file-text'
+                } 
+                className="w-10 h-10 text-orange-500/50"
+            ></i>
         </div>
         <h3 className="text-2xl font-black mb-10 text-gray-800 dark:text-white">{selectedItem.title}</h3>
         <a 
@@ -1263,46 +1314,59 @@ item.type === 'quizzes' ? <i data-lucide="check-square"></i> :
 }} className="space-y-4">
 
                 
-                <div>
-                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        عنوان المحاضرة (مثال: المحاضرة الأولى)
-                    </label>
-                    <input name="title" required type="text" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
-                </div>
+               <div>
+    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        عنوان المحاضرة (مثال: المحاضرة الأولى)
+    </label>
+    <input name="title" required type="text" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
+</div>
 
-                <div>
-                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        رابط المحاضرة (درايف / يوتيوب)
-                    </label>
-                    <input name="url" required type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
-                </div>
+<div>
+    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        نوع الملف
+    </label>
+    <select 
+        name="type" 
+        onChange={(e) => setSelectedType(e.target.value)} // تحديث الحالة عند التغيير
+        className={`w-full p-4 rounded-2xl border-2 outline-none ${
+            darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'
+        }`}
+    >
+        <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
+        <option value="pdf">{lang === 'ar' ? "ملفات PDF" : "PDF File"}</option>
+        <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
+        <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+        <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
+        <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
+        <option value="labs">{lang === 'ar' ? "معمل / Labs" : "Labs"}</option>
+        <option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
+        <option value="tutorials">{lang === 'ar' ? "شروحات" : "Tutorials"}</option>
+        <option value="quizzes">{lang === 'ar' ? "كويزات" : "Quizzes"}</option>
+        <option value="summaries">{lang === 'ar' ? "ملخصات" : "Summaries"}</option>
+    </select> 
+</div>
 
-                <div>
-                    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                        نوع الملف
-                    </label>
-                  <select 
-  name="type" 
-  className={`w-full p-4 rounded-2xl border-2 outline-none ${
-    darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'
-  }`}
->
-  <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
-<option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
-<option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
-<option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
-<option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
-<option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
-<option value="labs">{lang === 'ar' ? "معمل" : "Labs"}</option>
-<option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
-<option value="tutorials">{lang === 'ar' ? "شروحات" : "Tutorials"}</option>
-<option value="quizzes">{lang === 'ar' ? "كويزات" : "Quizzes"}</option>
-</select>
-                </div>
+{/* الرابط الأساسي (بيشتغل شيت للـ Labs أو الرابط المباشر للمواد التانية) */}
+<div>
+    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        {selectedType === 'labs' ? (lang === 'ar' ? "رابط شيت أو ملف المعمل (PDF)" : "Lab Sheet URL (PDF)") : (lang === 'ar' ? "رابط المحاضرة (درايف / يوتيوب)" : "Lecture URL")}
+    </label>
+    <input name="url" required type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
+</div>
 
-                <button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
-                    حفظ المحاضرة
-                </button>
+{/* 🔥 الحقل الذكي الجديد: يظهر فقط إذا تم اختيار نوع 'labs' لرفع فيديو المعمل المرفق */}
+{selectedType === 'labs' && (
+    <div className="animate-in slide-in-from-top duration-300">
+        <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            {lang === 'ar' ? "رابط فيديو شرح المعمل (اختياري)" : "Lab Video URL (Optional)"}
+        </label>
+        <input name="videoUrl" type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="https://..." />
+    </div>
+)}
+
+<button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
+    حفظ المحاضرة
+</button>
 
             </form>
             {/* بداية كود عرض الدروس والحذف والتعديل */}
