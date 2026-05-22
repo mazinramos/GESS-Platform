@@ -367,7 +367,7 @@ React.useEffect(() => {
     e.preventDefault();
     
    
-    const hardcodedPass = "gess@admin@123"; 
+    const hardcodedPass = "00000"; 
     
   
     if (adminPassInput == hardcodedPass) {
@@ -982,9 +982,9 @@ React.useEffect(() => {
   { key: 'voice', icon: 'mic', label: 'voice' },
   { key: 'labs', icon: 'flask-conical', label: 'labs' },
   { key: 'sheets', icon: 'table', label: 'sheets' },
-  { key: 'tutorials', icon: 'clapperboard', label: 'tutorials' }, 
-  { key: 'quizzes', icon: 'sparkles', label: 'quizzes' }, 
-  { key: 'summaries', icon: 'scissors', label: 'summaries' }  
+  { key: 'tutorials', icon: 'brain', label: 'tutorials' }, 
+  { key: 'quizzes', icon: 'help-circle', label: 'quizzes' }, 
+  { key: 'summaries', icon: 'file-check', label: 'summaries' }  
 ]
 
     .filter(item => typesAvailable.includes(item.key)) 
@@ -1060,9 +1060,9 @@ React.useEffect(() => {
                 item.type === 'ppt' ? <i data-lucide="presentation"></i> :
                 item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
                 item.type === 'sheets' ? <i data-lucide="table"></i> :
-                item.type === 'tutorials' ? <i data-lucide="clapperboard"></i> :
-                item.type === 'quizzes' ? <i data-lucide="sparkles"></i> :
-                item.type === 'summaries' ? <i data-lucide="scissors"></i> :
+                item.type === 'tutorials' ? <i data-lucide="brain"></i> :
+                item.type === 'quizzes' ? <i data-lucide="help-circle"></i> :
+                item.type === 'summaries' ? <i data-lucide="file-check"></i> :
                 <i data-lucide="external-link"></i>
               }
             </div>
