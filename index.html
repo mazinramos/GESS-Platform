@@ -342,7 +342,7 @@ if (enteredUser === 'admin' && enteredPass === savedAdminPass) {
 
 React.useEffect(() => {
   const handlePopState = (event) => {
-    if (view === 'admin') {
+    if (view == 'admin') {
       event.preventDefault();
       setView('student');
       window.history.pushState(null, null, window.location.pathname); 
@@ -365,10 +365,10 @@ React.useEffect(() => {
     e.preventDefault();
     
    
-    const hardcodedPass = "12345"; 
+    const hardcodedPass = "00000"; 
     
   
-    if (adminPassInput === hardcodedPass) {
+    if (adminPassInput == hardcodedPass) {
         setView('admin');
         setShowAdminAuth(false);
         setAdminPassInput("");
@@ -971,7 +971,7 @@ React.useEffect(() => {
 
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
 
-    {[
+   {[
   { key: 'video', icon: 'video', label: 'video' },
   { key: 'pdf', icon: 'file-text', label: 'pdf' },
   { key: 'exam', icon: 'clipboard-list', label: 'exam' },
@@ -980,10 +980,11 @@ React.useEffect(() => {
   { key: 'voice', icon: 'mic', label: 'voice' },
   { key: 'labs', icon: 'flask-conical', label: 'labs' },
   { key: 'sheets', icon: 'table', label: 'sheets' },
+  { key: 'tutorials', icon: 'book-open', label: 'tutorials' }, 
+  { key: 'quizzes', icon: 'check-square', label: 'quizzes' },   
 ]
-    
 
-    .filter(item => typesAvailable.includes(item.key)) // 🔥 المهم جداً
+    .filter(item => typesAvailable.includes(item.key)) 
 
     .map(item => (
 
@@ -997,14 +998,21 @@ React.useEffect(() => {
         className="p-6 rounded-xl bg-white dark:bg-gray-900 flex flex-col items-center shadow-sm hover:shadow-md transition"
       >
 
-        <i 
-  data-lucide={item.icon} 
-  className="w-10 h-10 mb-2 text-orange-500"
-  
-></i>
+        <i data-lucide={item.icon} className="w-10 h-10 mb-2 text-orange-500"></i>
 
         <span className="font-bold text-gray-800 dark:text-white">
-          {t[lang][item.label]}
+       
+{item.label === 'video' ? (lang === 'ar' ? "فيديو" : "Video") :
+ item.label === 'pdf' ? (lang === 'ar' ? "ملفات PDF" : "PDF Files") :
+ item.label === 'exam' ? (lang === 'ar' ? "امتحانات" : "Exams") :
+ item.label === 'ref' ? (lang === 'ar' ? "مراجع" : "References") :
+ item.label === 'ppt' ? (lang === 'ar' ? "بوربوينت" : "PowerPoint") :
+ item.label === 'voice' ? (lang === 'ar' ? "فويس" : "Voice") :
+ item.label === 'labs' ? (lang === 'ar' ? "معامل" : "Labs") :
+ item.label === 'sheets' ? (lang === 'ar' ? "شيتات" : "Sheets") :
+ item.label === 'tutorials' ? (lang === 'ar' ? "شروحات" : "Tutorials") :
+ item.label === 'quizzes' ? (lang === 'ar' ? "كويزات" : "Quizzes") :
+ (lang === 'ar' ? "رابط خارجي" : "Link")}
         </span>
 
       </button>
@@ -1046,14 +1054,16 @@ React.useEffect(() => {
       {/* 🔥 أيقونة موحدة بالبرتقالي */}
       <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
         {
-          item.type === 'video' ? <i data-lucide="video"></i> :
-          item.type === 'pdf' ? <i data-lucide="file-text"></i> :
-          item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
-          item.type === 'voice' ? <i data-lucide="mic"></i> :
-          item.type === 'ppt' ? <i data-lucide="presentation"></i> :
-          item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
-          item.type === 'sheets' ? <i data-lucide="table"></i> :
-          <i data-lucide="external-link"></i>
+        item.type === 'video' ? <i data-lucide="video"></i> :
+item.type === 'pdf' ? <i data-lucide="file-text"></i> :
+item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+item.type === 'voice' ? <i data-lucide="mic"></i> :
+item.type === 'ppt' ? <i data-lucide="presentation"></i> :
+item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+item.type === 'sheets' ? <i data-lucide="table"></i> :
+item.type === 'tutorials' ? <i data-lucide="book-open"></i> : 
+item.type === 'quizzes' ? <i data-lucide="check-square"></i> : 
+<i data-lucide="external-link"></i>
         }
       </div>
 
@@ -1278,15 +1288,15 @@ React.useEffect(() => {
   }`}
 >
   <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
-  <option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
-  <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
-  <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
-
-  {/* 🔥 الجديد */}
-  <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
-  <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
-  <option value="labs">{lang === 'ar' ? "معمل" : "Labs"}</option>
-  <option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
+<option value="pdf">{lang === 'ar' ? "ملف PDF" : "PDF File"}</option>
+<option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
+<option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+<option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
+<option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
+<option value="labs">{lang === 'ar' ? "معمل" : "Labs"}</option>
+<option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
+<option value="tutorials">{lang === 'ar' ? "شروحات" : "Tutorials"}</option>
+<option value="quizzes">{lang === 'ar' ? "كويزات" : "Quizzes"}</option>
 </select>
                 </div>
 
