@@ -148,7 +148,9 @@ const t = {
             const typesAvailable = [...new Set(subjectContents.map(item => item.type))];
             const filteredContent = contents.filter(item => item.type === view);
             const [selectedType, setSelectedType] = React.useState('video');
-            
+            const [linksList, setLinksList] = React.useState([]); 
+            const [isExistingLecture, setIsExistingLecture] = React.useState(false);
+            const [selectedLectureId, setSelectedLectureId] = React.useState('');
             
             
             
@@ -980,9 +982,9 @@ React.useEffect(() => {
   { key: 'voice', icon: 'mic', label: 'voice' },
   { key: 'labs', icon: 'flask-conical', label: 'labs' },
   { key: 'sheets', icon: 'table', label: 'sheets' },
-  { key: 'tutorials', icon: 'book-open', label: 'tutorials' }, 
-  { key: 'quizzes', icon: 'check-square', label: 'quizzes' }, 
-  { key: 'summaries', icon: 'file-spreadsheet', label: 'summaries' }  
+  { key: 'tutorials', icon: 'clapperboard', label: 'tutorials' }, 
+  { key: 'quizzes', icon: 'sparkles', label: 'quizzes' }, 
+  { key: 'summaries', icon: 'scissors', label: 'summaries' }  
 ]
 
     .filter(item => typesAvailable.includes(item.key)) 
@@ -1024,210 +1026,130 @@ React.useEffect(() => {
   </div>
 )}
 
-                                {path.length == 4 && !selectedItem && (
+                               {path.length == 4 && !selectedItem && (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+    {contents
+      .filter(c =>
+        String(c.yearId) === String(path[0].id) &&
+        String(c.semesterId) === String(path[1].id) &&
+        c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
+        c.type === view
+      )
+      .map(item => (
+        <button
+          key={item.id}
+          onClick={() => {
+            setSelectedItem(item);
+            if (typeof firebase !== 'undefined') {
+              firebase.analytics().logEvent('view_lecture', {
+                lecture_title: item.title,
+                subject: item.subject,
+                type: item.type
+              });
+            }
+          }}
+          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+        >
+          <div className="flex items-center gap-4">
+            <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
+              {
+                item.type === 'video' ? <i data-lucide="video"></i> :
+                item.type === 'pdf' ? <i data-lucide="file-text"></i> :
+                item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+                item.type === 'voice' ? <i data-lucide="mic"></i> :
+                item.type === 'ppt' ? <i data-lucide="presentation"></i> :
+                item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+                item.type === 'sheets' ? <i data-lucide="table"></i> :
+                item.type === 'tutorials' ? <i data-lucide="clapperboard"></i> :
+                item.type === 'quizzes' ? <i data-lucide="sparkles"></i> :
+                item.type === 'summaries' ? <i data-lucide="scissors"></i> :
+                <i data-lucide="external-link"></i>
+              }
+            </div>
 
-  {contents
-  .filter(c =>
-    String(c.yearId) === String(path[0].id) &&
-    String(c.semesterId) === String(path[1].id) &&
-    c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
-    c.type === view
-  )
- .map(item => (
-
-  <button
-    key={item.id}
-    onClick={() => {
-      setSelectedItem(item);
-      if (typeof firebase !== 'undefined') {
-        firebase.analytics().logEvent('view_lecture', {
-          lecture_title: item.title,
-          subject: item.subject,
-          type: item.type
-        });
-      }
-    }}
-    className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
-  >
-
-    <div className="flex items-center gap-4">
-      
-      {/* 🔥 أيقونة موحدة بالبرتقالي */}
-      <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
-        {
-        item.type === 'video' ? <i data-lucide="video"></i> :
-item.type === 'pdf' ? <i data-lucide="file-text"></i> :
-item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
-item.type === 'voice' ? <i data-lucide="mic"></i> :
-item.type === 'ppt' ? <i data-lucide="presentation"></i> :
-item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
-item.type === 'sheets' ? <i data-lucide="table"></i> :
-item.type === 'tutorials' ? <i data-lucide="clapperboard"></i> : 
-item.type === 'quizzes' ? <i data-lucide="help-circle"></i> : 
-item.type === 'summaries' ? <i data-lucide="scissors" ></i> :
-<i data-lucide="external-link"></i>
-        }
-      </div>
-
-      <div>
-        <h4 className="font-black text-lg">{item.title}</h4>
-        <p className="text-[10px] font-bold text-gray-400 uppercase">
-          {item.type}
-        </p>
-      </div>
-
-    </div>
-
-    <i data-lucide="chevron-left" className="text-gray-300"></i>
-
-  </button>
-
-))}
-
+            <div className="text-left">
+              <h4 className="font-black text-lg text-gray-900">{item.title}</h4>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                {item.type} • {item.links ? `${item.links.length} ${lang === 'ar' ? 'ملفات' : 'Files'}` : `1 ${lang === 'ar' ? 'ملف' : 'File'}`}
+              </p>
+            </div>
+          </div>
+          <i data-lucide="chevron-left" className="text-gray-300"></i>
+        </button>
+      ))}
   </div>
 )}
 
-                                {selectedItem && (
-                                    <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in">
-                                        <div className="p-4 bg-gray-50 flex items-center justify-between">
-                                            <span className="text-xs font-black text-gray-500">{selectedItem.subject}</span>
-                                            <button onClick={() => setSelectedItem(null)} className="p-2 bg-white rounded-full"><i data-lucide="x"></i></button>
-                                        </div>
-                                      {selectedItem.type === 'video' ? (
-    /* 1. عرض الفيديو - معالجة ذكية لمنع الشاشة السوداء */
-    <div className="aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
-        <iframe 
-            src={
-                selectedItem.url.includes('drive.google.com') 
-                ? selectedItem.url
-                    .replace('/view', '/preview') 
-                    .replace('/edit', '/preview') 
-                    .split('?')[0] + '?autoplay=0' // تنظيف الرابط لضمان التشغيل
-                : selectedItem.url.replace("watch?v=", "embed/") // دعم يوتيوب
-            } 
-            className="w-full h-full border-none" 
-            allow="autoplay; scroll-background; picture-in-picture"
-            allowFullScreen
-        ></iframe>
-    </div>
-) : selectedItem.type === 'voice' ? (
-    /* 2. عرض الصوت - تحويل تلقائي لرابط مباشر من قوقل درايف */
-    <div className="flex flex-col items-center justify-center p-12 bg-white dark:bg-gray-800 rounded-[2.5rem] shadow-xl border border-gray-100 dark:border-gray-700">
-        <div className="w-20 h-20 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center mb-6 animate-pulse">
-            <i data-lucide="mic" className="w-10 h-10 text-orange-500"></i>
-        </div>
-        
-        <h3 className="text-xl font-black text-gray-800 dark:text-white mb-2 text-center">
-            {selectedItem.title}
-        </h3>
-        
-        <p className="text-sm text-gray-400 mb-8 uppercase tracking-widest font-bold">
-            {lang === 'ar' ? "محاضرة صوتية" : "Audio Lecture"}
-        </p>
-
-        <audio controls className="w-full max-w-md shadow-sm rounded-full">
-    <source 
-        src={
-            selectedItem.url.includes('drive.google.com') 
-            ? selectedItem.url
-                .split('/view')[0] // بياخد الجزء اللي قبل كلمة view تماماً
-                .replace('file/d/', 'uc?export=download&id=') 
-            : selectedItem.url
-        } 
-        type="audio/mpeg" 
-    />
-    Your browser does not support the audio element.
-</audio>
-        
-        <div className="mt-8 flex items-center gap-2 text-xs text-green-500 font-bold">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-ping"></div>
-            {lang === 'ar' ? "جاهز للاستماع" : "Ready to Stream"}
-        </div>
-    </div>
-) : selectedItem.type === 'ppt' ? (
-    /* 3. البوربوينت - الحل الأقوى لمشكلة Not Found */
-    <div className="w-full h-[80vh] rounded-2xl overflow-hidden shadow-lg border border-gray-100">
-        <iframe 
-            src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                selectedItem.url.includes('google.com') 
-                ? `https://drive.google.com/uc?export=download&id=${selectedItem.url.match(/[-\w]{25,}/)}`
-                : selectedItem.url
-            )}`} 
-            className="w-full h-full border-none"
-        ></iframe>
-    </div>
-
-) : selectedItem.type === 'labs' ? (
-    /* 4. المعامل الذكي - يعرض الفيديو أولاً (لو متوفر) وتحته زر تحميل أو فتح شيت الـ PDF */
-    <div className="p-6 md:p-10 flex flex-col gap-6 bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem]">
-        
-        {/* أ) إذا تم رفع رابط فيديو للمعمل، يتم تشغيله هنا بشكل ذكي بدون شاشة سوداء */}
-        {selectedItem.videoUrl && (
-            <div className="w-full aspect-video bg-black rounded-3xl overflow-hidden shadow-2xl">
-                <iframe 
-                    src={
-                        selectedItem.videoUrl.includes('drive.google.com') 
-                        ? selectedItem.videoUrl.replace('/view', '/preview').replace('/edit', '/preview').split('?')[0] + '?autoplay=0'
-                        : selectedType.videoUrl.includes('watch?v=')
-                        ? selectedItem.videoUrl.replace("watch?v=", "embed/")
-                        : selectedItem.videoUrl
-                    } 
-                    className="w-full h-full border-none" 
-                    allowFullScreen
-                    title="Lab Video"
-                ></iframe>
+{/* 📂 المودال الداخلي الذكي: بيعرض محتويات الدرس كـ كروت تحت بعض */}
+{selectedItem && (
+    <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in p-6">
+        <div className="p-4 bg-gray-50 rounded-2xl flex items-center justify-between mb-6">
+            <div className="flex flex-col">
+                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem.subject}</span>
+                <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem.title}</h2>
             </div>
-        )}
+            <button onClick={() => setSelectedItem(null)} className="p-3 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
+                <i data-lucide="x" className="w-5 h-5 text-gray-500"></i>
+            </button>
+        </div>
 
-        {/* ب) عرض بيانات الشيت وزر فتح الـ PDF للمعمل */}
-        <div className="py-10 text-center bg-white dark:bg-gray-800 rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-700 shadow-sm">
-            <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i data-lucide="flask-conical" className="w-10 h-10 text-orange-500"></i>
-            </div>
-            <h3 className="text-2xl font-black mb-2 text-gray-800 dark:text-white">{selectedItem.title}</h3>
-            <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-8">
-                {selectedItem.videoUrl ? (lang === 'ar' ? "فيديو الشرح + شيت المعمل" : "Lab Video & Sheet") : (lang === 'ar' ? "شيت المعمل فقط" : "Lab Sheet Only")}
+        {/* لستة الملفات المجمعة تحت بعض جوة الدرس الـ واجهة الجديدة 🔥 */}
+        <div className="space-y-4 max-h-[70vh] overflow-y-auto p-2">
+            {selectedItem.links && selectedItem.links.length > 0 ? (
+                selectedItem.links.map((link, index) => (
+                    <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-all">
+                        <div className="flex items-center gap-4 self-start md:self-center">
+                            <div className="p-3 rounded-xl bg-orange-100 text-orange-600">
+                                {
+                                    link.type === 'video' ? <i data-lucide="video" className="w-5 h-5"></i> :
+                                    link.type === 'voice' ? <i data-lucide="mic" className="w-5 h-5"></i> :
+                                    link.type === 'ppt' ? <i data-lucide="presentation" className="w-5 h-5"></i> :
+                                    <i data-lucide="file-text" className="w-5 h-5"></i>
+                                }
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-base text-gray-800">{link.title}</h4>
+                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{link.type}</span>
+                            </div>
+                        </div>
+
+                        {/* زر فتح ومعاينة الرابط المذكور */}
+                        <a 
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="w-full md:w-auto text-center bg-gray-900 hover:bg-orange-500 text-white px-6 py-3 rounded-full text-xs font-black shadow-md transition-all whitespace-nowrap"
+                        >
+                            {link.type === 'video' ? (lang === 'ar' ? "مشاهدة الفيديو" : "Watch Video") : (lang === 'ar' ? "تحميل / فتح الملف" : "Open File")}
+                        </a>
+                    </div>
+                ))
+            ) : (
+                /* لضمان دعم المحاضرات القديمة المرفوعة برابط واحد قبل التحديث */
+                <div className="text-center py-10">
+                    <div className="w-16 h-16 bg-orange-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i data-lucide="file-text" className="w-8 h-8 text-orange-500"></i>
+                    </div>
+                    <h4 className="font-bold text-gray-700 mb-6">{selectedItem.title}</h4>
+                    <a 
+                        href={selectedItem.url} 
+                        target="_blank" 
+                        rel="noreferrer"
+                        className="bg-[#f58220] text-white px-12 py-3 rounded-full font-black shadow-xl inline-block"
+                    >
+                        {lang === 'ar' ? "تحميل / فتح الملف" : "Download / Open File"}
+                    </a>
+                </div>
+            )}
+        </div>
+
+        <div className="p-6 border-t border-gray-50 mt-6">
+            <p className="text-xs text-gray-400 font-medium text-center">
+                {lang === 'ar' ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}
             </p>
-            <a 
-                href={selectedItem.url} 
-                target="_blank" 
-                rel="noreferrer"
-                className="bg-[#f58220] text-white px-12 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
-            >
-                {lang === 'ar' ? "فتح شيت المعمل (PDF)" : "Open Lab Sheet (PDF)"}
-            </a>
         </div>
-    </div>
-) : (
-    /* 5. عرض الملفات الأخرى التقليدية (PDF, Exams, Sheets, Summaries) */
-    <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent rounded-[2.5rem] border border-dashed border-gray-200 dark:border-gray-700">
-        <div className="w-20 h-20 bg-orange-50 dark:bg-orange-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-            <i 
-                data-lucide={
-                    selectedItem.type === 'quizzes' ? 'check-square' : 
-                    selectedItem.type === 'summaries' ? 'file-spreadsheet' : 'file-text'
-                } 
-                className="w-10 h-10 text-orange-500/50"
-            ></i>
-        </div>
-        <h3 className="text-2xl font-black mb-10 text-gray-800 dark:text-white">{selectedItem.title}</h3>
-        <a 
-            href={selectedItem.url} 
-            target="_blank" 
-            rel="noreferrer"
-            className="bg-[#f58220] text-white px-12 py-4 rounded-full font-black shadow-xl hover:scale-105 transition-transform inline-block"
-        >
-            {lang === 'ar' ? "تحميل / فتح الملف" : "Download / Open File"}
-        </a>
     </div>
 )}
-                                        <div className="p-10">
-                                            <h2 className="text-3xl font-black text-gray-900">{selectedItem.title}</h2>
-                                            <p className="mt-4 text-gray-500 font-medium">{lang === 'ar' ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}</p>
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         )}
                     </main>
@@ -1242,133 +1164,270 @@ item.type === 'summaries' ? <i data-lucide="scissors" ></i> :
     </div>
   </div>
 )}
-{/* النافذة المنبثقة لإضافة المحاضرات */}
 {isModalOpen && modalSubjectData && (
-    /* السطر اللي تحت ده هو اللي بيقفل المودال لما تضغط في الفراغ */
+    /* السطر اللي تحت ده هو اللي بيقفل المودال لما تضغط في الفراغ - رفعنا الـ z-index ليكون فوق الهيدر برة */
     <div 
         onClick={(e) => {
             if (e.target === e.currentTarget) setIsModalOpen(false);
         }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
-        {/* المربع الأبيض (محتوى المودال) - أضفنا stopPropagation عشان ما يقفلش لما تضغط جواه */}
+        {/* المربع الأبيض (محتوى المودال) - نفس مقاساتك القديمة بالظبط max-w-md و p-6 */}
         <div 
             onClick={(e) => e.stopPropagation()} 
-            className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
+            className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
         >
             
-            {/* زر الإغلاق (الـ X) */}
+            {/* زر الإغلاق الأصلي (الـ X) */}
             <button 
                 onClick={() => setIsModalOpen(false)}
-                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors"
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors z-10"
             >
                 <i data-lucide="x" className="w-6 h-6"></i>
             </button>
 
-            {/* باقي كود الفورم وعرض الدروس اللي إنت كاتبه يكمل هنا عادي... */}
-            <div className="mb-6">
+            {/* رأس المودال ثابت */}
+            <div className="mb-4 pr-6">
                 <h2 className="text-2xl font-black text-orange-500 mb-1">
                     {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
                 </h2>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    المادة المحددة: <strong className={darkMode ? 'text-white' : 'text-black'}>{modalSubjectData.subject}</strong>
+                    {lang === 'ar' ? "المادة المحددة:" : "Subject:"} <strong className={darkMode ? 'text-white' : 'text-black'}>{modalSubjectData.subject}</strong>
                 </p>
             </div>
 
-          <form onSubmit={async (e) => {
+
+       <form onSubmit={async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     
-    // تجهيز البيانات
-    const newLecture = {
-        title: formData.get('title'),
-        url: formData.get('url'),
-        type: formData.get('type'), // فيديو، pdf، exam، reference
-        category: 'academic',
-        subject: modalSubjectData.subject,
-        yearId: String(modalSubjectData.yearId),
-        semesterId: String(modalSubjectData.semesterId),
-        createdAt: firebase.firestore.FieldValue.serverTimestamp() // توقيت عالمي
-    };
+    if (linksList.length === 0) {
+        alert(lang === 'ar' ? "الرجاء إضافة رابط واحد على الأقل أولاً!" : "Please add at least one link first!");
+        return;
+    }
 
     try {
-        // استخدام db المعرف عندك في السكريبت الأول
-        // تأكد أن اسم الكولكشن 'materials' مطابق للـ useEffect في سطر 116
-        await db.collection("materials").add(newLecture);
+        if (isExistingLecture) {
+            // 🔥 الحالة الأولى: إضافة روابط لدرس موجود مسبقاً في الفايربيز
+            if (!selectedLectureId) {
+                alert(lang === 'ar' ? "الرجاء اختيار الدرس المراد الإضافة إليه" : "Please select a lecture");
+                return;
+            }
+
+            // جلب المستند الحالي لإضافة الروابط الجديدة للـ array القديمة
+            const docRef = db.collection("materials").doc(selectedLectureId);
+            const docSnap = await docRef.get();
+            
+            if (docSnap.exists) {
+                const currentData = docSnap.data();
+                const updatedLinks = [...(currentData.links || []), ...linksList];
+                
+                await docRef.update({
+                    links: updatedLinks
+                });
+            }
+        } else {
+            // 🆕 الحالة الثانية: إنشاء درس جديد كلياً
+            const newLecture = {
+                title: formData.get('title'),
+                type: formData.get('type'),
+                category: 'academic',
+                subject: modalSubjectData.subject,
+                yearId: String(modalSubjectData.yearId),
+                semesterId: String(modalSubjectData.semesterId),
+                links: linksList,
+                createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+            await db.collection("materials").add(newLecture);
+        }
 
         setToast({ 
             show: true, 
-            message: lang === 'ar' ? "تمت إضافة المحاضرة بنجاح" : "Lecture added successfully" 
+            message: lang === 'ar' ? "تم تحديث الدرس بنجاح" : "Lecture updated successfully" 
         });
         
         setIsModalOpen(false);
+        setLinksList([]);
+        setSelectedLectureId('');
+        setIsExistingLecture(false);
         e.target.reset();
-        
-        // إخفاء التوست بعد 3 ثواني
         setTimeout(() => setToast({ show: false, message: '' }), 3000);
 
     } catch (error) {
         console.error("Firebase Error:", error);
         alert(lang === 'ar' ? "فشل الحفظ: " + error.message : "Save failed: " + error.message);
     }
-}} className="space-y-4">
+}} 
+/* 🛠️ الكلاسات السحرية لمنع التداخل مع الهيدر وتفعيل السكرول الداخلي النظيف */
+className="space-y-4 max-h-[72vh] overflow-y-auto pr-1 scroll-smooth text-left"
+style={{ scrollbarWidth: 'thin' }} // لضمان ظهور سكرول بار نحيف وأنيق في المتصفحات
+>
 
-                
-               <div>
-    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        عنوان المحاضرة (مثال: المحاضرة الأولى)
-    </label>
-    <input name="title" required type="text" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
-</div>
-
-<div>
-    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        نوع الملف
-    </label>
-    <select 
-        name="type" 
-        onChange={(e) => setSelectedType(e.target.value)} // تحديث الحالة عند التغيير
-        className={`w-full p-4 rounded-2xl border-2 outline-none ${
-            darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'
-        }`}
-    >
-        <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
-        <option value="pdf">{lang === 'ar' ? "ملفات PDF" : "PDF File"}</option>
-        <option value="reference">{lang === 'ar' ? "مرجع خارجي" : "Reference"}</option>
-        <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
-        <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
-        <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
-        <option value="labs">{lang === 'ar' ? "معمل / Labs" : "Labs"}</option>
-        <option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
-        <option value="tutorials">{lang === 'ar' ? "شروحات" : "Tutorials"}</option>
-        <option value="quizzes">{lang === 'ar' ? "كويزات" : "Quizzes"}</option>
-        <option value="summaries">{lang === 'ar' ? "ملخصات" : "Summaries"}</option>
-    </select> 
-</div>
-
-{/* الرابط الأساسي (بيشتغل شيت للـ Labs أو الرابط المباشر للمواد التانية) */}
-<div>
-    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        {selectedType === 'labs' ? (lang === 'ar' ? "رابط شيت أو ملف المعمل (PDF)" : "Lab Sheet URL (PDF)") : (lang === 'ar' ? "رابط المحاضرة (درايف / يوتيوب)" : "Lecture URL")}
-    </label>
-    <input name="url" required type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
-</div>
-
-{/* 🔥 الحقل الذكي الجديد: يظهر فقط إذا تم اختيار نوع 'labs' لرفع فيديو المعمل المرفق */}
-{selectedType === 'labs' && (
-    <div className="animate-in slide-in-from-top duration-300">
-        <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-            {lang === 'ar' ? "رابط فيديو شرح المعمل (اختياري)" : "Lab Video URL (Optional)"}
-        </label>
-        <input name="videoUrl" type="url" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} placeholder="https://..." />
+    {/* 🔄 أزرار الاختيار: درس جديد أم درس موجود مسبقاً */}
+    <div className="flex gap-2 p-1 bg-gray-100 dark:bg-gray-800 rounded-xl sticky top-0 z-10 backdrop-blur-md">
+        <button
+            type="button"
+            onClick={() => { setIsExistingLecture(false); setSelectedLectureId(''); }}
+            className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${!isExistingLecture ? 'bg-white dark:bg-gray-700 text-orange-500 shadow-sm' : 'text-gray-500'}`}
+        >
+            {lang === 'ar' ? "🆕 درس جديد" : "New Lecture"}
+        </button>
+        <button
+            type="button"
+            onClick={() => setIsExistingLecture(true)}
+            className={`flex-1 py-2 text-xs font-black rounded-lg transition-all ${isExistingLecture ? 'bg-white dark:bg-gray-700 text-orange-500 shadow-sm' : 'text-gray-500'}`}
+        >
+            {lang === 'ar' ? "📂 إضافة لدرس موجود" : "Add to Existing"}
+        </button>
     </div>
-)}
 
-<button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all mt-4">
-    حفظ المحاضرة
-</button>
+    {/* قسم اختيار الفئة الرئيسية للكرت */}
+    <div>
+        <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+            القسم / الفئة الرئيسية للكرت برة
+        </label>
+        <select 
+            name="type" 
+            className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
+        >
+            <option value="video">{lang === 'ar' ? "فيديو" : "Video"}</option>
+            <option value="pdf">{lang === 'ar' ? "ملفات PDF" : "PDF File"}</option>
+            <option value="exam">{lang === 'ar' ? "امتحان / Assignment" : "Exam"}</option>
+            <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
+            <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
+            <option value="labs">{lang === 'ar' ? "معمل / Labs" : "Labs"}</option>
+            <option value="sheets">{lang === 'ar' ? "شيتات" : "Sheets"}</option>
+            <option value="tutorials">{lang === 'ar' ? "شروحات" : "Tutorials"}</option>
+            <option value="quizzes">{lang === 'ar' ? "كويزات" : "Quizzes"}</option>
+            <option value="summaries">{lang === 'ar' ? "ملخصات" : "Summaries"}</option>
+        </select> 
+    </div>
 
-            </form>
+    {/* الإدخال الديناميكي: إما حقل نصي أو قائمة منسدلة بالدروس الحالية */}
+    {!isExistingLecture ? (
+        <div className="animate-in fade-in duration-200">
+            <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                عنوان الدرس الجديد (مثال: المحاضرة الأولى)
+            </label>
+            <input name="title" required={!isExistingLecture} type="text" className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} />
+        </div>
+    ) : (
+        <div className="animate-in fade-in duration-200">
+            <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+                اختر الدرس المراد تجميعه والزيادة عليه مِمّا سَبَق:
+            </label>
+            <select 
+                value={selectedLectureId}
+                onChange={(e) => setSelectedLectureId(e.target.value)}
+                required={isExistingLecture}
+                className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
+            >
+                <option value="">{lang === 'ar' ? "-- اختر الدرس المستهدف --" : "-- Select Target Lecture --"}</option>
+                {contents
+                    .filter(c => 
+                        String(c.yearId) === String(modalSubjectData.yearId) &&
+                        String(c.semesterId) === String(modalSubjectData.semesterId) &&
+                        c.subject?.trim().toLowerCase() === modalSubjectData.subject?.trim().toLowerCase()
+                    )
+                    .map(lecture => (
+                        <option key={lecture.id} value={lecture.id}>
+                            {lecture.title} ({lecture.type})
+                        </option>
+                    ))
+                }
+            </select>
+        </div>
+    )}
+
+    {/* 🛠️ صندوق الروابط */}
+    <div className={`p-4 rounded-2xl border-2 border-dashed ${darkMode ? 'bg-gray-900/50 border-gray-700' : 'bg-orange-50/30 border-orange-200'}`}>
+        <h4 className="text-xs font-black text-orange-500 uppercase tracking-wider mb-3">
+            {lang === 'ar' ? "إضافة محتويات وروابط للدرس" : "Add Contents & Links to this Lecture"}
+        </h4>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+            <select 
+    id="linkTypeInput"
+    value={selectedType}
+    onChange={(e) => setSelectedType(e.target.value)}
+    className={`p-3 rounded-xl border text-sm outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}
+>
+    <option value="pdf">📄 PDF / شيتات</option>
+    <option value="video">🎬 Video شرح</option>
+    <option value="voice">🎙️ Voice فويس</option>
+    <option value="ppt">📊 PowerPoint</option>
+    <option value="exam">📝 امتحان / Assignment</option>
+    <option value="tutorials">🎓 شروحات / Tutorials</option>
+    <option value="quizzes">❓ كويزات / Quizzes</option>
+    <option value="summaries">🥞 ملخصات / Summaries</option>
+    <option value="labs">🔬 معمل / Labs</option>
+    <option value="link">🔗 رابط خارجي</option>
+</select>
+
+            <input 
+                id="linkTitleInput"
+                type="text" 
+                placeholder={lang === 'ar' ? "اسم الملف (مثلاً: شيت المعمل)" : "Content Title"} 
+                className={`p-3 rounded-xl border text-sm md:col-span-2 ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}
+            />
+        </div>
+
+        <div className="flex gap-2">
+            <input 
+                id="linkUrlInput"
+                type="url" 
+                placeholder="https://drive.google.com/..." 
+                className={`flex-1 p-3 rounded-xl border text-sm ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}
+            />
+            <button
+                type="button"
+                onClick={() => {
+                    const t = document.getElementById('linkTypeInput').value;
+                    const title = document.getElementById('linkTitleInput').value.trim();
+                    const url = document.getElementById('linkUrlInput').value.trim();
+                    if(!url || !title) {
+                        alert(lang === 'ar' ? "اكتب الاسم والرابط أولاً!" : "Fill Title and URL first!");
+                        return;
+                    }
+                    setLinksList([...linksList, { type: t, title: title, url: url }]);
+                    document.getElementById('linkTitleInput').value = '';
+                    document.getElementById('linkUrlInput').value = '';
+                }}
+                className="px-4 bg-orange-500 text-white font-bold rounded-xl text-sm hover:bg-orange-600 transition-colors"
+            >
+                {lang === 'ar' ? "إضافة" : "Add"}
+            </button>
+        </div>
+
+        {/* لستة الروابط المضافة مؤقتاً */}
+        {linksList.length > 0 && (
+            <div className="mt-4 space-y-2 max-h-[150px] overflow-y-auto pr-1">
+                {linksList.map((link, idx) => (
+                    <div key={idx} className={`p-2 rounded-xl flex justify-between items-center text-xs font-bold ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 shadow-sm'}`}>
+                        <div className="flex items-center gap-2">
+                            <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded uppercase text-[9px]">{link.type}</span>
+                            <span>{link.title}</span>
+                        </div>
+                        <button 
+                            type="button" 
+                            onClick={() => setLinksList(linksList.filter((_, i) => i !== idx))}
+                            className="text-red-500 hover:text-red-700 font-black px-2"
+                        >
+                            ✕
+                        </button>
+                    </div>
+                ))}
+            </div>
+        )}
+    </div>
+
+    {/* زر الحفظ النهائي المثبت أسفل مساحة السكرول */}
+    <div className="sticky bottom-0 pt-2 bg-white dark:bg-gray-900">
+        <button type="submit" className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-lg shadow-lg transition-all">
+            {isExistingLecture ? (lang === 'ar' ? "تحديث وتجميع في الدرس الحالي" : "Update Existing Lecture") : (lang === 'ar' ? "حفظ كـ درس جديد مجمع" : "Save as New Lecture")}
+        </button>
+    </div>
+</form>
             {/* بداية كود عرض الدروس والحذف والتعديل */}
 <div className="mt-8 pt-6 border-t border-gray-100 dark:border-gray-700">
     <h3 className={`text-lg font-black mb-4 ${darkMode ? 'text-orange-400' : 'text-gray-700'}`}>
