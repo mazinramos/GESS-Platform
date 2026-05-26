@@ -1095,21 +1095,18 @@ React.useEffect(() => {
             </button>
         </div>
 
-        {/* جسم المحتوى: يفرق بين النظام المجمع ونظام الملف المنفرد المباشر */}
-        <div className="space-y-4 max-h-[70vh] overflow-y-auto">
+        {/* [تعديل حاسم]: شيلنا max-h-[70vh] و overflow-y-auto لمنع السكرول الداخلي وضغط الفيديو */}
+        <div className="space-y-4">
             
             {selectedItem.links && selectedItem.links.length > 0 ? (
-                /* ================= أولاً: نظام المجلد (يحتوي على دروس وروابط فرعية) ================= */
+                /* ================= أولاً: نظام Mجلد (يحتوي على دروس وروابط فرعية) ================= */
                 <div className="flex flex-col h-full bg-white rounded-[2rem] overflow-hidden">
-                    
 
-                    {/* لستة المحتويات الفرعية: تعرض الملفات والفيديوهات المضافة فقط بدون تكرار العنوان الرئيسي */}
-                    <div className="p-6 space-y-4 overflow-y-auto max-h-[60vh]">
+                    {/* [تعديل حاسم برضه]: شيلنا max-h-[60vh] و overflow-y-auto عشان السكرول المزعج يختفي والفيديو يفرد براحته */}
+                    <div className="p-6 space-y-4">
                         {selectedItem.links
-                            /* [إصلاح التكرار]: هنا بنعمل فلترة وبنحذف أي عنصر فرعي واخد نفس اسم الفولدر الكبير بالظبط */
                             .filter(link => link.title?.trim().toLowerCase() !== selectedItem.title?.trim().toLowerCase())
                             .map((link, index) => {
-                                // تحويل روابط درايف ويوتيوب تلقائياً إلى روابط مدمجة
                                 let embedUrl = link.url || '';
                                 let isVideoUrl = false;
                                 const isPdf = embedUrl.toLowerCase().includes('.pdf') || link.title?.toLowerCase().includes('pdf') || link.title?.includes('ملف');
@@ -1148,7 +1145,7 @@ React.useEffect(() => {
                                                     <div>
                                                         <h4 className="font-bold text-base text-gray-800">{link.title}</h4>
                                                         <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                                                            {link.type === 'labs' ? (lang === 'ar' ? "🎬 فيديو المعمل المدمج" : "Embedded Lab Video") : (lang === 'ar' ? "🎬 فيديو شرح مدمج" : "Embedded Video")}
+                                                            {link.type === 'labs' ? (lang === 'ar' ? " فيديو المعمل المدمج" : "Embedded Lab Video") : (lang === 'ar' ? "🎬 فيديو شرح مدمج" : "Embedded Video")}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -1165,7 +1162,7 @@ React.useEffect(() => {
                                                 </button>
                                             </div>
                                             
-                                            {/* [إصلاح مقاس الفيديو]: تم إعطاء الحاوية pb-[56.25%] لتفرش المساحة الكاملة للفيديو بنسبة 16:9 بدون قص */}
+                                            {/* حاوية الفيديو الذهبية: الحين حتفتح بأبعادها الكاملة 100% لأن برا مفيش سكرول يضغطها */}
                                             <div id={`embedded-player-${index}`} className="hidden border-t border-gray-100 bg-black relative w-full h-0 pb-[56.25%] overflow-hidden shadow-inner">
                                                 <iframe src={embedUrl} className="w-full h-full border-none absolute top-0 left-0" allowFullScreen></iframe>
                                             </div>
@@ -1223,9 +1220,8 @@ React.useEffect(() => {
                     </div>
                 </div>
             ) : (
-                /* ================= ثانياً: نظام الملف المفرد (لو الدرس مرفوع برابط مباشر بدون مجلد) ================= */
+                /* ================= ثانياً: نظام الملف المفرد ================= */
                 <div>
-                    {/* [إصلاح مقاس الفيديو المنفرد]: تم ضبط الأبعاد هنا برضه لتفادي أي قص */}
                     {selectedItem.type === 'video' || selectedItem.type === 'labs' ? (
                         <div className="relative w-full h-0 pb-[56.25%] bg-black shadow-inner overflow-hidden">
                             <iframe 
@@ -1260,7 +1256,6 @@ React.useEffect(() => {
                             />
                         </div>
                     ) : (
-                        /* في حال كان ملف PDF منفرد */
                         <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent">
                             <i data-lucide="file-text" className="w-20 h-20 text-[#f58220]/20 mx-auto mb-6"></i>
                             <h3 className="text-2xl font-black mb-10 text-gray-800">{selectedItem.title}</h3>
