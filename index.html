@@ -1327,15 +1327,12 @@ React.useEffect(() => {
 <form onSubmit={async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-
-    if (!isExistingLecture) {
+if (!isExistingLecture) {
+    // [تعديل]: بناخد القيمة، ولو فاضية بنديها نص فاضي "" بدل ما نوقف الحفظ بـ alert
+    const lectureUrl = formData.get('lectureUrl')?.toString().trim() || '';
     
-        const lectureUrl = formData.get('lectureUrl');
-        if (!lectureUrl || !lectureUrl.trim()) {
-            alert(lang === 'ar' ? "الرجاء إضافة رابط المحتوى الأساسي أولاً!" : "Please add the main content URL first!");
-            return;
-        }
-    } else {
+    // تم حذف شرط الـ alert تماماً من هنا عشان يقبل الحفظ كاسم فقط
+} else {
    
         if (linksList.length === 0) {
             alert(lang === 'ar' ? "الرجاء إضافة رابط واحد على الأقل للعلبة أولاً!" : "Please add at least one link to the box first!");
@@ -1466,17 +1463,17 @@ style={{ scrollbarWidth: 'thin' }}
 
       
             <div>
-                <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    {lang === 'ar' ? "رابط المحتوى الأساسي (Drive / YouTube)" : "Main Content URL"}
-                </label>
-                <input 
-                    name="lectureUrl" 
-                    required={!isExistingLecture} 
-                    type="url" 
-                    placeholder="https://drive.google.com/..." 
-                    className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} 
-                />
-            </div>
+    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        {lang === 'ar' ? "رابط المحتوى الأساسي (اختياري - اترك فارغاً لو مجلد)" : "Main Content URL (Optional)"}
+    </label>
+    <input 
+        name="lectureUrl" 
+        /* [تعديل]: تم حذف required وتحويل النوع إلى text لمنع قيود المتصفح */
+        type="text" 
+        placeholder="https://drive.google.com/..." 
+        className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} 
+    />
+</div>
         </div>
     ) : (
   
