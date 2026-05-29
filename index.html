@@ -151,6 +151,7 @@ const t = {
             const [linksList, setLinksList] = React.useState([]); 
             const [isExistingLecture, setIsExistingLecture] = React.useState(false);
             const [selectedLectureId, setSelectedLectureId] = React.useState('');
+            const [isFolderOnly, setIsFolderOnly] = React.useState(false);
             
             
             
@@ -1029,251 +1030,373 @@ React.useEffect(() => {
                                {path.length == 4 && !selectedItem && (
   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
     {contents
-      .filter(c =>
-        String(c.yearId) === String(path[0].id) &&
-        String(c.semesterId) === String(path[1].id) &&
-        c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
-        c.type === view
-      )
-      .map(item => (
+  .filter(c =>
+    String(c.yearId) === String(path[0].id) &&
+    String(c.semesterId) === String(path[1].id) &&
+    c.subject?.trim().toLowerCase() === path[2].title?.trim().toLowerCase() &&
+    c.type === view
+  )
+  .map(item => (
+
+    item.isFolder ? (
+
+      // ================= فولدر فقط =================
+      <div
+        key={item.id}
+        className="bg-white p-6 rounded-[2rem] border flex items-center justify-between"
+      >
+        <div className="flex items-center gap-4">
+
+          <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
+            <i data-lucide="folder"></i>
+          </div>
+
+          <div className="text-left">
+            <h4 className="font-black text-lg text-gray-900">
+              {item.title}
+            </h4>
+
+            <p className="text-[10px] font-bold text-orange-500 uppercase tracking-wider">
+              {lang === 'ar'
+                ? 'مجلد فارغ لإضافة محتويات'
+                : 'Empty Folder'}
+            </p>
+          </div>
+
+        </div>
+
         <button
-          key={item.id}
           onClick={() => {
             setSelectedItem(item);
-            if (typeof firebase !== 'undefined') {
-              firebase.analytics().logEvent('view_lecture', {
-                lecture_title: item.title,
-                subject: item.subject,
-                type: item.type
-              });
-            }
           }}
-          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+          className="bg-orange-500 hover:bg-orange-600 text-white px-5 py-2 rounded-full text-xs font-black"
         >
-          <div className="flex items-center gap-4">
-            <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
-  {
-    item.type === 'video' ? <i data-lucide="video"></i> :
-    item.type === 'pdf' ? <i data-lucide="file-text"></i> :
-    item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
-    item.type === 'voice' ? <i data-lucide="mic"></i> :
-    item.type === 'ppt' ? <i data-lucide="presentation"></i> :
-    item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
-    item.type === 'sheets' ? <i data-lucide="table"></i> :
-    item.type === 'tutorials' ? <i data-lucide="brain"></i> :
-    item.type === 'quizzes' ? <i data-lucide="help-circle"></i> :
-    item.type === 'summaries' ? <i data-lucide="file-check"></i> :
-    item.type === 'references' ? <i data-lucide="book-open"></i> :
-    <i data-lucide="external-link"></i>
-  }
-</div>
-
-            <div className="text-left">
-              <h4 className="font-black text-lg text-gray-900">{item.title}</h4>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                {item.type} • {item.links ? `${item.links.length} ${lang === 'ar' ? 'ملفات' : 'Files'}` : `1 ${lang === 'ar' ? 'ملف' : 'File'}`}
-              </p>
-            </div>
-          </div>
-          <i data-lucide="chevron-left" className="text-gray-300"></i>
+          {lang === 'ar' ? 'دخول' : 'Open'}
         </button>
-      ))}
+      </div>
+
+    ) : (
+
+      // ================= درس عادي =================
+      <button
+        key={item.id}
+        onClick={() => {
+          setSelectedItem(item);
+
+          if (typeof firebase !== 'undefined') {
+            firebase.analytics().logEvent('view_lecture', {
+              lecture_title: item.title,
+              subject: item.subject,
+              type: item.type
+            });
+          }
+        }}
+        className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
+      >
+
+        <div className="flex items-center gap-4">
+
+          <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
+
+            {
+              item.type === 'video' ? <i data-lucide="video"></i> :
+              item.type === 'pdf' ? <i data-lucide="file-text"></i> :
+              item.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+              item.type === 'voice' ? <i data-lucide="mic"></i> :
+              item.type === 'ppt' ? <i data-lucide="presentation"></i> :
+              item.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+              item.type === 'sheets' ? <i data-lucide="table"></i> :
+              item.type === 'tutorials' ? <i data-lucide="brain"></i> :
+              item.type === 'quizzes' ? <i data-lucide="help-circle"></i> :
+              item.type === 'summaries' ? <i data-lucide="file-check"></i> :
+              item.type === 'references' ? <i data-lucide="book-open"></i> :
+              <i data-lucide="external-link"></i>
+            }
+
+          </div>
+
+          <div className="text-left">
+            <h4 className="font-black text-lg text-gray-900">
+              {item.title}
+            </h4>
+
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              {item.type}
+            </p>
+          </div>
+
+        </div>
+
+        <i data-lucide="chevron-left" className="text-gray-300"></i>
+
+      </button>
+
+    )
+
+))}
   </div>
 )}
-
-
 {selectedItem && (
-    <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in">
-        {/* الرأس الشامل للمودال: المادة والعنوان وزر الإغلاق */}
-        <div className="p-6 bg-gray-50 flex items-center justify-between border-b border-gray-100">
+    <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in max-w-4xl w-full mx-auto flex flex-col max-h-[90vh] my-auto">
+        
+        {/* رأس المودال الثابت */}
+        <div className="p-4 bg-gray-50 flex items-center justify-between border-b border-gray-100 shrink-0">
             <div className="flex flex-col">
-                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem.subject}</span>
-                <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem.title}</h2>
+                <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem?.subject || ""}</span>
+                <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem?.title || ""}</h2>
             </div>
-            <button onClick={() => setSelectedItem(null)} className="p-3 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
+            <button onClick={() => setSelectedItem(null)} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
                 <i data-lucide="x" className="w-5 h-5 text-gray-500"></i>
             </button>
         </div>
 
-        {/* [تعديل حاسم]: شيلنا max-h-[70vh] و overflow-y-auto لمنع السكرول الداخلي وضغط الفيديو */}
-        <div className="space-y-4">
+        {/* جسم المحتوى - مع تعديلات الفريم والأيقونات الديناميكية */}
+        <div className="flex-1 overflow-y-auto pr-1 overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             
-            {selectedItem.links && selectedItem.links.length > 0 ? (
-                /* ================= أولاً: نظام Mجلد (يحتوي على دروس وروابط فرعية) ================= */
-                <div className="flex flex-col h-full bg-white rounded-[2rem] overflow-hidden">
+            {selectedItem?.links && Array.isArray(selectedItem.links) && selectedItem.links.length > 0 ? (
+                /* ================= أولاً: نظام المجلد (يحتوي على دروس وروابط فرعية) ================= */
+                <div className="p-6 space-y-6">
+                    <div className="space-y-4">
+                        {selectedItem.links.map((link, index) => {
+                            if (!link) return null;
+                            
+                            let embedUrl = link.url || '';
+                            let isVideoUrl = false;
+                            const linkTitle = link.title || '';
+                            const isPdf = embedUrl.toLowerCase().includes('.pdf') || linkTitle.toLowerCase().includes('pdf') || linkTitle.includes('ملف');
 
-                    {/* [تعديل حاسم برضه]: شيلنا max-h-[60vh] و overflow-y-auto عشان السكرول المزعج يختفي والفيديو يفرد براحته */}
-                    <div className="p-6 space-y-4">
-                        {selectedItem.links
-                            .filter(link => link.title?.trim().toLowerCase() !== selectedItem.title?.trim().toLowerCase())
-                            .map((link, index) => {
-                                let embedUrl = link.url || '';
-                                let isVideoUrl = false;
-                                const isPdf = embedUrl.toLowerCase().includes('.pdf') || link.title?.toLowerCase().includes('pdf') || link.title?.includes('ملف');
-
-                                if (embedUrl.includes('drive.google.com')) {
-                                    let fileId = '';
-                                    const match = embedUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
-                                    if (match && match[1]) fileId = match[1];
-                                    else {
-                                        const queryMatch = embedUrl.match(/id=([a-zA-Z0-9-_]+)/);
-                                        if (queryMatch && queryMatch[1]) fileId = queryMatch[1];
+                            if (embedUrl.includes('drive.google.com')) {
+                                let fileId = '';
+                                const match = embedUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                                if (match && match[1]) {
+                                    fileId = match[1];
+                                } else {
+                                    const queryMatch = embedUrl.match(/id=([a-zA-Z0-9-_]+)/);
+                                    if (queryMatch && queryMatch[1]) fileId = queryMatch[1];
+                                }
+                                if (fileId) {
+                                    if ((link.type === 'video' || link.type === 'labs') && !isPdf) {
+                                        embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                                        isVideoUrl = true;
+                                    } else if (link.type === 'voice') {
+                                        embedUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
                                     }
-                                    if (fileId) {
-                                        if ((link.type === 'video' || link.type === 'labs') && !isPdf) {
-                                            embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-                                            isVideoUrl = true;
-                                        } else if (link.type === 'voice') {
-                                            embedUrl = `https://docs.google.com/uc?export=download&id=${fileId}`;
-                                        }
-                                    }
-                                } else if ((embedUrl.includes('youtube.com/watch') || embedUrl.includes('youtu.be')) && !isPdf) {
-                                    const videoId = embedUrl.includes('v=') ? embedUrl.split('v=')[1]?.split('&')[0] : embedUrl.split('/').pop();
-                                    embedUrl = `https://www.youtube.com/embed/${videoId}`;
-                                    isVideoUrl = true;
                                 }
+                            } else if ((embedUrl.includes('youtube.com/watch') || embedUrl.includes('youtu.be')) && !isPdf) {
+                                const videoId = embedUrl.includes('v=') ? embedUrl.split('v=')[1]?.split('&')[0] : embedUrl.split('/').pop();
+                                embedUrl = `https://www.youtube.com/embed/${videoId}`;
+                                isVideoUrl = true;
+                            }
 
-                                // 1. عرض الفيديوهات المجمعة
-                                if ((link.type === 'video' && !isPdf) || (link.type === 'labs' && isVideoUrl)) {
-                                    return (
-                                        <div key={index} className="rounded-[2rem] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden">
-                                            <div className="p-5 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
-                                                <div className="flex items-center gap-4 self-start md:self-center">
-                                                    <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
-                                                        {link.type === 'labs' ? <i data-lucide="flask-conical" className="w-5 h-5"></i> : <i data-lucide="video" className="w-5 h-5"></i>}
-                                                    </div>
-                                                    <div>
-                                                        <h4 className="font-bold text-base text-gray-800">{link.title}</h4>
-                                                        <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">
-                                                            {link.type === 'labs' ? (lang === 'ar' ? " فيديو المعمل المدمج" : "Embedded Lab Video") : (lang === 'ar' ? "🎬 فيديو شرح مدمج" : "Embedded Video")}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                                <button 
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                        e.preventDefault();
-                                                        const playerDiv = document.getElementById(`embedded-player-${index}`);
-                                                        if (playerDiv) playerDiv.classList.toggle('hidden');
-                                                    }} 
-                                                    className="w-full md:w-auto text-center bg-gray-900 hover:bg-orange-500 text-white px-6 py-3 rounded-full text-xs font-black shadow-md transition-all whitespace-nowrap"
-                                                >
-                                                    {lang === 'ar' ? " مشاهدة الفيديو" : "Watch Video"}
-                                                </button>
-                                            </div>
-                                            
-                                            {/* حاوية الفيديو الذهبية: الحين حتفتح بأبعادها الكاملة 100% لأن برا مفيش سكرول يضغطها */}
-                                            <div id={`embedded-player-${index}`} className="hidden border-t border-gray-100 bg-black relative w-full h-0 pb-[56.25%] overflow-hidden shadow-inner">
-                                                <iframe src={embedUrl} className="w-full h-full border-none absolute top-0 left-0" allowFullScreen></iframe>
-                                            </div>
-                                        </div>
-                                    );
-                                }
+                            // ---------- [ تحديد الأيقونة والنصوص لـ كروت المجلد بشكل ديناميكي ] ----------
+                            let lucideIcon = "file-text"; // الافتراضي ملف
+                            let badgeText = link.type || "link";
+                            let btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "🔗 فتح / تحميل الملف" : "Open File";
 
-                                // 2. عرض الفويس المدمج
-                                if (link.type === 'voice') {
-                                    return (
-                                        <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
-                                            <div className="flex items-center gap-4 self-start md:self-center">
-                                                <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0"><i data-lucide="mic" className="w-5 h-5"></i></div>
-                                                <div>
-                                                    <h4 className="font-bold text-base text-gray-800">{link.title}</h4>
-                                                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{lang === 'ar' ? "تسجيل صوتي مدمج" : "Voice Note"}</span>
-                                                </div>
-                                            </div>
-                                            <div className="w-full md:max-w-md">
-                                                <audio controls className="w-full h-10 rounded-xl bg-gray-100 custom-audio" src={embedUrl} />
-                                            </div>
-                                        </div>
-                                    );
-                                }
+                            if (link.type === 'labs' || linkTitle.toLowerCase().includes('exam') || linkTitle.includes('امتحان')) {
+                                lucideIcon = "flask-conical"; // لو معمل أو امتحان عملي
+                                badgeText = (typeof lang !== 'undefined' && lang === 'ar') ? "امتحان / معمل ورق" : "Exam / Lab Doc";
+                                btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📝 معاينة الامتحان / المعمل" : "Preview Exam / Lab";
+                            } else if (link.type === 'pdf' || isPdf) {
+                                lucideIcon = "file-text"; // ملف نصي أو PDF
+                                badgeText = "PDF Document";
+                                btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📄 فتح ملف PDF" : "Open PDF File";
+                            } else if (link.type === 'ppt' || linkTitle.toLowerCase().includes('ppt') || linkTitle.includes('محاضرة')) {
+                                lucideIcon = "presentation"; // بوربوينت
+                                badgeText = "PowerPoint";
+                                btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📊 عرض المحاضرة (PPT)" : "View PPT Slides";
+                            } else if (link.type === 'video' || isVideoUrl) {
+                                lucideIcon = "video"; // فيديو
+                                badgeText = (typeof lang !== 'undefined' && lang === 'ar') ? "🎬 فيديو شرح مدمج" : "Embedded Video";
+                            } else if (link.type === 'voice') {
+                                lucideIcon = "mic"; // تسجيل صوتي
+                                badgeText = (typeof lang !== 'undefined' && lang === 'ar') ? "تسجيل صوتي مدمج" : "Voice Note";
+                            } else if (link.type?.toLowerCase().includes('sheet') || linkTitle.toLowerCase().includes('sheet') || linkTitle.includes('شيت')) {
+                                lucideIcon = "file-spreadsheet"; // شيتات إكسل أو بيانات
+                                badgeText = (typeof lang !== 'undefined' && lang === 'ar') ? "شيت عملي" : "Data Sheet";
+                                btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📊 فتح الشيت" : "Open Sheet";
+                            }
 
-                                // 3. كرت الملفات التقليدية (PDF, PPT, Labs Files)
+                            // 1. كرت مخصص للفيديو (مشاهدة مدمجة)
+                            if ((link.type === 'video' && !isPdf) || (link.type === 'labs' && isVideoUrl)) {
                                 return (
-                                    <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-all">
-                                        <div className="flex items-center gap-4 self-start md:self-center">
-                                            <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
-                                                {link.type === 'ppt' ? <i data-lucide="presentation" className="w-5 h-5"></i> : 
-                                                 link.type === 'labs' ? <i data-lucide="flask-conical" className="w-5 h-5"></i> : 
-                                                 <i data-lucide="file-text" className="w-5 h-5"></i>}
+                                    <div key={index} className="rounded-[2rem] border border-gray-100 bg-white shadow-sm hover:shadow-md transition-all overflow-hidden">
+                                        <div className="p-5 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4">
+                                            <div className="flex items-center gap-4 self-start md:self-center">
+                                                <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
+                                                    <i data-lucide={lucideIcon} className="w-5 h-5"></i>
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-base text-gray-800">{linkTitle}</h4>
+                                                    <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{badgeText}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className="font-bold text-base text-gray-800">{link.title}</h4>
-                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                                                    {link.type === 'labs' ? (lang === 'ar' ? " ملف معمل" : "Lab File") : link.type}
-                                                </span>
-                                            </div>
+                                            <button 
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const playerDiv = document.getElementById(`embedded-player-${index}`);
+                                                    if (playerDiv) playerDiv.classList.toggle('hidden');
+                                                }} 
+                                                className="w-full md:w-auto text-center bg-gray-900 hover:bg-orange-500 text-white px-6 py-3 rounded-full text-xs font-black shadow-md transition-all whitespace-nowrap"
+                                            >
+                                                {(typeof lang !== 'undefined' && lang === 'ar') ? "🎬 مشاهدة الفيديو" : "Watch Video"}
+                                            </button>
                                         </div>
-                                        <a href={link.url} target="_blank" rel="noreferrer" className="w-full md:w-auto text-center bg-gray-900 hover:bg-orange-500 text-white px-6 py-3 rounded-full text-xs font-black shadow-md transition-all whitespace-nowrap">
-                                            {lang === 'ar' ? " فتح / تحميل الملف" : "Open File"}
-                                        </a>
+                                        <div id={`embedded-player-${index}`} className="hidden relative w-full h-0 pb-[56.25%] bg-black border-t border-gray-100 overflow-hidden">
+                                            <iframe src={embedUrl} className="w-full h-full border-none absolute top-0 left-0" allow="autoplay; fullscreen" allowFullScreen></iframe>
+                                        </div>
                                     </div>
                                 );
-                            })}
-                    </div>
-                    
-                    {/* أسفل المجلد */}
-                    <div className="p-6 bg-gray-50 border-t border-gray-100 mt-auto">
-                        <p className="text-center text-xs text-gray-400 font-medium">
-                            {lang === 'ar' ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب" : "Content provided by the Geomatics Engineering Department"}
-                        </p>
+                            }
+
+                            // 2. كرت مخصص للفويس (تشغيل صوتي مدمج)
+                            if (link.type === 'voice') {
+                                return (
+                                    <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4 shadow-sm">
+                                        <div className="flex items-center gap-4 self-start md:self-center">
+                                            <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
+                                                <i data-lucide={lucideIcon} className="w-5 h-5"></i>
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-base text-gray-800">{linkTitle}</h4>
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{badgeText}</span>
+                                            </div>
+                                        </div>
+                                        <div className="w-full md:max-w-md">
+                                            <audio controls className="w-full h-10 rounded-xl bg-gray-100 custom-audio" src={embedUrl} />
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            // 3. كرت مخصص لباقي الملفات والروابط (PDF, PPT, Sheets, Exams...) بأيقونات متغيرة
+                            return (
+                                <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col md:flex-row justify-between items-center gap-4 hover:shadow-md transition-all">
+                                    <div className="flex items-center gap-4 self-start md:self-center">
+                                        <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
+                                            <i data-lucide={lucideIcon} className="w-5 h-5"></i>
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-base text-gray-800">{linkTitle}</h4>
+                                            <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">{badgeText}</span>
+                                        </div>
+                                    </div>
+                                    <a href={link.url || '#'} target="_blank" rel="noreferrer" className="w-full md:w-auto text-center bg-gray-900 hover:bg-orange-500 text-white px-6 py-3 rounded-full text-xs font-black shadow-md transition-all whitespace-nowrap">
+                                        {btnText}
+                                    </a>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
             ) : (
-                /* ================= ثانياً: نظام الملف المفرد ================= */
+                /* ================= ثانياً: نظام الدرس المنفرد المباشر ================= */
                 <div>
-                    {selectedItem.type === 'video' || selectedItem.type === 'labs' ? (
-                        <div className="relative w-full h-0 pb-[56.25%] bg-black shadow-inner overflow-hidden">
-                            <iframe 
-                                src={
-                                    selectedItem.url?.includes("drive.google.com")
-                                        ? `https://drive.google.com/file/d/${selectedItem.url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1]}/preview`
-                                        : selectedItem.url?.replace("watch?v=", "embed/")
-                                } 
-                                className="w-full h-full border-none absolute top-0 left-0" 
-                                allowFullScreen>
-                            </iframe>
-                        </div>
-                    ) : selectedItem.type === 'voice' ? (
-                        <div className="p-8 mx-6 mt-4 bg-gradient-to-br from-orange-50 to-transparent rounded-[2rem] border border-orange-100/50 shadow-sm">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-14 h-14 rounded-2xl bg-orange-100 text-orange-600 flex items-center justify-center shadow-inner">
-                                    <i data-lucide="mic" className="w-6 h-6"></i>
+                    {(() => {
+                        const singleUrl = selectedItem?.url || '';
+                        const singleTitle = selectedItem?.title || '';
+                        
+                        // حماية إضافية: لو الدرس مضاف كاسم وعنوان تنبيهي فقط (بدون أي روابط)
+                        if (!singleUrl || singleUrl.trim() === '' || singleUrl === '#') {
+                            return (
+                                <div className="py-16 text-center bg-gradient-to-br from-gray-50 to-transparent px-6">
+                                    <i data-lucide="bell" className="w-16 h-16 text-orange-400 mx-auto mb-4 animate-bounce"></i>
+                                    <h3 className="text-xl font-bold text-gray-400 mb-2">
+                                        {(typeof lang !== 'undefined' && lang === 'ar') ? "العنوان المسجل" : "Registered Title"}
+                                    </h3>
+                                    <p className="text-2xl font-black text-gray-800 max-w-xl mx-auto leading-relaxed">
+                                        {singleTitle}
+                                    </p>
+                                    <div className="mt-6 inline-block bg-orange-50 text-orange-600 text-xs font-black px-4 py-2 rounded-full border border-orange-100">
+                                        {(typeof lang !== 'undefined' && lang === 'ar') ? "📌 تنويه وإشعار أكاديمي بدون ملفات مرفقة" : "📌 Academic notice with no attached files"}
+                                    </div>
                                 </div>
-                                <div>
-                                    <h3 className="font-black text-xl text-gray-800">{selectedItem.title}</h3>
-                                    <p className="text-gray-400 text-xs font-bold uppercase tracking-wider">Voice Lecture</p>
-                                </div>
-                            </div>
-                            <audio 
-                                controls 
-                                className="w-full h-12 rounded-xl custom-audio mt-2"
-                                src={
-                                    selectedItem.url?.includes("drive.google.com")
-                                        ? `https://docs.google.com/uc?export=download&id=${selectedItem.url.match(/\/d\/([a-zA-Z0-9-_]+)/)?.[1]}`
-                                        : selectedItem.url
-                                } 
-                            />
-                        </div>
-                    ) : (
-                        <div className="py-20 text-center bg-gradient-to-br from-[#f58220]/5 to-transparent">
-                            <i data-lucide="file-text" className="w-20 h-20 text-[#f58220]/20 mx-auto mb-6"></i>
-                            <h3 className="text-2xl font-black mb-10 text-gray-800">{selectedItem.title}</h3>
-                            <a href={selectedItem.url} target="_blank" rel="noreferrer" className="bg-gray-900 hover:bg-orange-500 text-white px-10 py-4 rounded-full font-black shadow-xl transition-all">
-                                {lang === 'ar' ? "تحميل / فتح الملف" : "Download / Open File"}
-                            </a>
-                        </div>
-                    )}
+                            );
+                        }
 
-                    <div className="p-10">
-                        <h2 className="text-3xl font-black text-gray-900">{selectedItem.title}</h2>
-                        <p className="mt-4 text-gray-500 font-medium">
-                            {lang === 'ar' ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}
+                        const isDirectPdf = singleUrl.toLowerCase().includes('.pdf') || singleTitle.toLowerCase().includes('pdf') || singleTitle.includes('ملف');
+                        let isSingleVideo = false;
+                        if (singleUrl && !isDirectPdf && selectedItem?.type !== 'voice') {
+                            if (singleUrl.includes('drive.google.com') || singleUrl.includes('youtube.com') || singleUrl.includes('youtu.be')) {
+                                isSingleVideo = true;
+                            }
+                        }
+
+                        // 1. عرض فريم الفيديو المباشر لو الدرس فيديو منفرد
+                        if ((selectedItem?.type === 'video' || selectedItem?.type === 'labs' || isSingleVideo) && !isDirectPdf) {
+                            let videoSrc = '';
+                            if (singleUrl.includes("drive.google.com")) {
+                                const driveMatch = singleUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                                videoSrc = driveMatch && driveMatch[1] ? `https://drive.google.com/file/d/${driveMatch[1]}/preview` : singleUrl;
+                            } else {
+                                videoSrc = singleUrl.replace("watch?v=", "embed/");
+                            }
+
+                            return (
+                                <div className="relative w-full h-0 pb-[56.25%] bg-black overflow-hidden">
+                                    <iframe src={videoSrc} className="w-full h-full border-none absolute top-0 left-0" allow="autoplay; fullscreen" allowFullScreen></iframe>
+                                </div>
+                            );
+                        }
+
+                        // 2. عرض الريكورد الصوتي المباشر لو منفرد
+                        if (selectedItem?.type === 'voice') {
+                            let voiceSrc = singleUrl;
+                            if (singleUrl.includes("drive.google.com")) {
+                                const voiceMatch = singleUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+                                if (voiceMatch && voiceMatch[1]) {
+                                    voiceSrc = `https://docs.google.com/uc?export=download&id=${voiceMatch[1]}`;
+                                }
+                            }
+                            return (
+                                <div className="p-8 mx-6 mt-4 bg-gradient-to-br from-orange-50 to-transparent rounded-[2rem] border border-orange-100/50 shadow-sm">
+                                    <audio controls className="w-full h-12 rounded-xl custom-audio" src={voiceSrc} />
+                                </div>
+                            );
+                        }
+
+                        // 3. كرت التحميل للملفات الفردية الأخرى (PDF, PPT...) بأيقونات Lucide متغيرة ديناميكياً
+                        let singleLucideIcon = "file-text";
+                        let singleBtnText = (typeof lang !== 'undefined' && lang === 'ar') ? "تحميل / فتح الملف" : "Download / Open File";
+
+                        if (selectedItem?.type === 'labs' || singleTitle.toLowerCase().includes('exam') || singleTitle.includes('امتحان')) {
+                            singleLucideIcon = "flask-conical";
+                            singleBtnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📝 معاينة الامتحان / ملف المعمل" : "Preview Exam / Lab File";
+                        } else if (selectedItem?.type === 'ppt' || singleTitle.toLowerCase().includes('ppt') || singleTitle.includes('محاضرة')) {
+                            singleLucideIcon = "presentation";
+                            singleBtnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📊 عرض المحاضرة البوربوينت" : "View PPT Presentation";
+                        } else if (selectedItem?.type === 'pdf' || isDirectPdf) {
+                            singleLucideIcon = "file-text";
+                            singleBtnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📄 فتح وقراءة ملف PDF" : "Open & Read PDF";
+                        }
+
+                        return (
+                            <div className="py-20 text-center bg-gradient-to-br from-orange-500/5 to-transparent">
+                                <i data-lucide={singleLucideIcon} className="w-20 h-20 text-orange-500/20 mx-auto mb-6"></i>
+                                <h3 className="text-2xl font-black mb-10 text-gray-800 px-6">{singleTitle}</h3>
+                                <a href={singleUrl} target="_blank" rel="noreferrer" className="bg-orange-500 hover:bg-gray-900 text-white px-10 py-4 rounded-full font-black shadow-xl transition-all inline-block">
+                                    {singleBtnText}
+                                </a>
+                            </div>
+                        );
+                    })()}
+
+                    <div className="p-8">
+                        <h2 className="text-2xl font-black text-gray-900">{selectedItem?.title || ""}</h2>
+                        <p className="mt-2 text-sm text-gray-500 font-medium">
+                            {(typeof lang !== 'undefined' && lang === 'ar') ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}
                         </p>
                     </div>
                 </div>
             )}
         </div>
+
+        {/* تذييل المودال الثابت */}
+        <div className="p-4 bg-gray-50 border-t border-gray-100 shrink-0 text-center text-xs text-gray-400 font-medium">
+            {(typeof lang !== 'undefined' && lang === 'ar') ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب" : "Content provided by the Geomatics Engineering Department"}
+        </div>
+
     </div>
 )}
                             </div>
@@ -1372,12 +1495,13 @@ const lectureData = {
                 subject: modalSubjectData.subject,
                 yearId: String(modalSubjectData.yearId),
                 semesterId: String(modalSubjectData.semesterId),
-          
-                links: [{
-                    type: formData.get('type'),
-                    title: formData.get('title'),
-                    url: formData.get('lectureUrl')
-                }],
+          links: formData.get('lectureUrl')?.trim()
+    ? [{
+        type: formData.get('type'),
+        title: formData.get('title'),
+        url: formData.get('lectureUrl')
+      }]
+    : [],
                 createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
             await db.collection("materials").add(newLecture);
@@ -1465,18 +1589,70 @@ style={{ scrollbarWidth: 'thin' }}
             </div>
 
       
-            <div>
-    <label className={`block text-sm font-bold mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-        {lang === 'ar' ? "رابط المحتوى الأساسي (اختياري - اترك فارغاً لو مجلد)" : "Main Content URL (Optional)"}
+         {/* نوع الإضافة */}
+<div>
+    <label className={`block text-sm font-bold mb-3 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
+        {lang === 'ar' ? "نوع المادة" : "Lecture Type"}
     </label>
-    <input 
-        name="lectureUrl" 
-        /* [تعديل]: تم حذف required وتحويل النوع إلى text لمنع قيود المتصفح */
-        type="text" 
-        placeholder="https://drive.google.com/..." 
-        className={`w-full p-3 rounded-xl border ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`} 
-    />
+
+    <div className="grid grid-cols-2 gap-3">
+
+        {/* مادة كاملة */}
+        <button
+            type="button"
+            onClick={() => setIsFolderOnly(false)}
+            className={`p-4 rounded-2xl border-2 transition-all font-black text-sm ${
+                !isFolderOnly
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-lg'
+                    : darkMode
+                        ? 'bg-gray-800 border-gray-700 text-gray-300'
+                        : 'bg-white border-gray-200 text-gray-700'
+            }`}
+        >
+            🎬 {lang === 'ar' ? "مادة كاملة" : "Full Lecture"}
+        </button>
+
+        {/* اسم فقط */}
+        <button
+            type="button"
+            onClick={() => setIsFolderOnly(true)}
+            className={`p-4 rounded-2xl border-2 transition-all font-black text-sm ${
+                isFolderOnly
+                    ? 'bg-orange-500 text-white border-orange-500 shadow-lg'
+                    : darkMode
+                        ? 'bg-gray-800 border-gray-700 text-gray-300'
+                        : 'bg-white border-gray-200 text-gray-700'
+            }`}
+        >
+            📁 {lang === 'ar' ? "اسم فقط" : "Folder Only"}
+        </button>
+
+    </div>
 </div>
+
+{/* الرابط يظهر فقط لو مادة كاملة */}
+{!isFolderOnly && (
+    <div>
+        <label className={`block text-sm font-bold mb-2 ${
+            darkMode ? 'text-gray-300' : 'text-gray-600'
+        }`}>
+            {lang === 'ar'
+                ? "رابط المحتوى الأساسي"
+                : "Main Content URL"}
+        </label>
+
+        <input
+            name="lectureUrl"
+            type="text"
+            placeholder="https://drive.google.com/..."
+            className={`w-full p-3 rounded-xl border ${
+                darkMode
+                    ? 'bg-gray-800 border-gray-700 text-white'
+                    : 'bg-gray-50 border-gray-200'
+            }`}
+        />
+    </div>
+)}
         </div>
     ) : (
   
@@ -1568,25 +1744,149 @@ style={{ scrollbarWidth: 'thin' }}
                     </button>
                 </div>
 
-                {linksList.length > 0 && (
-                    <div className="mt-4 space-y-2 max-h-[150px] overflow-y-auto pr-1">
-                        {linksList.map((link, idx) => (
-                            <div key={idx} className={`p-2 rounded-xl flex justify-between items-center text-xs font-bold ${darkMode ? 'bg-gray-800 text-white' : 'bg-white text-gray-700 shadow-sm'}`}>
-                                <div className="flex items-center gap-2">
-                                    <span className="bg-orange-100 text-orange-600 px-2 py-0.5 rounded uppercase text-[9px]">{link.type}</span>
-                                    <span>{link.title}</span>
-                                </div>
-                                <button 
-                                    type="button" 
-                                    onClick={() => setLinksList(linksList.filter((_, i) => i !== idx))}
-                                    className="text-red-500 hover:text-red-700 font-black px-2"
-                                >
-                                    ✕
-                                </button>
+               {linksList.length > 0 && (
+    <div className="mt-4 space-y-3 max-h-[250px] overflow-y-auto pr-1">
+
+        <div className="flex items-center justify-between mb-2">
+            <h3 className="text-xs font-black text-orange-500 uppercase tracking-wider">
+                {lang === 'ar' ? "المحتويات المضافة داخل الدرس" : "Added Lecture Contents"}
+            </h3>
+
+            <span className="text-[10px] font-black text-gray-400">
+                {linksList.length} {lang === 'ar' ? "عنصر" : "Items"}
+            </span>
+        </div>
+
+        {linksList.map((link, idx) => {
+
+            const isVideo =
+                link.type === 'video' ||
+                link.url.includes('youtube') ||
+                link.url.includes('youtu.be');
+
+            const isVoice = link.type === 'voice';
+
+            let previewUrl = link.url;
+
+            if (previewUrl.includes('watch?v=')) {
+                previewUrl = previewUrl.replace("watch?v=", "embed/");
+            }
+
+            if (previewUrl.includes('youtu.be/')) {
+                const id = previewUrl.split('youtu.be/')[1];
+                previewUrl = `https://www.youtube.com/embed/${id}`;
+            }
+
+            return (
+                <div
+                    key={idx}
+                    className={`rounded-2xl border overflow-hidden ${
+                        darkMode
+                            ? 'bg-gray-900 border-gray-700'
+                            : 'bg-white border-gray-200 shadow-sm'
+                    }`}
+                >
+
+                    {/* Header */}
+                    <div className="p-4 flex items-center justify-between gap-3">
+
+                        <div className="flex items-center gap-3">
+
+                            <div className="w-12 h-12 rounded-xl bg-orange-100 text-orange-500 flex items-center justify-center">
+
+                                {
+                                    link.type === 'video' ? <i data-lucide="video"></i> :
+                                    link.type === 'voice' ? <i data-lucide="mic"></i> :
+                                    link.type === 'pdf' ? <i data-lucide="file-text"></i> :
+                                    link.type === 'ppt' ? <i data-lucide="presentation"></i> :
+                                    link.type === 'exam' ? <i data-lucide="clipboard-list"></i> :
+                                    link.type === 'labs' ? <i data-lucide="flask-conical"></i> :
+                                    link.type === 'tutorials' ? <i data-lucide="brain"></i> :
+                                    link.type === 'quizzes' ? <i data-lucide="help-circle"></i> :
+                                    link.type === 'summaries' ? <i data-lucide="file-check"></i> :
+                                    <i data-lucide="link"></i>
+                                }
+
                             </div>
-                        ))}
+
+                            <div>
+                                <h4 className={`font-black text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                    {link.title}
+                                </h4>
+
+                                <p className="text-[10px] uppercase font-black text-orange-500 tracking-widest">
+                                    {link.type}
+                                </p>
+                            </div>
+
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-2">
+
+                            {/* معاينة */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    window.open(link.url, '_blank');
+                                }}
+                                className="px-3 py-2 rounded-xl bg-blue-500 hover:bg-blue-600 text-white text-[10px] font-black"
+                            >
+                                {lang === 'ar' ? "معاينة" : "Preview"}
+                            </button>
+
+                            {/* حذف */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setLinksList(
+                                        linksList.filter((_, i) => i !== idx)
+                                    );
+                                }}
+                                className="px-3 py-2 rounded-xl bg-red-500 hover:bg-red-600 text-white text-[10px] font-black"
+                            >
+                                {lang === 'ar' ? "حذف" : "Delete"}
+                            </button>
+
+                        </div>
                     </div>
-                )}
+
+                    {/* Preview */}
+                    {(isVideo || isVoice) && (
+                        <div className="border-t">
+
+                            {isVideo && (
+                                <div className="aspect-video bg-black">
+
+                                    <iframe
+                                        src={previewUrl}
+                                        className="w-full h-full border-none"
+                                        allowFullScreen
+                                    ></iframe>
+
+                                </div>
+                            )}
+
+                            {isVoice && (
+                                <div className="p-4">
+
+                                    <audio
+                                        controls
+                                        className="w-full"
+                                        src={link.url}
+                                    />
+
+                                </div>
+                            )}
+
+                        </div>
+                    )}
+
+                </div>
+            );
+        })}
+    </div>
+)}
             </div>
         </div>
     )}
