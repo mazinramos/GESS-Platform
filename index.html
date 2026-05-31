@@ -11,6 +11,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22GESS%20EDU%22,%22short_name%22:%22GESS%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22icons%22:[{%22src%22:%22https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="manifest.json" />
     <title>GESS EDU | منصة هندسة المساحة - جامعة الخرطوم</title>
     
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -152,10 +154,66 @@ const t = {
             const [isExistingLecture, setIsExistingLecture] = React.useState(false);
             const [selectedLectureId, setSelectedLectureId] = React.useState('');
             const [isFolderOnly, setIsFolderOnly] = React.useState(false);
-            
-            
+            const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+            const [showDownloadOption, setShowDownloadOption] = React.useState(false);
             
 
+
+React.useEffect(() => {
+    // 1. فحص هل الطالب فاتح المنصة حالياً كتطبيق منزل في الشاشة الرئيسية؟
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+                         || window.navigator.standalone === true;
+
+    // 2. إذا كان آيفون، نظام آبل ما بيدعمش حدث التثبيت التلقائي، فبنعتمد على الفحص المباشر
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isStandalone) {
+        setShowDownloadOption(false); // مخفي تماماً لأن التطبيق نازل وشغال
+    } else {
+        // لو مش منزل والموبايل آيفون، أظهره دايماً عشان نوجهه لكيفية التنزيل
+        if (isIOS) {
+            setShowDownloadOption(true);
+        }
+    }
+
+    // 3. لأجهزة الأندرويد واللابتوب والويندوز (اصطياد التثبيت)
+    const handleBeforeInstallPrompt = (e) => {
+        e.preventDefault();
+        setDeferredPrompt(e);
+        // طالما الحدث اشتغل والموقع مش standalone، يبقى الخيار يظهر فوراً
+        if (!isStandalone) {
+            setShowDownloadOption(true);
+        }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+}, []);
+
+// دالة التشغيل عند الضغط على زر "تحميل التطبيق"
+const handleDownloadApp = async () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (isIOS) {
+        // لمستخدمي الآيفون: بنظهر لهم تنبيه (Alert) بالخطوات لأن سفاري لا يدعم التثبيت البرمجي
+        alert(lang === 'ar' 
+            ? "📥 للتثبيت على iPhone:\n1. اضغط على زر المشاركة أسفل المتصفح.\n2. اختر 'إضافة إلى الشاشة الرئيسية'." 
+            : "📥 To Install on iPhone:\n1. Tap the Share button.\n2. Choose 'Add to Home Screen'."
+        );
+        return;
+    }
+
+    // للأندرويد، ويندوز، ولابتوب
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt(); // إظهار نافذة المتصفح الرسمية للتثبيت فوراً
+    
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+        setShowDownloadOption(false); // لو وافق وثبته يختفي الخيار فوراً
+    }
+    setDeferredPrompt(null);
+};
 
             React.useEffect(() => {
   if (!localStorage.getItem('gess_login_pass')) {
@@ -613,6 +671,24 @@ React.useEffect(() => {
                                     {lang === 'ar' ? "لوحة الإدارة" : "Admin Panel"}
                                 </div>
                             </button>
+
+                            {/* خيار تحميل التطبيق الديناميكي */}
+{showDownloadOption && (
+    <button
+        onClick={handleDownloadApp}
+        className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors rounded-xl ${
+            darkMode 
+                ? 'text-orange-400 hover:bg-gray-800' 
+                : 'text-[#f58220] hover:bg-orange-50'
+        }`}
+    >
+        {/* أيقونة التحميل المريحة للعين */}
+        <span className="text-base">📥</span>
+        <span>
+            {lang === 'ar' ? 'تحميل التطبيق' : 'Install App'}
+        </span>
+    </button>
+)}
 
                             <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
                             <button 
