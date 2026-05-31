@@ -672,20 +672,34 @@ React.useEffect(() => {
                                 </div>
                             </button>
 
-                            {/* خيار تحميل التطبيق الديناميكي */}
+               {/* خيار تحميل التطبيق الديناميكي بأيقونة متناسقة */}
 {showDownloadOption && (
     <button
         onClick={handleDownloadApp}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors rounded-xl ${
             darkMode 
-                ? 'text-orange-400 hover:bg-gray-800' 
-                : 'text-[#f58220] hover:bg-orange-50'
+                ? 'text-orange-450 hover:bg-gray-800' 
+                : 'text-[#f58220] hover:bg-orange-50/60'
         }`}
     >
-        {/* أيقونة التحميل المريحة للعين */}
-        <span className="text-base">📥</span>
+        {/* أيقونة مكتبة تحمِيل متناسقة تماماً مع بقية التصميم */}
+        <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="w-4 h-4 opacity-80" /* المقاس والشفافية مضبوطين زي أخوانهم فوق */
+        >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+
         <span>
-            {lang === 'ar' ? 'تحميل التطبيق' : 'Install App'}
+            {lang === 'ar' ? 'تحميل المنصة كتطبيق' : 'Install App'}
         </span>
     </button>
 )}
