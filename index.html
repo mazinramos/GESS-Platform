@@ -2352,24 +2352,20 @@ if (typeof db !== 'undefined') {
             const isExpired = now > item.expiresAt;
             const isShowingNow = item.isActive && !isExpired;
 
-            // 1. كروت الطلاب (جعل الألوان ديناميكية بالكامل ومتوافقة مع الدارك مود واللايت مود)
+            // 1. كروت الطلاب (استخدام كلاسات تيلويند القياسية dark: لمنع توقف السكريبت)
             if (isShowingNow) {
                 studentListHtml += `
                     <div class="swiper-slide">
                         <div style="padding: 20px; border-radius: 24px; border-right: 5px solid #f58220; text-align: right;" 
-                             class="border transition-colors duration-300 shadow-sm ${
-                                 darkMode 
-                                 ? 'bg-gray-800 border-gray-700 text-white shadow-black/20' 
-                                 : 'bg-gray-50 border-gray-100 text-gray-800 shadow-gray-100/30'
-                             }">
-                            <h4 style="font-weight: 900; margin: 0; font-size: 15px;" class="${darkMode ? 'text-white' : 'text-gray-800'}">📢 ${item.title}</h4>
-                            <p style="font-size: 13px; margin: 8px 0 0 0; line-height: 1.6;" class="${darkMode ? 'text-gray-300' : 'text-gray-600'}">${item.content}</p>
+                             class="border transition-colors duration-300 shadow-sm bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white shadow-gray-100/30 dark:shadow-black/20">
+                            <h4 style="font-weight: 900; margin: 0; font-size: 15px;" class="text-gray-800 dark:text-white">📢 ${item.title}</h4>
+                            <p style="font-size: 13px; margin: 8px 0 0 0; line-height: 1.6;" class="text-gray-600 dark:text-gray-300">${item.content}</p>
                         </div>
                     </div>
                 `;
             }
 
-            // 2. أسطر الجدول للأدمن (ألوان ثابتة وآمنة تماماً - لم نلمسها مطلقاً)
+            // 2. أسطر الجدول للأدمن (ألوان ثابتة وآمنة تماماً - لم يتم لمسها)
             adminTableHtml += `
                 <tr style="border-bottom: 1px solid #f3f4f6; font-size: 13px; text-align: right;">
                     <td style="padding: 14px; font-weight: bold;">
@@ -2392,13 +2388,12 @@ if (typeof db !== 'undefined') {
             `;
         }); // نهاية الـ Loops
 
-        // 🔄 دالة الحقن الذكي والمستمر لجدول الإعلانات المتوافقة مع ريأكت
+        // 🔄 دالة الحقن لجدول الإعلانات
         function tryInjectingAdminTable() {
             const aTable = document.getElementById('admin-table-body');
             if (aTable) {
                 aTable.innerHTML = adminTableHtml || '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">لا توجد سجلات.</td></tr>';
             } else {
-                // لو الأدمن مش فاتح اللوحة حالياً، الكود هينتظر نصف ثانية ويعيد المحاولة بأمان
                 setTimeout(tryInjectingAdminTable, 500);
             }
         }
@@ -2410,7 +2405,6 @@ if (typeof db !== 'undefined') {
             if (typeof initSwiperSafely === 'function') initSwiperSafely();
         }
         
-        // تشغيل نظام مراقبة وحقن الجدول فوراً
         tryInjectingAdminTable();
     });
 }
