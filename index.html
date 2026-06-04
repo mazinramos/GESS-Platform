@@ -11,14 +11,10 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <link rel="manifest" href="data:application/manifest+json,{%22name%22:%22GESS%20EDU%22,%22short_name%22:%22GESS%22,%22start_url%22:%22/%22,%22display%22:%22standalone%22,%22icons%22:[{%22src%22:%22https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSl7IniYMpJnIFr7Ae9kIYO_3tk0o1KSI2MTg&s%22,%22sizes%22:%22512x512%22,%22type%22:%22image/png%22}]}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="manifest.json" />
     <title>GESS EDU | منصة هندسة المساحة - جامعة الخرطوم</title>
     
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -31,14 +27,6 @@
         .backdrop-blur-xl { backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); }
         .animate-in { animation: fadeIn 0.5s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulseGlow {
-  0%, 100% { filter: drop-shadow(0 0 2px rgba(245, 130, 32, 0.4)) brightness(1); }
-  50% { filter: drop-shadow(0 0 12px rgba(245, 130, 32, 0.95)) brightness(1.2); }
-}
-
-.animate-earth-glow {
-  animation: pulseGlow 3s ease-in-out infinite;
-}
     </style>
 </head>
 <body class="bg-[#fafafa]">
@@ -62,76 +50,9 @@
 
  
   firebase.initializeApp(firebaseConfig);
-  
   const db = firebase.firestore();
   const analytics = firebase.analytics();
-// 1. تعريف موديل الرسائل
-const messaging = firebase.messaging();
 
-// 2. دالة تشغيل السيستم وطلب الإذن من هواتف الطلاب تلقائياً
-function setupNotificationSystem() {
-    Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-            console.log('تم تفعيل نظام الإشعارات بنجاح! 🔔');
-            
-            // جلب الـ Token الفريد لجهاز الطالب
-            // ⚠️ ملاحظة: استبدل 'ضع_هنا_الـ_VAPID_KEY_بتاعك' بالمفتاح المجلوب من تبويب Cloud Messaging في فايربيز
-            messaging.getToken({ vapidKey: 'ضع_هنا_الـ_VAPID_KEY_بتاعك' })
-            .then((currentToken) => {
-                if (currentToken) {
-                    // تسجيل الطالب تلقائياً في جروب الدفعة (students)
-                    subscribeTokenToTopic(currentToken, 'students');
-                }
-            }).catch((err) => console.log('خطأ في جلب التوكن:', err));
-        }
-    });
-}
-
-// دالة ربط جهاز الطالب بـ سيرفر الإرسال الجماعي
-function subscribeTokenToTopic(token, topic) {
-    fetch(`https://iid.googleapis.com/iid/v1/${token}/rel/topics/${topic}`, {
-        method: 'POST',
-        headers: {
-            // ⚠️ ملاحظة: استبدل الكلمة تحت بمفتاح السيرفر (Server Key) المجلوب من إعدادات الفايربيز برضه
-            'Authorization': 'Bearer ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' 
-        }
-    }).then(response => {
-        if (response.ok) console.log(`تم ربط الطالب بجروب البث: ${topic}`);
-    }).catch(err => console.error('خطأ في الربط السيرفري:', err));
-}
-
-// 3. الدالة السحرية للأدمن (تشتغل طوالي لما تضغط زر الإرسال من لوحتك)
-function sendNotificationFromAdmin(title, body) {
-    const notificationPayload = {
-        to: "/topics/students", // البث لكل الدفعة المشتركة في الجروب ده
-        notification: {
-            title: title,
-            body: body,
-            icon: "/logo.png",
-            click_action: window.location.origin // يفتح المنصة طوالي لما الطالب يضغط على الإشعار
-        }
-    };
-
-    return fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'key=ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' // نفس مفتاح السيرفر
-        },
-        body: JSON.stringify(notificationPayload)
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('🚀 تم بث الإشعار بنغمة لجميع هواتف الطلاب بنجاح!');
-        } else {
-            alert('❌ فشل الإرسال، تحقق من مفتاح السيرفر الخاص بك.');
-        }
-    })
-    .catch(err => console.error('Error:', err));
-}
-
-// تشغيل الفحص والطلب تلقائياً أول ما أي زول يفتح المنصة
-setupNotificationSystem();
 firebase.analytics().setUserProperties({ debug_mode: true });
 </script>
 
@@ -233,13 +154,10 @@ const t = {
             const [isExistingLecture, setIsExistingLecture] = React.useState(false);
             const [selectedLectureId, setSelectedLectureId] = React.useState('');
             const [isFolderOnly, setIsFolderOnly] = React.useState(false);
-            
-            
+            const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+            const [showDownloadOption, setShowDownloadOption] = React.useState(false);
             
 
-const [deferredPrompt, setDeferredPrompt] = React.useState(null);
-// لو المنصة مفتوحة كـ تطبيق مستقل (Standalone) الستيت دي هتكون false تلقائياً ومستحيل الخيار يظهر
-const [showDownloadOption, setShowDownloadOption] = React.useState(false);
 
 React.useEffect(() => {
     // 1. فحص هل الطالب فاتح المنصة حالياً كتطبيق منزل في الشاشة الرئيسية؟
@@ -296,7 +214,6 @@ const handleDownloadApp = async () => {
     }
     setDeferredPrompt(null);
 };
-
 
             React.useEffect(() => {
   if (!localStorage.getItem('gess_login_pass')) {
@@ -446,66 +363,43 @@ React.useEffect(() => {
           
             React.useEffect(() => { lucide.createIcons(); });
 
-// 1. دالة تسجيل الدخول الرئيسية الموحدة (طالب / أدمن)
-const handleLogin = (e) => {
+           const handleLogin = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const enteredUser = formData.get('username');
     const enteredPass = formData.get('password');
 
     if (loginType === 'admin') {
-        const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'admin123';
-        if (enteredUser?.toLowerCase() === 'admin' && enteredPass === savedAdminPass) {
-            setIsLoggedIn(true);
-            setView('admin'); 
-            localStorage.setItem("gess_is_logged_in", "true");
-            setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير 🔓" : "Welcome Admin 🔓" });
+   const savedAdminPass = localStorage.getItem('gess_admin_pass');
+
+if (enteredUser === 'admin' && enteredPass === savedAdminPass) {
+        setIsAdmin(true);
+        setView('admin_dashboard'); 
+            setToast({ show: true, message: lang === 'ar' ? "مرحباً أيها المدير" : "Welcome Admin" });
         } else {
-            alert(lang === 'ar' ? "❌ خطأ في بيانات الأدمن!" : "❌ Admin credentials error!");
+            alert(lang === 'ar' ? "خطأ في بيانات الأدمن" : "Admin credentials error");
         }
     } else {
-        const savedStudentPass = localStorage.getItem('gess_login_pass') || '123456';
-        if (enteredPass === savedStudentPass) {
-            setStudentName(enteredUser);
-            setIsLoggedIn(true);
-            setView('student'); 
-            localStorage.setItem("gess_is_logged_in", "true");
-            localStorage.setItem("gess_user_name", enteredUser);
-            setToast({ show: true, message: lang === 'ar' ? `مرحباً بك يا ${enteredUser}` : `Welcome ${enteredUser}` });
-        } else {
-            alert(lang === 'ar' ? "❌ كلمة مرور الطالب غير صحيحة!" : "❌ Incorrect Student Password!");
-        }
+      
+      const savedStudentPass = localStorage.getItem('gess_login_pass');
+        
+       if (enteredPass === savedStudentPass) {
+  setView('user_dashboard');
+} else {
+  alert("كلمة المرور غير صحيحة");
+}
     }
-    setTimeout(() => setToast({ show: false, message: '' }), 3000);
+
+
+
+  setTimeout(() => setToast({ show: false, message: '' }), 3000);
 };
-
-// 2. دالة تأكيد الهوية السريعة (المودال المنبثق من التروس)
-const checkAdminAuth = (e) => {
-    e.preventDefault();
-    const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'admin123';
-
-    if (adminPassInput === savedAdminPass) {
-        setView('admin');
-        setShowAdminAuth(false);
-        setAdminPassInput("");
-        setPath([]);
-        setToast({ show: true, message: lang === 'ar' ? "تم تأكيد صلاحيات الإدارة" : "Admin Authorized" });
-    } else {
-        alert(lang === 'ar' ? "❌ كلمة مرور الإدارة غير صحيحة!" : "❌ Incorrect Admin Password!");
-        setAdminPassInput("");
-    }
-    setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    const handleLogOut = () => {
+    localStorage.removeItem('user_token'); 
+    localStorage.removeItem('is_admin'); 
+    setIsLoggedIn(false); 
+    setView('student'); 
 };
-
-// 3. دالة تسجيل الخروج المحدثة لتنظيف الستيت بالكامل
-const handleLogOut = () => {
-    localStorage.removeItem('gess_is_logged_in');
-    localStorage.removeItem('gess_user_name');
-    setIsLoggedIn(false);
-    setStudentName("");
-    setView('login'); 
-};
-
 
 React.useEffect(() => {
   const handlePopState = (event) => {
@@ -528,7 +422,28 @@ React.useEffect(() => {
 }, [path, view]);
             
 
-         
+           const checkAdminAuth = (e) => {
+    e.preventDefault();
+    
+   
+    const hardcodedPass = "00000"; 
+    
+  
+    if (adminPassInput == hardcodedPass) {
+        setView('admin');
+        setShowAdminAuth(false);
+        setAdminPassInput("");
+        setPath([]);
+     
+        localStorage.setItem('gess_admin_pass', hardcodedPass);
+    } else {
+        setToast({ 
+            show: true, 
+            message: lang === 'ar' ? "خطأ: كلمة مرور الإدارة غير صحيحة" : "Incorrect Admin Password" 
+        });
+        setTimeout(() => setToast({ show: false, message: '' }), 3000);
+    }
+};
 
           const addMaterial = async (e) => {
   e.preventDefault();
@@ -576,121 +491,98 @@ React.useEffect(() => {
   }
 };
 
-           if (!isLoggedIn || view === 'login') {
-    return (
-        <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-            <div className="absolute inset-0 z-0">
-                <div className={`absolute inset-0 transition-colors duration-500 ${darkMode ? 'bg-black/70' : 'bg-[#f58220]/10'} mix-blend-multiply z-10`}></div>
-                <img src="https://images.unsplash.com/photo-1581092583537-20d51b4b4f1b?q=80&w=1600" className="w-full h-full object-cover blur-md scale-110" alt="bg" />
-            </div>
-            
-            <div className={`relative z-20 transition-all duration-500 p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border backdrop-blur-xl ${darkMode ? 'bg-gray-800/95 border-gray-700' : 'bg-white/90 border-white/50'}`}>
-                <div className="flex flex-col items-center mb-6">
-                    <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg p-2 mb-3 border-2 border-[#f58220]">
-                        <img src={GESS_LOGO} className="w-full h-full object-contain rounded-full" alt="logo" />
+            if (view === '') return (
+                <div className={`min-h-screen relative flex items-center justify-center p-4 overflow-hidden transition-colors duration-500 ${darkMode ? 'bg-gray-900' : ''}`}>
+                    <div className="absolute inset-0 z-0">
+                       <div className={`absolute inset-0 transition-colors duration-500 ${darkMode ? 'bg-black/60' : 'bg-[#f58220]/10'} mix-blend-multiply z-10`}></div>
+                        <img src="https://images.unsplash.com/photo-1581092583537-20d51b4b4f1b?q=80&w=1600" className="w-full h-full object-cover blur-md scale-110" />
                     </div>
-                    <h1 className={`text-xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>GESS EDU PLATFORM</h1>
-                    <p className="text-[#f58220] font-bold text-xs tracking-widest mt-1">{lang === 'ar' ? "هندسة المساحة - جامعة الخرطوم" : "Geomatics Engineering - U of K"}</p>
+                    <div className={`relative z-20 transition-all duration-500 p-8 rounded-[2.5rem] shadow-2xl w-full max-w-md border backdrop-blur-xl ${darkMode ? 'bg-gray-800/90 border-gray-700' : 'bg-white/80 border-white/50'}`}>
+                        <div className="flex flex-col items-center mb-8">
+                            <div className="w-24 h-24 bg-white rounded-full flex items-center justify-center shadow-lg p-2 mb-4 border-2 border-[#f58220]">
+                                <img src={GESS_LOGO} className="w-full h-full object-contain rounded-full" />
+                            </div>
+                            <h1 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{lang === 'ar' ? "GESS EDU PLATFORM" : "GESS EDU PLATFORM"}</h1>
+                            <p className="text-[#f58220] font-bold text-sm tracking-widest mt-1">{lang === 'ar' ? "هندسة المساحة - جامعة الخرطوم" : "Geomatics Engineering - U of K"}</p>
+                        </div>
+                        <form onSubmit={handleLogin} className="space-y-5">
+                         
+                       
+<div className={`flex p-1 rounded-2xl mb-6 ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+  <button 
+    type="button"
+    onClick={() => setLoginType('student')}
+    className={`flex-1 py-3 rounded-xl font-bold transition-all ${loginType === 'student' ? 'bg-white shadow-sm text-orange-500' : 'text-gray-500'}`}
+  >
+    {lang === 'ar' ? 'طالب' : 'Student'}
+  </button>
+  <button 
+    type="button"
+    onClick={() => setLoginType('admin')}
+    className={`flex-1 py-3 rounded-xl font-bold transition-all ${loginType === 'admin' ? 'bg-white shadow-sm text-orange-500' : 'text-gray-500'}`}
+  >
+    {lang === 'ar' ? 'أدمن' : 'Admin'}
+  </button>
+</div>
+
+
+<div className="space-y-4">
+  <div>
+    <label className="block text-sm font-bold mb-2 opacity-70">
+      {loginType === 'student' 
+        ? (lang === 'ar' ? "اسم الطالب" : "Student Name")
+        : (lang === 'ar' ? "اسم الأدمن" : "Admin Name")
+      }
+    </label>
+    <input 
+      type="text" 
+      name="username" 
+      className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
+      required 
+    />
+  </div>
+
+  <div>
+    <label className="block text-sm font-bold mb-2 opacity-70">
+      {lang === 'ar' ? "كلمة المرور" : "Password"}
+    </label>
+    <input 
+      type="password" 
+      name="password" 
+      className={`w-full p-4 rounded-2xl border-2 outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}
+      required 
+    />
+       <button 
+    type="submit" 
+    className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-2xl text-lg shadow-lg shadow-orange-500/30 transition-all mt-6 active:scale-95"
+>
+    {lang === 'ar' ? (loginType === 'student' ? "دخول الطالب" : "دخول الأدمن") : "Login"}
+</button>
+  </div>
+</div>
+
+                        </form>
+                    </div>
                 </div>
-
-                {/* سويتش اختيارات نوع الدخول */}
-                <div className={`flex p-1 rounded-2xl mb-5 ${darkMode ? 'bg-gray-900/50' : 'bg-gray-100'}`}>
-                    <button 
-                        type="button"
-                        onClick={() => setLoginType('student')}
-                        className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${loginType === 'student' ? (darkMode ? 'bg-orange-500 text-white shadow-md' : 'bg-white shadow-sm text-orange-500') : 'text-gray-500'}`}
-                    >
-                        {lang === 'ar' ? 'بوابة الطلاب' : 'Student Portal'}
-                    </button>
-                    <button 
-                        type="button"
-                        onClick={() => setLoginType('admin')}
-                        className={`flex-1 py-2.5 rounded-xl text-xs font-black transition-all ${loginType === 'admin' ? (darkMode ? 'bg-orange-500 text-white shadow-md' : 'bg-white shadow-sm text-orange-500') : 'text-gray-500'}`}
-                    >
-                        {lang === 'ar' ? 'لوحة التحكم (أدمن)' : 'Admin Dashboard'}
-                    </button>
-                </div>
-
-                {/* نموذج الدخول الموحد */}
-                <form onSubmit={handleLogin} className="space-y-4">
-                    <div>
-                        <label className={`block text-xs font-bold mb-1.5 opacity-80 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {loginType === 'student' ? (lang === 'ar' ? "اسم الطالب الإشرافي" : "Student Name") : (lang === 'ar' ? "اسم مدير النظام" : "Admin Username")}
-                        </label>
-                        <input 
-                            type="text" 
-                            name="username" 
-                            placeholder={loginType === 'student' ? (lang === 'ar' ? "اكتب اسمك ثلاثي" : "Enter full name") : "admin"}
-                            className={`w-full p-3.5 rounded-xl border-2 outline-none font-bold text-sm transition-all ${darkMode ? 'bg-gray-900 border-gray-750 text-white focus:border-orange-500' : 'bg-gray-50 border-gray-100 focus:border-orange-500 text-gray-900'}`}
-                            required 
-                        />
-                    </div>
-
-                    <div>
-                        <label className={`block text-xs font-bold mb-1.5 opacity-80 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                            {lang === 'ar' ? "رمز الدخول السري" : "Access Password"}
-                        </label>
-                        <input 
-                            type="password" 
-                            name="password" 
-                            placeholder="••••••••"
-                            className={`w-full p-3.5 rounded-xl border-2 outline-none font-bold text-center tracking-widest text-sm transition-all ${darkMode ? 'bg-gray-900 border-gray-750 text-white focus:border-orange-500' : 'bg-gray-50 border-gray-100 focus:border-orange-500 text-gray-900'}`}
-                            required 
-                        />
-                    </div>
-
-                    <button 
-                        type="submit" 
-                        className="w-full py-4 bg-orange-500 hover:bg-orange-600 text-white font-black rounded-xl text-sm shadow-lg shadow-orange-500/20 transition-all mt-4 active:scale-95"
-                    >
-                        {lang === 'ar' ? (loginType === 'student' ? "تأكيد الدخول المباشر 🚀" : "ولوج لوحة الصلاحيات 🔐") : "Confirm Connection"}
-                    </button>
-                </form>
-            </div>
-        </div>
-    );
-}
+            );
 
             return (
                 <div className={`min-h-screen pb-20 transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#fafafa]'}`}>
-                   {showAdminAuth && (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[200] flex items-center justify-center p-4 animate-in fade-in duration-200">
-        <div className={`p-6 rounded-3xl shadow-2xl w-full max-w-sm border transition-all transform scale-100 ${darkMode ? 'bg-gray-900 border-gray-800 text-white' : 'bg-white border-gray-150'}`}>
-            <div className="flex justify-between items-center mb-5">
-                <h3 className="font-black text-orange-500 flex items-center gap-2 text-sm">
-                    🔐 {lang === 'ar' ? "تأكيد صلاحيات المشرف" : "Elevated Admin Access"}
-                </h3>
-                <button 
-                    onClick={() => setShowAdminAuth(false)} 
-                    className={`p-1.5 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}
-                >
-                    ✕
-                </button>
-            </div>
-            
-            <form onSubmit={checkAdminAuth} className="space-y-4">
-                <p className="text-xs text-gray-400 font-medium leading-relaxed">
-                    {lang === 'ar' ? "المنطقة الحالية محمية. يرجى كتابة رمز مرور المسؤول الرئيسي للمنصة لتأكيد هويتك:" : "This area requires an administrative key. Please verify your credentials:"}
-                </p>
-                <input 
-                    type="password" 
-                    autoFocus 
-                    placeholder="••••••••"
-                    className={`w-full p-3.5 rounded-xl border-2 outline-none font-bold text-center tracking-widest text-base transition-all ${darkMode ? 'bg-gray-850 border-gray-750 text-white focus:border-orange-500' : 'bg-gray-50 border-gray-200 focus:border-orange-500'}`}
-                    value={adminPassInput} 
-                    onChange={(e) => setAdminPassInput(e.target.value)} 
-                    required
-                />
-                <button 
-                    type="submit" 
-                    className="w-full bg-gray-900 dark:bg-orange-500 hover:bg-gray-800 dark:hover:bg-orange-600 text-white p-3.5 rounded-xl font-black text-xs transition-all active:scale-[0.98]"
-                >
-                    {lang === 'ar' ? "تحقق ودخول اللوحة 🔓" : "Verify & Access"}
-                </button>
-            </form>
-        </div>
-    </div>
-)}
+                    {showAdminAuth && (
+                        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+                            <div className={`p-8 rounded-[2.5rem] shadow-2xl w-full max-w-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100'}`}>
+                                <div className="flex justify-between items-center mb-6">
+                                    <h3 className="font-black text-[#f58220] flex items-center gap-2"><i data-lucide="shield-check"></i>{lang === 'ar' ? "الإدارة فقط" : "Admin Only"}</h3>
+                                    <button onClick={() => setShowAdminAuth(false)} title={lang === 'ar' ? "إغلاق" : "Close"} className="p-2 hover:bg-gray-100 rounded-full"><i data-lucide="x"></i></button>
+                                </div>
+                                <form onSubmit={checkAdminAuth} className="space-y-4">
+                                    <p className="text-xs text-gray-500 font-bold">{lang === 'ar' ? "يرجى إدخال كلمة المرور الخاصة بالمشرف" : "Please enter the admin password"}</p>
+                                    <input type="password" autoFocus className="w-full p-4 bg-gray-50 rounded-2xl border-2 border-transparent focus:border-[#f58220] outline-none font-bold text-center" value={adminPassInput} onChange={(e) => setAdminPassInput(e.target.value)} />
+                                    <button className="w-full bg-gray-900 text-white p-4 rounded-2xl font-black">{lang === 'ar' ? "تأكيد الهوية" : "Confirm Identity"}</button>
+                                </form>
+                            </div>
+                        </div>
+                    )}
 
                    <header className={`sticky top-0 z-[100] w-full h-20 flex items-center transition-all ${
     darkMode ? 'bg-gray-900/95 border-b border-gray-800 backdrop-blur-md' : 'bg-white/95 border-b border-gray-100 backdrop-blur-md'
@@ -780,18 +672,32 @@ React.useEffect(() => {
                                 </div>
                             </button>
 
-                            {/* خيار تحميل التطبيق الديناميكي */}
+               {/* خيار تحميل التطبيق الديناميكي بأيقونة متناسقة */}
 {showDownloadOption && (
     <button
         onClick={handleDownloadApp}
         className={`w-full flex items-center gap-3 px-4 py-2.5 text-xs font-bold transition-colors rounded-xl ${
             darkMode 
-                ? 'text-orange-400 hover:bg-gray-800' 
-                : 'text-[#f58220] hover:bg-orange-50'
+                ? 'text-orange-450 hover:bg-gray-800' 
+                : 'text-[#f58220] hover:bg-orange-50/60'
         }`}
     >
-        {/* أيقونة التحميل المريحة للعين */}
-        <span className="text-base">📥</span>
+        {/* أيقونة مكتبة تحمِيل متناسقة تماماً مع بقية التصميم */}
+        <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round" 
+            className="w-4 h-4 opacity-80" /* المقاس والشفافية مضبوطين زي أخوانهم فوق */
+        >
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+        </svg>
+
         <span>
             {lang === 'ar' ? 'تحميل المنصة كتطبيق' : 'Install App'}
         </span>
@@ -815,7 +721,7 @@ React.useEffect(() => {
             </div>
         </div>
     </div>
-</header> 
+</header>
 
 {/* شريط التنبيهات العاجلة المطور - حل مشكلة قص النص */}
 {/* شريط التنبيهات المطور - إظهار العنوان وتحته المحتوى بالكامل بدون قص */}
@@ -996,7 +902,7 @@ React.useEffect(() => {
     : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
 }`}>{lang === 'ar' ? "نشر المحتوى الآن" : "Post Content Now"}</button>
                                     </form>
-
+                                    
 {/* ==================== [ لوحة تحكم الأدمن - إدارة الإعلانات ] ==================== */}
 <div className={`p-6 rounded-[2rem] border shadow-sm space-y-6 mt-8 transition-all ${
     darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
@@ -1008,24 +914,9 @@ React.useEffect(() => {
         {lang === 'ar' ? 'إدارة الإعلانات والإشعارات (للأدمن)' : 'Manage Announcements (Admin)'}
     </h2>
     
-    {/* فورم إضافة إعلان جديد معدل بالكامل ليدعم الـ Push Notification */}
-    <form onSubmit={(e) => { 
-        e.preventDefault(); 
-        
-        // 1. جلب المدخلات من الفورم مباشرة بطريقة ريأكت النظيفة
-        const title = document.getElementById('form-title').value;
-        const content = document.getElementById('form-content').value;
-        const duration = document.getElementById('form-duration').value;
-        
-        // 2. تشغيل دالة الفايرستور القديمة بتاعتك لحفظ البيانات في المنصة
-        handlePublishAnnouncement(); 
-        
-        // 3. تشغيل دالة البث الفوري لتصل لكل هواتف الطلاب بنغمة في نفس اللحظة
-        if (typeof sendNotificationFromAdmin === 'function') {
-            sendNotificationFromAdmin(title, content);
-        }
-        
-    }} className={`grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
+    {/* فورمة إضافة إعلان جديد */}
+    {/* غيّر السطر الأول للفورمة وخليها كدا (شيلنا الـ id وخليناها تشتغل بنظام ريأكت) */}
+<form onSubmit={(e) => { e.preventDefault(); handlePublishAnnouncement(); }} className={`grid grid-cols-1 md:grid-cols-3 gap-4 p-4 rounded-2xl ${darkMode ? 'bg-gray-800/50' : 'bg-gray-50'}`}>
         <input type="hidden" id="announcement-id" />
         
         <div className="flex flex-col gap-1">
@@ -1043,45 +934,44 @@ React.useEffect(() => {
             <select id="form-duration" className={`p-3 rounded-xl border text-sm focus:outline-[#f58220] ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'}`}>
                 <option value="1">{lang === 'ar' ? 'يوم واحد' : '1 Day'}</option>
                 <option value="3">{lang === 'ar' ? '3 أيام' : '3 Days'}</option>
-                <option value="7" defaultValue>{lang === 'ar' ? 'أسبوع كامل' : '1 Week'}</option>
+                <option value="7" selected>{lang === 'ar' ? 'أسبوع كامل' : '1 Week'}</option>
                 <option value="30">{lang === 'ar' ? 'شهر كامل' : '1 Month'}</option>
             </select>
         </div>
         
         <div className="md:col-span-3 flex gap-2 justify-end mt-2">
-            {/* تم تعديل الـ type إلى submit لتشغيل دالة الإرسال الجماعي بأمان */}
-            <button type="submit" className="bg-gray-950 text-white hover:bg-[#f58220] px-8 py-2.5 rounded-full text-xs font-black shadow-md transition-all">
-                {lang === 'ar' ? 'نشر الإعلان وإرسال إشعار 🚀' : 'Publish & Notify 🚀'}
-            </button>
+            <button type="button" onClick={handlePublishAnnouncement} className="bg-gray-950 text-white hover:bg-[#f58220] px-8 py-2.5 rounded-full text-xs font-black shadow-md transition-all">
+    {lang === 'ar' ? 'نشر الإعلان وإرسال إشعار 🚀' : 'Publish & Notify 🚀'}
+</button>
         </div>
     </form>
 
    {/* جدول السجلات الحية لمراقبة وحذف وتعديل الإعلانات */}
-    <div className="mt-4">
-        <h3 className="text-sm font-black text-gray-500 mb-3">
-            {lang === 'ar' ? 'السجلات الحالية للتحكم والعمليات:' : 'Current Records & Operations:'}
-        </h3>
-        <div className={`overflow-x-auto rounded-2xl border ${darkMode ? 'border-gray-800 bg-gray-900/50' : 'border-gray-100 bg-white'}`}>
-            <table className="w-full text-right text-sm border-collapse">
-                <thead>
-                    <tr className={`border-b text-xs font-bold ${darkMode ? 'border-gray-800 text-gray-400 bg-gray-800/30' : 'border-gray-100 text-gray-500 bg-gray-50'}`}>
-                        <th className="p-4">{lang === 'ar' ? 'عنوان التنبيه / الإعلان' : 'Announcement Title'}</th>
-                        <th className="p-4 w-24 text-center">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
-                        <th className="p-4 w-36 text-center">{lang === 'ar' ? 'إجراءات التحكم' : 'Actions'}</th>
-                    </tr>
-                </thead>
-                <tbody id="admin-table-body" className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
-                    <tr>
-                        <td colSpan="3" className="p-4 text-center text-gray-400 text-xs">
-                            {lang === 'ar' ? 'جاري جلب السجلات من الفايرستور...' : 'Loading records...'}
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
+<div className="mt-4">
+    <h3 className="text-sm font-black text-gray-500 mb-3">
+        {lang === 'ar' ? 'السجلات الحالية للتحكم والعمليات:' : 'Current Records & Operations:'}
+    </h3>
+    <div className={`overflow-x-auto rounded-2xl border ${darkMode ? 'border-gray-800 bg-gray-900/50' : 'border-gray-100 bg-white'}`}>
+        <table className="w-full text-right text-sm border-collapse">
+            <thead>
+                <tr className={`border-b text-xs font-bold ${darkMode ? 'border-gray-800 text-gray-400 bg-gray-800/30' : 'border-gray-100 text-gray-500 bg-gray-50'}`}>
+                    <th className="p-4">{lang === 'ar' ? 'عنوان التنبيه / الإعلان' : 'Announcement Title'}</th>
+                    <th className="p-4 w-24 text-center">{lang === 'ar' ? 'الحالة' : 'Status'}</th>
+                    <th className="p-4 w-36 text-center">{lang === 'ar' ? 'إجراءات التحكم' : 'Actions'}</th>
+                </tr>
+            </thead>
+            <tbody id="admin-table-body" className={darkMode ? 'text-gray-300' : 'text-gray-600'}>
+                {/* الأسطر والبيانات بتنزل هنا تلقائياً عبر الجافا سكريبت جاهدة للتعديل والحذف */}
+                <tr>
+                    <td colSpan="3" className="p-4 text-center text-gray-400 text-xs">
+                        {lang === 'ar' ? 'جاري جلب السجلات من الفايرستور...' : 'Loading records...'}
+                    </td>
+                </tr>
+            </tbody>
+        </table>
     </div>
 </div>
-
+</div>
                                 </div>
                                 <div className="mt-12 pt-8 border-t-2 border-gray-100">
     <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1195,96 +1085,26 @@ React.useEffect(() => {
                                 )}
 
                                 {path.length === 0 && !selectedItem && (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <>
-            {/* 1. كروت السنوات الدراسية الديناميكية المحدثة بالتوهج والكرة الأرضية */}
-            {years.map(y => (
-                <button 
-                    key={y.id} 
-                    onClick={() => setPath([{type: 'year', ...y}])} 
-                    className={`relative overflow-hidden p-6 rounded-[2.5rem] border transition-all duration-300 text-right flex flex-col justify-between group transform hover:-translate-y-1 hover:shadow-xl ${
-                        darkMode 
-                            ? 'bg-gray-900/60 border-gray-800 shadow-black/40' 
-                            : 'bg-white border-gray-100 shadow-gray-200/50'
-                    }`}
-                >
-                    {/* الجزء العلوي: العنوان والتنبيه الذكي */}
-                    <div className="w-full flex justify-between items-start mb-2 relative z-10">
-                        <div className="text-right">
-                            <h3 className={`text-xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-850'}`}>
-                                {y.title}
-                            </h3>
-                            <span className="text-[10px] bg-orange-500/10 text-[#f58220] px-3 py-0.5 rounded-full font-black mt-1 inline-block">
-                                {y.id === 'y1' ? '1st Year' : y.id === 'y2' ? '2nd Year' : '3rd Year'}
-                            </span>
-                        </div>
-                        
-                        {/* أيقونة الترس أو التنبيه الشيك مثل الصورة */}
-                        <div className="relative opacity-80 group-hover:opacity-100 transition-opacity">
-                            <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-red-500 text-white text-[8px] font-bold rounded-full flex items-center justify-center border border-white dark:border-gray-900">
-                                !
-                            </span>
-                            <span className="text-base">🔔</span>
-                        </div>
-                    </div>
-
-                    {/* منتصف الكارت: الجرافيك المتوهج للكرة الأرضية وحواف القارات */}
-                    <div className="relative h-36 w-full flex items-center justify-center my-1">
-                        {/* دوائر الخلفية المدمجة الناعمة */}
-                        <div className="absolute w-32 h-32 bg-orange-500/5 rounded-full blur-xl"></div>
-                        
-                        {/* الكرة الأرضية مع أنميشن التوهج */}
-                        <div className="relative w-28 h-28 flex items-center justify-center animate-earth-glow">
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="#f58220" 
-                                strokeWidth="1.2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
-                                className="w-full h-full opacity-90"
-                            >
-                                <circle cx="12" cy="12" r="10" strokeDasharray="3 3" opacity="0.25" />
-                                <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" opacity="0.2" />
-                                <path d="M2 12h20" opacity="0.2" />
-                                <path d="M3.6 9h16.8M3.6 15h16.8" opacity="0.1" />
-                                {/* تفاصيل تعرجات القارات المتوهجة */}
-                                <path fill="rgba(245, 130, 32, 0.08)" stroke="#f58220" strokeWidth="1.5" d="M6 14c1.5-1 2.5 0 4-1s1-2 3-1.5 2.5.5 3-1.5 1.5-1 2.5-1c0 0-1-2-3-1.5s-2-1.5-4-.5-2.5 1.5-4 1-1.5 2.5-1.5 2.5z" />
-                                <path fill="rgba(245, 130, 32, 0.05)" stroke="#f58220" strokeWidth="1.2" d="M14 17c1-.5 1.5.5 2 0s.5-1 1.5-.5c0 0-.5-1.5-1.5-1s-1.5.5-2 1.5z" />
-                            </svg>
-                        </div>
-
-                        {/* تاغ جانبي عائم وصغير مثل الصورة */}
-                        <span className="absolute bottom-0 right-2 text-[9px] font-bold text-orange-500/70 bg-orange-500/5 px-2 py-0.5 rounded-md border border-orange-500/10">
-                            GESS EDU
-                        </span>
-                    </div>
-
-                    {/* أسفل الكارت: زر الانتقال المتفاعل */}
-                    <div className="w-full mt-2 pt-3 border-t border-gray-100 dark:border-gray-800/60 flex justify-between items-center relative z-10">
-                        <span className={`text-[11px] font-bold opacity-60 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                            {lang === 'ar' ? "عرض المواد الدراسية" : "View Academic Subjects"}
-                        </span>
-                        <div className="w-7 h-7 bg-orange-500 text-white rounded-full flex items-center justify-center shadow-md shadow-orange-500/20 group-hover:bg-orange-600 transition-colors">
-                            <span className="text-xs font-bold transform translate-x-[0.5px]">➔</span>
-                        </div>
-                    </div>
-                </button>
-            ))}
-
-            {/* 2. كارت الكورسات التدريبية (تم الحفاظ عليه كاملاً كما هو) */}
-            <button 
-                onClick={() => setPath([{ id: 'courses', title: lang === 'ar' ? 'الكورسات التدريبية' : 'Training Courses', type: 'courses_section' }])}
-                className={`p-8 rounded-[2.5rem] cursor-pointer shadow-lg transform transition hover:scale-105 text-center flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 text-white`}
-            >
-                <i data-lucide="rocket" className="w-12 h-12 mb-4"></i>
-                <h3 className="text-2xl font-black">{lang === 'ar' ? "الكورسات التدريبية" : "Training Courses"}</h3>
-                <p className="text-white/80 text-sm mt-2">{lang === 'ar' ? "تطوير المهارات والبرامج الخارجية" : "Skills Development & External Programs"}</p>
-            </button>
-        </>
-    </div>
-)}
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <>
+                                        {years.map(y => (
+                                           <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
+                                                <i data-lucide="graduation-cap" class="w-12 h-12 text-[#f58220] mb-4"></i>
+                                               <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{y.title}</h3>
+                                                <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض المواد الدراسية" : "View Academic Subjects"}</p>
+                                            </button>
+                                        ))}
+                                            <button 
+                                                onClick={() => setPath([{ id: 'courses', title: lang === 'ar' ? 'الكورسات التدريبية' : 'Training Courses', type: 'courses_section' }])}
+                                                className={`p-8 rounded-2xl cursor-pointer shadow-lg transform transition hover:scale-105 text-center flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 text-white`}>
+                                                <i data-lucide="rocket" class="w-12 h-12 mb-4"></i>
+                                                <h3 className="text-2xl font-black">{lang === 'ar' ? "الكورسات التدريبية" : "Training Courses"}</h3>
+                                                <p className="text-white/80 text-sm mt-2">{lang === 'ar' ? "تطوير المهارات والبرامج الخارجية" : "Skills Development & External Programs"}</p>
+                                            </button>
+                                        </>
+                                    </div>
+                                    
+                                )}
 
                                 {path.length === 1 && path[0].type === 'year' && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -2566,11 +2386,6 @@ function resetFormState() {
     }
 }
 
-
-
     </script>
-
-
-
 </body>
-</html>                                           
+</html>
