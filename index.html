@@ -1421,39 +1421,10 @@ React.useEffect(() => {
   </div>
 )}
 
-{/* صفحة الأدعية والأذكار  */}
-{path.length === 1 && path[0]?.id === 'supplications' && (
-
-    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
-
-        {/* الهيدر */}
-        <div className="text-center mb-10">
-            
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-amber-100 text-amber-700 font-black text-sm mb-5">
-                <i data-lucide="moon-star" className="w-5 h-5"></i>
-                {lang === 'ar' ? "ركن الأدعية والأذكار" : "Supplications & Azkar"}
-            </div>
-
-            <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4">
-                {lang === 'ar' ? "الأدعية والأذكار الإسلامية" : "Islamic Supplications"}
-            </h1>
-
-            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-8">
-                {lang === 'ar'
-                    ? "مجموعة من الأدعية والأذكار المختارة للطلاب أثناء الدراسة والامتحانات والحياة اليومية."
-                    : "A collection of Islamic supplications and daily azkar for students and academic life."
-                }
-            </p>
-
-        </div>
-
-        <div className="space-y-8">
-
 {[
     {
-        title_ar: "أدعية قبل البدء في المذاكرة",
-        title_en: "Before Studying",
-        text_ar: `اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلًا.
+        title: "أدعية قبل البدء في المذاكرة",
+        text: `اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلًا.
 
 رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي * وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي * يَفْقَهُوا قَوْلِي.
 
@@ -1467,9 +1438,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية سرعة الفهم وقوة الحفظ",
-        title_en: "Understanding & Memorization",
-        text_ar: `رَّبِّ زِدْنِي عِلْمًا.
+        title: "أدعية سرعة الفهم وقوة الحفظ",
+        text: `رَّبِّ زِدْنِي عِلْمًا.
 
 اللَّهُمَّ انْفَعْنِي بِمَا عَلَّمْتَنِي، وَعَلِّمْنِي مَا يَنْفَعُنِي، وَزِدْنِي عِلْمًا.
 
@@ -1481,9 +1451,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية الفراغ من المذاكرة",
-        title_en: "After Finishing Study",
-        text_ar: `اللَّهُمَّ إِنِّي أَسْتَوْدِعُكَ مَا قَرَأْتُ وَمَا حَفِظْتُ وَمَا تَعَلَّمْتُ.
+        title: "أدعية الفراغ من المذاكرة",
+        text: `اللَّهُمَّ إِنِّي أَسْتَوْدِعُكَ مَا قَرَأْتُ وَمَا حَفِظْتُ وَمَا تَعَلَّمْتُ.
 
 رُدَّهُ إِلَيَّ عِنْدَ حَاجَتِي إِلَيْهِ، إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.
 
@@ -1491,9 +1460,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية التوجه إلى الامتحان",
-        title_en: "Before Exams",
-        text_ar: `رَّبِّ أَدْخِلْنِي مُدْخَلَ صِدْقٍ وَأَخْرَجْنِي مُخْرَجَ صِدْقٍ وَاجْعَل لِّي مِن لَّدُنكَ سُلْطَانًا نَّصِيرًا.
+        title: "أدعية التوجه إلى الامتحان",
+        text: `رَّبِّ أَدْخِلْنِي مُدْخَلَ صِدْقٍ وَأَخْرَجْنِي مُخْرَجَ صِدْقٍ وَاجْعَل لِّي مِن لَّدُنكَ سُلْطَانًا نَّصِيرًا.
 
 اللَّهُمَّ إِنِّي تَوَكَّلْتُ عَلَيْكَ، وَأَسْلَمْتُ أَمْرِي إِلَيْكَ، لَا مَلْجَأَ وَلَا مَنْجَا مِنْكَ إِلَّا إِلَيْكَ.
 
@@ -1501,17 +1469,15 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية داخل لجنة الامتحان",
-        title_en: "Inside Exam Hall",
-        text_ar: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
+        title: "أدعية داخل لجنة الامتحان",
+        text: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
 
 اللَّهُمَّ لَا تَجْعَلْ لِلْخَوْفِ سَبِيلًا إِلَى قَلْبِي، وَأَنْزِلْ عَلَيَّ السَّكِينَةَ.`
     },
 
     {
-        title_ar: "دعاء النسيان والتعسر",
-        title_en: "Forgetfulness & Difficulty",
-        text_ar: `لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ.
+        title: "دعاء النسيان والتعسر",
+        text: `لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ.
 
 يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ.
 
@@ -1529,16 +1495,13 @@ React.useEffect(() => {
         }`}
     >
 
-
         <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-amber-500/40 rounded-tl-lg"></div>
         <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-amber-500/40 rounded-tr-lg"></div>
         <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-amber-500/40 rounded-bl-lg"></div>
         <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-amber-500/40 rounded-br-lg"></div>
 
-     
         <div className="absolute inset-2 border border-dashed border-amber-500/10 rounded-[2.7rem]"></div>
 
-       
         <div className="relative z-10 flex items-center justify-center gap-3 mb-6 border-b border-amber-500/10 pb-4">
 
             <span className="text-amber-500 text-sm hidden sm:inline">
@@ -1546,7 +1509,7 @@ React.useEffect(() => {
             </span>
 
             <h3 className="text-xl md:text-2xl font-black text-amber-500 text-center">
-                {lang === 'ar' ? dua.title_ar : dua.title_en}
+                {dua.title}
             </h3>
 
             <span className="text-amber-500 text-sm hidden sm:inline">
@@ -1555,7 +1518,6 @@ React.useEffect(() => {
 
         </div>
 
-       
         <div className="relative z-10 text-center">
 
             <p 
@@ -1564,12 +1526,11 @@ React.useEffect(() => {
                 }`}
                 dir="rtl"
             >
-                {dua.text_ar}
+                {dua.text}
             </p>
 
         </div>
 
-       
         <div className="text-center text-amber-500/40 text-sm tracking-widest mt-6 pt-4 border-t border-amber-500/5">
             ⚜ ⚜ ⚜
         </div>
@@ -1577,12 +1538,6 @@ React.useEffect(() => {
     </div>
 
 ))}
-
-</div>
-
-    </div>
-
-)}
 
 
                               {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
