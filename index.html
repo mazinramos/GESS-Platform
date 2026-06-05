@@ -663,7 +663,7 @@ React.useEffect(() => {
         ${darkMode ? 'bg-gray-800 border-gray-700 shadow-black/50' : 'bg-white border-gray-100 shadow-orange-200/50'}`}
     >
         <div className="p-2 space-y-1">
-            {/* 1. خيار تغيير اللغة */}
+            {/* 1.  تغيير اللغة */}
             <button 
                 onClick={() => {
                     const newLang = lang === 'ar' ? 'en' : 'ar';
@@ -681,7 +681,7 @@ React.useEffect(() => {
                 </div>
             </button>
 
-            {/* 2. خيار الوضع الداكن / الفاتح */}
+            {/* 2.  الوضع الداكن / الفاتح */}
             <button 
                 onClick={() => {setDarkMode(!darkMode); setShowToolsMenu(false);}}
                 className={`flex items-center justify-between w-full p-3 rounded-xl text-sm transition-colors ${
@@ -694,7 +694,7 @@ React.useEffect(() => {
                 </div>
             </button>
 
-            {/* 3. خيار لوحة الإدارة */}
+            {/* 3.  لوحة الإدارة */}
             <button 
                 onClick={() => {
                     view === 'admin' ? setView('student') : setShowAdminAuth(true);
@@ -712,25 +712,25 @@ React.useEffect(() => {
                 </div>
             </button>
 
-            {/* 🕌 4. خيار الأدعية والأذكار الثابتة الجديد (بأيقونة Lucide الروحانية) 🕌 */}
-            <button 
-                onClick={() => {
-    setPath([{ id: 'supplications', type: 'supplications' }]);
-    setShowToolsMenu(false);
-}}
-                className={`flex items-center justify-between w-full p-3 rounded-xl text-sm font-bold transition-all duration-200 ${
-                    view === 'supplications'
-                    ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
-                    : (darkMode ? 'hover:bg-gray-700 text-amber-400' : 'hover:bg-amber-50/60 text-amber-600')
-                }`}
-            >
-                <div className="flex items-center gap-3">
-                    <i data-lucide="book-open" className="w-4 h-4"></i>
-                    {lang === 'ar' ? "الأدعية والأذكار" : "Supplications"}
-                </div>
-            </button>
+            {/*  الأدعية والأذكار  */}
+<button 
+    onClick={() => {
+        setPath([{ id: 'supplications', type: 'supplications' }]);
+        setShowToolsMenu(false);
+    }}
+    className={`flex items-center justify-between w-full p-3 rounded-xl text-sm font-bold transition-all duration-200 ${
+        path[0]?.id === 'supplications'
+        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20'
+        : (darkMode ? 'hover:bg-gray-700 text-amber-400' : 'hover:bg-amber-50/60 text-amber-600')
+    }`}
+>
+    <div className="flex items-center gap-3">
+        <i data-lucide="book-open" className="w-4 h-4"></i>
+        {"الأدعية والأذكار"}
+    </div>
+</button>
 
-            {/* 5. خيار تحميل التطبيق الديناميكي */}
+            {/* 5.  تحميل التطبيق  */}
             {showDownloadOption && (
                 <button
                     onClick={handleDownloadApp}
@@ -747,10 +747,10 @@ React.useEffect(() => {
                 </button>
             )}
 
-            {/* الخط الفاصل الجمالي */}
+            {/* الخط الفاصل  */}
             <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
 
-            {/* 6. زر تسجيل الخروج */}
+            {/* 6.  تسجيل الخروج */}
             <button 
                 onClick={() => {
                     handleLogOut(); 
@@ -815,112 +815,7 @@ React.useEffect(() => {
 
                     <main className={`max-w-6xl mx-auto px-4 py-8 transition-colors ${darkMode ? 'text-white' : ''}`}>
 
-{view === 'supplications' && (
 
-    <div className="max-w-5xl mx-auto px-4 py-8 animate-in fade-in duration-500">
-
-        {/* العنوان */}
-        <div className="text-center mb-10">
-
-            <div className="w-20 h-20 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                <i data-lucide="moon-star" className="w-10 h-10 text-amber-500"></i>
-            </div>
-
-            <h1 className="text-4xl font-black text-amber-500 mb-3">
-                {lang === 'ar'
-                    ? "الأدعية والأذكار"
-                    : "Supplications & Azkar"}
-            </h1>
-
-            <p className={`text-sm font-medium ${
-                darkMode ? 'text-gray-400' : 'text-gray-500'
-            }`}>
-                {lang === 'ar'
-                    ? "مجموعة أدعية وأذكار للطمأنينة والتوفيق"
-                    : "Collection of beautiful supplications"}
-            </p>
-
-        </div>
-
-        {/* كروت الأدعية */}
-        <div className="space-y-8">
-
-            {[
-                {
-                    title_ar: "دعاء التوفيق والنجاح في الامتحانات",
-                    title_en: "Dua for Success & Exams",
-                    text_ar: `اللَّهُمَّ إِنِّي أَسْأَلُكَ فَهْمَ النَّبِيِّينَ،
-وَحِفْظَ الْمُرْسَلِينَ،
-وَالْمَلَائِكَةِ الْمُقَرَّبِينَ.
-
-اللَّهُمَّ اجْعَلْ أَلْسِنَتَنَا عَامِرَةً بِذِكْرِكَ،
-وَقُلُوبَنَا بِخَشْيَتِكَ،
-
-اللَّهُمَّ لا سَهْلَ إِلاَّ مَا جَعَلْتَهُ سَهْلاً،
-
-يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ.`
-                },
-
-                {
-                    title_ar: "دعاء التيسير وسعة الصدر",
-                    title_en: "Dua for Ease & Relief",
-                    text_ar: `رَبِّ اشْرَحْ لِي صَدْرِي
-وَيَسِّرْ لِي أَمْرِي
-وَاحْلُلْ عُقْدَةً مِن لِّسَانِي يَفْقَهُوا قَوْلِي.
-
-اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ،
-وَالْعَجْزِ وَالْكَسَلِ.`
-                }
-
-            ].map((dua, index) => (
-
-                <div
-                    key={index}
-                    className={`relative p-8 md:p-12 rounded-[3rem] border-2 transition-all duration-300 overflow-hidden ${
-                        darkMode
-                        ? 'bg-gray-900/40 border-amber-500/25'
-                        : 'bg-white border-amber-600/10 shadow-md'
-                    }`}
-                >
-
-                    {/* الزوايا */}
-                    <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-amber-500/40 rounded-tl-lg"></div>
-                    <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-amber-500/40 rounded-tr-lg"></div>
-                    <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-amber-500/40 rounded-bl-lg"></div>
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-amber-500/40 rounded-br-lg"></div>
-
-                    {/* عنوان الدعاء */}
-                    <div className="text-center mb-6">
-
-                        <h3 className="text-2xl font-black text-amber-500">
-                            {lang === 'ar'
-                                ? dua.title_ar
-                                : dua.title_en}
-                        </h3>
-
-                    </div>
-
-                    {/* النص */}
-                    <p
-                        dir="rtl"
-                        className={`text-lg leading-[2.5] whitespace-pre-line text-right font-bold ${
-                            darkMode
-                            ? 'text-stone-200'
-                            : 'text-stone-700'
-                        }`}
-                    >
-                        {dua.text_ar}
-                    </p>
-
-                </div>
-
-            ))}
-
-        </div>
-
-    </div>
-
-)}
                         
                         {view === 'admin' ? (
                             <div className="max-w-4xl mx-auto animate-in">
@@ -1144,83 +1039,6 @@ React.useEffect(() => {
     </div>
 </div>
 
-{/* مجرى كروت الأدعية الطويلة (مرتبة بشكل طولي لراحة القراءة) */}
-            <div className="space-y-8">
-                {[
-                    // ==========================================
-                    // ✍️ اكتب أدعيتك هنا يا هندسة بالترتيب بالملي:
-                    // يمكنك تكرار هذه الكتلة [{...}] بعدد الأدعية التي تريدها
-                    // ==========================================
-                    {
-                        title_ar: "دعاء التوفيق والنجاح في الامتحانات",
-                        title_en: "Dua for Success & Exams",
-                        text_ar: `اللَّهُمَّ إِنِّي أَسْأَلُكَ فَهْمَ النَّبِيِّينَ، وَحِفْظَ الْمُرْسَلِينَ، وَالْمَلَائِكَةِ الْمُقَرَّبِينَ.
-                        اللَّهُمَّ اجْعَلْ أَلْسِنَتَنَا عَامِرَةً بِذِكْرِكَ، وَقُلُوبَنَا بِخَشْيَتِكَ، وَأَسْرَارَنَا بِطَاعَتِكَ، إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.
-                        اللَّهُمَّ يَا جَامِعَ النَّاسِ لِيَوْمٍ لَا رَيْبَ فِيهِ اجْمَعْ عَلَيَّ ضَالَّتِي، وَوَفِّقْنِي لِمَا تُحِبُّهُ وَتَرْضَاهُ.
-                        اللَّهُمَّ لا سَهْلَ إِلاَّ مَا جَعَلْتَهُ سَهْلاً، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلاً.
-                        يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ وَلا تَكِلْنِي إِلَى نَفْسِي طَرْفَةَ عَيْنٍ.
-                        اللَّهُمَّ افْتَحْ عَلَيْنَا فُتُوحَ الْعَارِفِينَ بِحِكْمَتِكَ، وَانْشُرْ عَلَيْنَا رَحْمَتَكَ، وَذَكِّرْنَا مَا نَسِينَا يَا ذَا الْجَلَالِ وَالْإِكْرَامِ.
-                        اللَّهُمَّ نَوِّرْ بِالْكِتَابِ بَصَرِي، وَاشْرَحْ بِهِ صَدْرِي، وَاسْتَعْمِلْ بِهِ بَدَنِي، وَأَطْلِقْ بِهِ لِسَانِي، وَقَوِّي بِهِ عَقْلِي بِحَوْلِكَ وَقُوَّتِكَ.`
-                    },
-                    {
-                        title_ar: "دعاء التيسير وسعة الصدر ولين المعضلات",
-                        title_en: "Dua for Ease & Relief",
-                        text_ar: `رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي يَفْقَهُوا قَوْلِي.
-                        اللَّهُمَّ رَبَّ السَّمَاوَاتِ السَّبْعِ وَرَبَّ الْعَرْشِ الْعَظِيمِ، رَبَّنَا وَرَبَّ كُلِّ شَيْءٍ، فَالِقَ الْحَبِّ وَالنَّوَى.
-                        أَعُوذُ بِكَ مِنْ شَرِّ كُلِّ شَيْءٍ أَنْتَ آخِذٌ بِنَاصِيَتِهِ، اللَّهُمَّ أَنْتَ الأَوَّلُ فَلَيْسَ قَبْلَكَ شَيْءٌ، وَأَنْتَ الآخِرُ فَلَيْسَ بَعْدَكَ شَيْءٌ.
-                        وَأَنْتَ الظَّاهِرُ فَلَيْسَ فَوْقَكَ شَيْءٌ، وَأَنْتَ الْبَاطِنُ فَلَيْسَ دُونَكَ شَيْءٌ، اقْضِ عَنَّا الدَّيْنَ وَأَغْنِنَا مِنَ الْفَقْرِ.
-                        اللَّهُمَّ إِنِّي أَعُوذُ بِكَ مِنَ الْهَمِّ وَالْحَزَنِ، وَالْعَجْزِ وَالْكَسَلِ، وَالْبُخْلِ وَالْجُبْنِ، وَضَلَعِ الدَّيْنِ وَغَلَبَةِ الرِّجَالِ.`
-                    }
-                    // ==========================================
-                    // 🔼 انتهى مكان الكتابة (تقدر تضيف أدعية تانية بنفس الطريقة)
-                    // ==========================================
-                ].map((dua, index) => (
-                    <div 
-                        key={index}
-                        className={`relative p-8 md:p-12 rounded-[3rem] border-2 transition-all duration-300 w-full overflow-hidden ${
-                            darkMode 
-                            ? 'bg-gray-900/40 border-amber-500/25 hover:border-amber-500/40 shadow-2xl shadow-black/40' 
-                            : 'bg-white border-amber-600/10 hover:border-amber-600/25 shadow-md shadow-stone-200/40'
-                        }`}
-                    >
-                        {/* الزوايا الإسلامية الأربعة المحاكية لإطار المصحف */}
-                        <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-amber-500/40 rounded-tl-lg"></div>
-                        <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-amber-500/40 rounded-tr-lg"></div>
-                        <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-amber-500/40 rounded-bl-lg"></div>
-                        <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-amber-500/40 rounded-br-lg"></div>
-
-                        {/* برواز داخلي منقّط ملوكي لجمالية الكرت وضمان عدم تداخل المحتوى */}
-                        <div className="absolute inset-2 md:inset-3 border border-dashed border-amber-500/15 rounded-[2.7rem] pointer-events-none"></div>
-
-                        {/* هيدر الكرت: اسم الدعاء محاط بـ نجوم إسلامية */}
-                        <div className="relative z-10 flex items-center justify-center gap-3 mb-6 border-b border-amber-500/10 pb-4">
-                            <span className="text-amber-500 text-sm hidden sm:inline">❖ ❖</span>
-                            <h3 className="text-xl font-black text-amber-500 text-center tracking-wide font-serif">
-                                {lang === 'ar' ? dua.title_ar : dua.title_en}
-                            </h3>
-                            <span className="text-amber-500 text-sm hidden sm:inline">❖ ❖</span>
-                        </div>
-
-                        {/* نص الدعاء: تم استخدام leading-[2.5] لإعطاء مسافة سطرية مريحة جداً حتى لو كان 15 سطر */}
-                        <div className="relative z-10 text-center">
-                            <p 
-                                className={`text-base md:text-lg font-bold leading-[2.4] px-2 md:px-6 tracking-wide font-serif whitespace-pre-line text-right ${
-                                    darkMode ? 'text-stone-200' : 'text-stone-800'
-                                }`} 
-                                dir="rtl"
-                            >
-                                {dua.text_ar}
-                            </p>
-                        </div>
-
-                        {/* الفاصل الزخرفي السفلي في نهاية الدعاء الطويل */}
-                        <div className="text-center text-amber-500/40 text-sm tracking-widest mt-6 pt-4 border-t border-amber-500/5">
-                            ⚜ ⚜ ⚜
-                        </div>
-                    </div>
-                ))}
-            </div>
-
                                 </div>
                                 <div className="mt-12 pt-8 border-t-2 border-gray-100">
     <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
@@ -1421,28 +1239,25 @@ React.useEffect(() => {
   </div>
 )}
 
-{/* صفحة الأدعية والأذكار  */}
+{/* صفحة الأدعية والأذكار */}
 {path.length === 1 && path[0]?.id === 'supplications' && (
 
     <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
 
         {/* الهيدر */}
         <div className="text-center mb-10">
-            
+
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-amber-100 text-amber-700 font-black text-sm mb-5">
                 <i data-lucide="moon-star" className="w-5 h-5"></i>
-                {lang === 'ar' ? "ركن الأدعية والأذكار" : "Supplications & Azkar"}
+                ركن الأدعية والأذكار
             </div>
 
             <h1 className="text-4xl font-black text-gray-900 dark:text-white mb-4">
-                {lang === 'ar' ? "الأدعية والأذكار الإسلامية" : "Islamic Supplications"}
+                الأدعية والأذكار 
             </h1>
 
             <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto leading-8">
-                {lang === 'ar'
-                    ? "مجموعة من الأدعية والأذكار المختارة للطلاب أثناء الدراسة والامتحانات والحياة اليومية."
-                    : "A collection of Islamic supplications and daily azkar for students and academic life."
-                }
+                مجموعة من الأدعية والأذكار اليومية المختارة للطلاب أثناء الدراسة والامتحانات  .
             </p>
 
         </div>
@@ -1451,9 +1266,8 @@ React.useEffect(() => {
 
 {[
     {
-        title_ar: "أدعية قبل البدء في المذاكرة",
-        title_en: "Before Studying",
-        text_ar: `اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلًا.
+        title: "أدعية قبل البدء في المذاكرة",
+        text: `اللَّهُمَّ لَا سَهْلَ إِلَّا مَا جَعَلْتَهُ سَهْلًا، وَأَنْتَ تَجْعَلُ الْحَزْنَ إِذَا شِئْتَ سَهْلًا.
 
 رَبِّ اشْرَحْ لِي صَدْرِي * وَيَسِّرْ لِي أَمْرِي * وَاحْلُلْ عُقْدَةً مِّن لِّسَانِي * يَفْقَهُوا قَوْلِي.
 
@@ -1467,9 +1281,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية سرعة الفهم وقوة الحفظ",
-        title_en: "Understanding & Memorization",
-        text_ar: `رَّبِّ زِدْنِي عِلْمًا.
+        title: "أدعية سرعة الفهم وقوة الحفظ",
+        text: `رَّبِّ زِدْنِي عِلْمًا.
 
 اللَّهُمَّ انْفَعْنِي بِمَا عَلَّمْتَنِي، وَعَلِّمْنِي مَا يَنْفَعُنِي، وَزِدْنِي عِلْمًا.
 
@@ -1481,9 +1294,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية الفراغ من المذاكرة",
-        title_en: "After Finishing Study",
-        text_ar: `اللَّهُمَّ إِنِّي أَسْتَوْدِعُكَ مَا قَرَأْتُ وَمَا حَفِظْتُ وَمَا تَعَلَّمْتُ.
+        title: "أدعية الفراغ من المذاكرة",
+        text: `اللَّهُمَّ إِنِّي أَسْتَوْدِعُكَ مَا قَرَأْتُ وَمَا حَفِظْتُ وَمَا تَعَلَّمْتُ.
 
 رُدَّهُ إِلَيَّ عِنْدَ حَاجَتِي إِلَيْهِ، إِنَّكَ عَلَى كُلِّ شَيْءٍ قَدِيرٌ.
 
@@ -1491,9 +1303,8 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية التوجه إلى الامتحان",
-        title_en: "Before Exams",
-        text_ar: `رَّبِّ أَدْخِلْنِي مُدْخَلَ صِدْقٍ وَأَخْرَجْنِي مُخْرَجَ صِدْقٍ وَاجْعَل لِّي مِن لَّدُنكَ سُلْطَانًا نَّصِيرًا.
+        title: "أدعية التوجه إلى الامتحان",
+        text: `رَّبِّ أَدْخِلْنِي مُدْخَلَ صِدْقٍ وَأَخْرَجْنِي مُخْرَجَ صِدْقٍ وَاجْعَل لِّي مِن لَّدُنكَ سُلْطَانًا نَّصِيرًا.
 
 اللَّهُمَّ إِنِّي تَوَكَّلْتُ عَلَيْكَ، وَأَسْلَمْتُ أَمْرِي إِلَيْكَ، لَا مَلْجَأَ وَلَا مَنْجَا مِنْكَ إِلَّا إِلَيْكَ.
 
@@ -1501,17 +1312,15 @@ React.useEffect(() => {
     },
 
     {
-        title_ar: "أدعية داخل لجنة الامتحان",
-        title_en: "Inside Exam Hall",
-        text_ar: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
+        title: "أدعية داخل لجنة الامتحان",
+        text: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
 
 اللَّهُمَّ لَا تَجْعَلْ لِلْخَوْفِ سَبِيلًا إِلَى قَلْبِي، وَأَنْزِلْ عَلَيَّ السَّكِينَةَ.`
     },
 
     {
-        title_ar: "دعاء النسيان والتعسر",
-        title_en: "Forgetfulness & Difficulty",
-        text_ar: `لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ.
+        title: "دعاء النسيان والتعسر",
+        text: `لَّا إِلَٰهَ إِلَّا أَنتَ سُبْحَانَكَ إِنِّي كُنتُ مِنَ الظَّالِمِينَ.
 
 يَا حَيُّ يَا قَيُّومُ بِرَحْمَتِكَ أَسْتَغِيثُ، أَصْلِحْ لِي شَأْنِي كُلَّهُ.
 
@@ -1520,25 +1329,22 @@ React.useEffect(() => {
 
 ].map((dua, index) => (
 
-    <div 
+    <div
         key={index}
         className={`relative p-8 md:p-12 rounded-[3rem] border-2 transition-all duration-300 overflow-hidden ${
-            darkMode 
-            ? 'bg-gray-900/40 border-amber-500/25 hover:border-amber-500/40 shadow-2xl shadow-black/40' 
+            darkMode
+            ? 'bg-gray-900/40 border-amber-500/25 hover:border-amber-500/40 shadow-2xl shadow-black/40'
             : 'bg-white border-amber-600/10 hover:border-amber-600/25 shadow-md shadow-stone-200/40'
         }`}
     >
-
 
         <div className="absolute top-4 left-4 w-6 h-6 border-t-2 border-l-2 border-amber-500/40 rounded-tl-lg"></div>
         <div className="absolute top-4 right-4 w-6 h-6 border-t-2 border-r-2 border-amber-500/40 rounded-tr-lg"></div>
         <div className="absolute bottom-4 left-4 w-6 h-6 border-b-2 border-l-2 border-amber-500/40 rounded-bl-lg"></div>
         <div className="absolute bottom-4 right-4 w-6 h-6 border-b-2 border-r-2 border-amber-500/40 rounded-br-lg"></div>
 
-     
         <div className="absolute inset-2 border border-dashed border-amber-500/10 rounded-[2.7rem]"></div>
 
-       
         <div className="relative z-10 flex items-center justify-center gap-3 mb-6 border-b border-amber-500/10 pb-4">
 
             <span className="text-amber-500 text-sm hidden sm:inline">
@@ -1546,7 +1352,7 @@ React.useEffect(() => {
             </span>
 
             <h3 className="text-xl md:text-2xl font-black text-amber-500 text-center">
-                {lang === 'ar' ? dua.title_ar : dua.title_en}
+                {dua.title}
             </h3>
 
             <span className="text-amber-500 text-sm hidden sm:inline">
@@ -1555,21 +1361,19 @@ React.useEffect(() => {
 
         </div>
 
-       
         <div className="relative z-10 text-center">
 
-            <p 
+            <p
                 className={`text-base md:text-lg font-bold leading-[2.5] px-2 md:px-6 whitespace-pre-line text-right ${
                     darkMode ? 'text-stone-200' : 'text-stone-800'
                 }`}
                 dir="rtl"
             >
-                {dua.text_ar}
+                {dua.text}
             </p>
 
         </div>
 
-       
         <div className="text-center text-amber-500/40 text-sm tracking-widest mt-6 pt-4 border-t border-amber-500/5">
             ⚜ ⚜ ⚜
         </div>
@@ -1578,7 +1382,7 @@ React.useEffect(() => {
 
 ))}
 
-</div>
+        </div>
 
     </div>
 
