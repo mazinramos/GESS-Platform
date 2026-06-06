@@ -1633,13 +1633,27 @@ React.useEffect(() => {
             badgeText = "PDF Document";
             btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📄 فتح ملف PDF" : "Open PDF File";
         } else if (isPpt) {
-            lucideIcon = "presentation"; 
-            badgeText = "PowerPoint";
-            btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📊 عرض المحاضرة أونلاين" : "View PPT Slides";
-            if (link.url) {
-                finalHref = `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(link.url)}`;
-            }
-        } else if (currentType === 'video' || isVideoUrl) {
+
+    lucideIcon = "presentation-chart";
+    
+    badgeText = (typeof lang !== 'undefined' && lang === 'ar')
+        ? "🎬 محاضرة بوربوينت صوتية"
+        : "PowerPoint Video";
+
+    btnText = (typeof lang !== 'undefined' && lang === 'ar')
+        ? "🎥 مشاهدة المحاضرة"
+        : "Watch Lecture";
+
+    // تحويل رابط Google Drive إلى Embed Video
+    if (link.url.includes('/file/d/')) {
+
+        const fileId = link.url.split('/file/d/')[1]?.split('/')[0];
+
+        embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+
+        isVideoUrl = true;
+    }
+} else if (currentType === 'video' || isVideoUrl || isPpt) {
             lucideIcon = "video"; 
             badgeText = (typeof lang !== 'undefined' && lang === 'ar') ? "🎬 فيديو شرح مدمج" : "Embedded Video";
         } else if (isVoiceType) {
@@ -1678,7 +1692,12 @@ React.useEffect(() => {
                         </button>
                     </div>
                     <div id={`embedded-player-${index}`} className="hidden relative w-full h-0 pb-[56.25%] bg-black border-t border-gray-100 overflow-hidden">
-                        <iframe src={embedUrl} className="w-full h-full border-none absolute top-0 left-0" allow="autoplay; fullscreen" allowFullScreen></iframe>
+                       <iframe
+    src={embedUrl}
+    className="w-full h-full border-none"
+    allow="autoplay"
+    allowFullScreen
+></iframe>
                     </div>
                 </div>
             );
