@@ -648,15 +648,16 @@ React.useEffect(() => {
             </div>
             <div className="relative">
                 <button 
-                    onClick={() => setShowToolsMenu(!showToolsMenu)} 
-                    className={`p-3 rounded-xl transition-all shadow-sm border ${
-                        showToolsMenu 
-                        ? 'bg-[#f58220] text-white border-[#f58220]' 
-                        : (darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-orange-100 text-[#f58220]')
-                    }`}
-                >
-                    <i data-lucide={showToolsMenu ? "x" : "settings"} className="w-5 h-5"></i>
-                </button>
+    onClick={() => setShowToolsMenu(!showToolsMenu)} 
+    className={`p-3 rounded-xl transition-all shadow-sm border ${
+        showToolsMenu 
+        ? 'bg-[#f58220] text-white border-[#f58220]' 
+        : (darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-orange-100 text-[#f58220]')
+    }`}
+>
+    {/* تم تغيير "settings" إلى "menu" */}
+    <i data-lucide={showToolsMenu ? "x" : "menu"} className="w-5 h-5"></i>
+</button>
                 {showToolsMenu && (
     <div className={`absolute mt-3 w-56 rounded-2xl shadow-2xl border z-[110] animate-in fade-in zoom-in-95 duration-200 
         ${lang === 'ar' ? 'left-0' : 'right-0'} 
