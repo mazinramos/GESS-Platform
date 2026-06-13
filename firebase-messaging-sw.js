@@ -1,7 +1,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
 
-// إعدادات الفايربيز الحقيقية لمنصة GESS PLATFORM
+  
 const firebaseConfig = {
   apiKey: "AIzaSyCtQtSikYfWEPtKjwxVIJim8fHzeW5ACtY",
   authDomain: "gess-platform.firebaseapp.com",
@@ -16,13 +16,13 @@ firebase.initializeApp(firebaseConfig);
 
 const messaging = firebase.messaging();
 
-// استقبال الإشعار والمنصة مقفولة تماماً في الموبايل
+
 messaging.onBackgroundMessage((payload) => {
     console.log('Received background message ', payload);
     const notificationTitle = payload.notification.title;
     const notificationOptions = {
         body: payload.notification.body,
-        icon: '/logo.png', // أيقونة المنصة الشيك في الشاشة
+        icon: '/logo.png',  
         badge: '/logo.png'
     };
 
