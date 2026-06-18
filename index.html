@@ -65,16 +65,21 @@
   
   const db = firebase.firestore();
   const analytics = firebase.analytics();
+// 1. تعريف موديل الرسائل
 const messaging = firebase.messaging();
 
+// 2. دالة تشغيل السيستم وطلب الإذن من هواتف الطلاب تلقائياً
 function setupNotificationSystem() {
     Notification.requestPermission().then((permission) => {
         if (permission === 'granted') {
             console.log('تم تفعيل نظام الإشعارات بنجاح! 🔔');
             
+            // جلب الـ Token الفريد لجهاز الطالب
+            // ⚠️ ملاحظة: استبدل 'ضع_هنا_الـ_VAPID_KEY_بتاعك' بالمفتاح المجلوب من تبويب Cloud Messaging في فايربيز
             messaging.getToken({ vapidKey: 'ضع_هنا_الـ_VAPID_KEY_بتاعك' })
             .then((currentToken) => {
                 if (currentToken) {
+                    // تسجيل الطالب تلقائياً في جروب الدفعة (students)
                     subscribeTokenToTopic(currentToken, 'students');
                 }
             }).catch((err) => console.log('خطأ في جلب التوكن:', err));
@@ -82,10 +87,12 @@ function setupNotificationSystem() {
     });
 }
 
+// دالة ربط جهاز الطالب بـ سيرفر الإرسال الجماعي
 function subscribeTokenToTopic(token, topic) {
     fetch(`https://iid.googleapis.com/iid/v1/${token}/rel/topics/${topic}`, {
         method: 'POST',
         headers: {
+            // ⚠️ ملاحظة: استبدل الكلمة تحت بمفتاح السيرفر (Server Key) المجلوب من إعدادات الفايربيز برضه
             'Authorization': 'Bearer ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' 
         }
     }).then(response => {
@@ -93,14 +100,15 @@ function subscribeTokenToTopic(token, topic) {
     }).catch(err => console.error('خطأ في الربط السيرفري:', err));
 }
 
+// 3. الدالة السحرية للأدمن (تشتغل طوالي لما تضغط زر الإرسال من لوحتك)
 function sendNotificationFromAdmin(title, body) {
     const notificationPayload = {
-        to: "/topics/students", 
+        to: "/topics/students", // البث لكل الدفعة المشتركة في الجروب ده
         notification: {
             title: title,
             body: body,
             icon: "/logo.png",
-            click_action: window.location.origin 
+            click_action: window.location.origin // يفتح المنصة طوالي لما الطالب يضغط على الإشعار
         }
     };
 
@@ -108,7 +116,7 @@ function sendNotificationFromAdmin(title, body) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': 'key=ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' 
+            'Authorization': 'key=ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' // نفس مفتاح السيرفر
         },
         body: JSON.stringify(notificationPayload)
     })
@@ -122,6 +130,7 @@ function sendNotificationFromAdmin(title, body) {
     .catch(err => console.error('Error:', err));
 }
 
+// تشغيل الفحص والطلب تلقائياً أول ما أي زول يفتح المنصة
 setupNotificationSystem();
 firebase.analytics().setUserProperties({ debug_mode: true });
 </script>
@@ -229,25 +238,31 @@ const t = {
             
 
 const [deferredPrompt, setDeferredPrompt] = React.useState(null);
+// لو المنصة مفتوحة كـ تطبيق مستقل (Standalone) الستيت دي هتكون false تلقائياً ومستحيل الخيار يظهر
 const [showDownloadOption, setShowDownloadOption] = React.useState(false);
 
 React.useEffect(() => {
+    // 1. فحص هل الطالب فاتح المنصة حالياً كتطبيق منزل في الشاشة الرئيسية؟
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
                          || window.navigator.standalone === true;
 
+    // 2. إذا كان آيفون، نظام آبل ما بيدعمش حدث التثبيت التلقائي، فبنعتمد على الفحص المباشر
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     if (isStandalone) {
-        setShowDownloadOption(false);
+        setShowDownloadOption(false); // مخفي تماماً لأن التطبيق نازل وشغال
     } else {
+        // لو مش منزل والموبايل آيفون، أظهره دايماً عشان نوجهه لكيفية التنزيل
         if (isIOS) {
             setShowDownloadOption(true);
         }
     }
 
+    // 3. لأجهزة الأندرويد واللابتوب والويندوز (اصطياد التثبيت)
     const handleBeforeInstallPrompt = (e) => {
         e.preventDefault();
         setDeferredPrompt(e);
+        // طالما الحدث اشتغل والموقع مش standalone، يبقى الخيار يظهر فوراً
         if (!isStandalone) {
             setShowDownloadOption(true);
         }
@@ -258,11 +273,12 @@ React.useEffect(() => {
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 }, []);
 
+// دالة التشغيل عند الضغط على زر "تحميل التطبيق"
 const handleDownloadApp = async () => {
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     if (isIOS) {
-
+        // لمستخدمي الآيفون: بنظهر لهم تنبيه (Alert) بالخطوات لأن سفاري لا يدعم التثبيت البرمجي
         alert(lang === 'ar' 
             ? "📥 للتثبيت على iPhone:\n1. اضغط على زر المشاركة أسفل المتصفح.\n2. اختر 'إضافة إلى الشاشة الرئيسية'." 
             : "📥 To Install on iPhone:\n1. Tap the Share button.\n2. Choose 'Add to Home Screen'."
@@ -270,12 +286,13 @@ const handleDownloadApp = async () => {
         return;
     }
 
+    // للأندرويد، ويندوز، ولابتوب
     if (!deferredPrompt) return;
-    deferredPrompt.prompt(); 
+    deferredPrompt.prompt(); // إظهار نافذة المتصفح الرسمية للتثبيت فوراً
     
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === 'accepted') {
-        setShowDownloadOption(false); 
+        setShowDownloadOption(false); // لو وافق وثبته يختفي الخيار فوراً
     }
     setDeferredPrompt(null);
 };
@@ -429,6 +446,7 @@ React.useEffect(() => {
           
             React.useEffect(() => { lucide.createIcons(); });
 
+// 1. دالة تسجيل الدخول الرئيسية الموحدة (طالب / أدمن)
 const handleLogin = (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
@@ -461,6 +479,7 @@ const handleLogin = (e) => {
     setTimeout(() => setToast({ show: false, message: '' }), 3000);
 };
 
+// 2. دالة تأكيد الهوية السريعة (المودال المنبثق من التروس)
 const checkAdminAuth = (e) => {
     e.preventDefault();
     const savedAdminPass = localStorage.getItem('gess_admin_pass') || 'admin123';
@@ -478,6 +497,7 @@ const checkAdminAuth = (e) => {
     setTimeout(() => setToast({ show: false, message: '' }), 3000);
 };
 
+// 3. دالة تسجيل الخروج المحدثة لتنظيف الستيت بالكامل
 const handleLogOut = () => {
     localStorage.removeItem('gess_is_logged_in');
     localStorage.removeItem('gess_user_name');
@@ -635,6 +655,7 @@ React.useEffect(() => {
         : (darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-orange-100 text-[#f58220]')
     }`}
 >
+    {/* تم تغيير "settings" إلى "menu" */}
     <i data-lucide={showToolsMenu ? "x" : "menu"} className="w-5 h-5"></i>
 </button>
                 {showToolsMenu && (
@@ -727,6 +748,7 @@ React.useEffect(() => {
                 </button>
             )}
 
+            {/* الخط الفاصل  */}
             <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
 
             {/* 6.  تسجيل الخروج */}
@@ -783,6 +805,7 @@ React.useEffect(() => {
 
         </div>
 
+        {/* النص الجانبي */}
         <div className={`text-[11px] font-bold ${
             darkMode
                 ? 'text-gray-500'
@@ -967,7 +990,7 @@ React.useEffect(() => {
 }`}>{lang === 'ar' ? "نشر المحتوى الآن" : "Post Content Now"}</button>
                                     </form>
 
-{/* ==================== [ لوحة  الأدمن - الإعلانات ] ==================== */}
+{/* ==================== [ لوحة تحكم الأدمن - إدارة الإعلانات ] ==================== */}
 <div className={`p-6 rounded-[2rem] border shadow-sm space-y-6 mt-8 transition-all ${
     darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'
 }`}>
@@ -978,15 +1001,19 @@ React.useEffect(() => {
         {lang === 'ar' ? 'إدارة الإعلانات والإشعارات (للأدمن)' : 'Manage Announcements (Admin)'}
     </h2>
     
+    {/* فورم إضافة إعلان جديد معدل بالكامل ليدعم الـ Push Notification */}
     <form onSubmit={(e) => { 
         e.preventDefault(); 
         
+        // 1. جلب المدخلات من الفورم مباشرة بطريقة ريأكت النظيفة
         const title = document.getElementById('form-title').value;
         const content = document.getElementById('form-content').value;
         const duration = document.getElementById('form-duration').value;
         
+        // 2. تشغيل دالة الفايرستور القديمة بتاعتك لحفظ البيانات في المنصة
         handlePublishAnnouncement(); 
         
+        // 3. تشغيل دالة البث الفوري لتصل لكل هواتف الطلاب بنغمة في نفس اللحظة
         if (typeof sendNotificationFromAdmin === 'function') {
             sendNotificationFromAdmin(title, content);
         }
@@ -1015,13 +1042,14 @@ React.useEffect(() => {
         </div>
         
         <div className="md:col-span-3 flex gap-2 justify-end mt-2">
-
+            {/* تم تعديل الـ type إلى submit لتشغيل دالة الإرسال الجماعي بأمان */}
             <button type="submit" className="bg-gray-950 text-white hover:bg-[#f58220] px-8 py-2.5 rounded-full text-xs font-black shadow-md transition-all">
                 {lang === 'ar' ? 'نشر الإعلان وإرسال إشعار 🚀' : 'Publish & Notify 🚀'}
             </button>
         </div>
     </form>
 
+   {/* جدول السجلات الحية لمراقبة وحذف وتعديل الإعلانات */}
     <div className="mt-4">
         <h3 className="text-sm font-black text-gray-500 mb-3">
             {lang === 'ar' ? 'السجلات الحالية للتحكم والعمليات:' : 'Current Records & Operations:'}
@@ -1467,7 +1495,7 @@ React.useEffect(() => {
 
     item.isFolder ? (
 
-      // ================= فولدر  =================
+      // ================= فولدر فقط =================
       <div
         key={item.id}
         className="bg-white p-6 rounded-[2rem] border flex items-center justify-between"
@@ -1504,6 +1532,7 @@ React.useEffect(() => {
 
     ) : (
 
+      // ================= درس عادي =================
       <button
         key={item.id}
         onClick={() => {
@@ -1565,6 +1594,7 @@ React.useEffect(() => {
 {selectedItem && (
     <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in max-w-4xl w-full mx-auto flex flex-col max-h-[90vh] my-auto">
         
+        {/* رأس المودال الثابت */}
         <div className="p-4 bg-gray-50 flex items-center justify-between border-b border-gray-100 shrink-0">
             <div className="flex flex-col">
                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem?.subject || ""}</span>
@@ -1575,10 +1605,11 @@ React.useEffect(() => {
             </button>
         </div>
 
+        {/* جسم المحتوى - مع تعديلات الفريم والأيقونات الديناميكية */}
         <div className="flex-1 overflow-y-auto pr-1 overflow-x-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             
             {selectedItem?.links && Array.isArray(selectedItem.links) && selectedItem.links.length > 0 ? (
-
+                /* ================= أولاً: نظام المجلد (يحتوي على دروس وروابط فرعية) ================= */
                 <div className="p-6 space-y-6">
                   <div className="space-y-4">
     {selectedItem.links.map((link, index) => {
@@ -1589,8 +1620,10 @@ React.useEffect(() => {
         const linkTitle = link.title || '';
         const isPdf = embedUrl.toLowerCase().includes('.pdf') || linkTitle.toLowerCase().includes('.pdf') || linkTitle.includes('ملف');
 
+        // تنظيف نوع الرابط وتحويله لحروف صغيرة لتفادي مشاكل الحروف الكبيرة
         const currentType = (link.type || '').toLowerCase().trim();
 
+        // الفحص الذكي الصارم لنوع الفويس (سواء من الـ type أو من الكلمات المفتاحية)
         const isVoiceType = currentType === 'voice' || currentType === 'audio' || linkTitle.toLowerCase().includes('voice') || linkTitle.includes('فويس') || linkTitle.includes('صوت');
 
         if (embedUrl.includes('drive.google.com')) {
@@ -1607,7 +1640,7 @@ React.useEffect(() => {
                     embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
                     isVideoUrl = true;
                 } else if (isVoiceType) {
-
+                    // تحويل إجباري لرابط المعاينة الرسمي عشان يشتغل جوه الـ iframe
                     embedUrl = `https://drive.google.com/file/d/${fileId}/preview`; 
                 }
             }
@@ -1617,9 +1650,11 @@ React.useEffect(() => {
             isVideoUrl = true;
         }
 
+        // ---------- [ الفحوصات الذكية المحدثة ] ----------
         const isPpt = currentType === 'ppt' || currentType === 'powerpoint' || embedUrl.toLowerCase().includes('.ppt') || embedUrl.toLowerCase().includes('.pptx') || linkTitle.toLowerCase().includes('ppt') || linkTitle.includes('محاضرة');
         const hasExamKeyword = linkTitle.toLowerCase().split(/\s+/).includes('exam') || linkTitle.includes('امتحان');
 
+        // ---------- [ تحديد الأيقونة والنصوص ديناميكياً ] ----------
         let lucideIcon = "file-text"; 
         let badgeText = link.type || "link";
         let btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "🔗 فتح / تحميل الملف" : "Open File";
@@ -1645,6 +1680,7 @@ React.useEffect(() => {
         ? "🎥 مشاهدة المحاضرة"
         : "Watch Lecture";
 
+    // تحويل رابط Google Drive إلى Embed Video
     if (link.url.includes('/file/d/')) {
 
         const fileId = link.url.split('/file/d/')[1]?.split('/')[0];
@@ -1665,9 +1701,11 @@ React.useEffect(() => {
             btnText = (typeof lang !== 'undefined' && lang === 'ar') ? "📊 فتح الشيت" : "Open Sheet";
         }
 
+// 3. كرت مخصص لباقي الملفات وفيديوهات البوربوينت المدمجة
 return (
     <div key={index} className="p-5 rounded-[2rem] border border-gray-100 bg-gradient-to-r from-gray-50 to-white flex flex-col justify-between gap-4 hover:shadow-md transition-all">
         
+        {/* الصف العلوي: معلومات الملف (الأيقونة والعناوين) */}
         <div className="flex flex-col md:flex-row justify-between items-center gap-4 w-full">
             <div className="flex items-center gap-4 self-start md:self-center">
                 <div className="p-3 rounded-xl bg-orange-100 text-orange-600 shrink-0">
@@ -1679,6 +1717,7 @@ return (
                 </div>
             </div>
 
+            {/* زرار الفتح الخارجي يظهر فقط للملفات العادية (مثل الـ PDF) وليس لفيديوهات قوقل درايف */}
             {!(link.url?.includes("drive.google.com")) && (
                 <a 
                     href={finalHref} 
@@ -1691,10 +1730,10 @@ return (
             )}
         </div>
 
-
+        {/* فريم الفيديو: يفتح تلقائياً في نفس الكرت إذا كان الرابط من قوقل درايف */}
         {link.url?.includes("drive.google.com") && (
             (() => {
-
+                // استخراج الـ ID الخاص بملف قوقل درايف لضمان تشغيله داخل الـ iframe
                 const driveMatch = link.url.match(/\/d\/([a-zA-Z0-9-_]+)/);
                 const videoSrc = driveMatch && driveMatch[1]
                     ? `https://drive.google.com/file/d/${driveMatch[1]}/preview`
@@ -1719,14 +1758,13 @@ return (
 </div>
                 </div>
             ) : (
-
-
-
-            <div>
+                /* ================= ثانياً: نظام الدرس المنفرد المباشر ================= */
+                <div>
                     {(() => {
                         const singleUrl = selectedItem?.url || '';
                         const singleTitle = selectedItem?.title || '';
                         
+                        // حماية إضافية: لو الدرس مضاف كاسم وعنوان تنبيهي فقط (بدون أي روابط)
                         if (!singleUrl || singleUrl.trim() === '' || singleUrl === '#') {
                             return (
                                 <div className="py-16 text-center bg-gradient-to-br from-gray-50 to-transparent px-6">
@@ -1752,6 +1790,7 @@ return (
                             }
                         }
 
+                       // 1. عرض فريم الفيديو المباشر لو الدرس فيديو أو بوربوينت فيديو
 if (
     (
         selectedItem?.type === 'video' ||
@@ -1765,6 +1804,7 @@ if (
 
     let videoSrc = '';
 
+    // لو الرابط Google Drive
     if (singleUrl.includes("drive.google.com")) {
 
         const driveMatch = singleUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
@@ -1774,6 +1814,7 @@ if (
             : singleUrl;
 
     } 
+    // لو الرابط YouTube
     else if (
         singleUrl.includes("youtube.com") ||
         singleUrl.includes("youtu.be")
@@ -1790,6 +1831,7 @@ if (
         }
 
     } 
+    // أي رابط مباشر
     else {
 
         videoSrc = singleUrl;
@@ -1814,6 +1856,7 @@ if (
     );
 }
 
+                        // 2. عرض الريكورد الصوتي المباشر لو منفرد
                         if (selectedItem?.type === 'voice') {
                             let voiceSrc = singleUrl;
                             if (singleUrl.includes("drive.google.com")) {
@@ -1829,6 +1872,7 @@ if (
                             );
                         }
 
+                        // 3. كرت التحميل للملفات الفردية الأخرى (PDF, PPT...) بأيقونات Lucide متغيرة ديناميكياً
                         let singleLucideIcon = "file-text";
                         let singleBtnText = (typeof lang !== 'undefined' && lang === 'ar') ? "تحميل / فتح الملف" : "Download / Open File";
 
@@ -1864,7 +1908,7 @@ if (
             )}
         </div>
 
-        {/* تذييل المودال  */}
+        {/* تذييل المودال الثابت */}
         <div className="p-4 bg-gray-50 border-t border-gray-100 shrink-0 text-center text-xs text-gray-400 font-medium">
             {(typeof lang !== 'undefined' && lang === 'ar') ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب" : "Content provided by the Geomatics Engineering Department"}
         </div>
@@ -1924,12 +1968,20 @@ if (
     e.preventDefault();
     const formData = new FormData(e.target);
 if (!isExistingLecture) {
-
+    // [تعديل]: بناخد القيمة، ولو فاضية بنديها نص فاضي "" بدل ما نوقف الحفظ بـ alert
     const lectureUrl = formData.get('lectureUrl')?.toString().trim() || '';
-}
-const lectureData = {
-    ...isExistingLecture ? {} : { title: formData.get('lectureTitle') || formData.get('title') },
     
+    // تم حذف شرط الـ alert تماماً من هنا عشان يقبل الحفظ كاسم فقط
+} // 1️⃣ تأكد إن بلوك الـ else القديم اللي كان فيه الـ alert ممسوح تماماً.
+
+// 2️⃣ دور على السطر اللي بيتبعت فيه الـ payload (البيانات اللي رايحة للسيرفر)، 
+// وعدل سطر الـ links فقط ليصبح كالتالي:
+
+// ... الكود الأصلي بتاعك ...
+const lectureData = {
+    ...isExistingLecture ? {} : { title: formData.get('lectureTitle') || formData.get('title') }, // سيب السطور دي زي ما هي في كودك الأصلي
+    
+    // [تعديل آمن ومضمون]: عدل سطر الـ links ليكون كدة بالظبط:
     links: typeof linksList !== 'undefined' && linksList.length > 0 ? linksList : []
 };
 
@@ -2097,6 +2149,7 @@ style={{ scrollbarWidth: 'thin' }}
     </div>
 </div>
 
+{/* الرابط يظهر فقط لو مادة كاملة */}
 {!isFolderOnly && (
     <div>
         <label className={`block text-sm font-bold mb-2 ${
@@ -2441,8 +2494,9 @@ style={{ scrollbarWidth: 'thin' }}
         root.render(<App />);
 // =========================================================================
 let swiperInstance = null;
-let currentEditingId = null;
+let currentEditingId = null; // متغير لحفظ معرف الإعلان الذي يتم تعديله حالياً
 
+// دالة الأمان لتشغيل السلايدر وضمان عدم تعليقه
 function initSwiperSafely() {
     if (typeof Swiper === 'undefined') {
         setTimeout(initSwiperSafely, 200);
@@ -2463,6 +2517,7 @@ function initSwiperSafely() {
     });
 }
 
+// الاستماع الحي وقراءة البيانات بأمان في الريأكت
 if (typeof db !== 'undefined') {
     db.collection('announcements').onSnapshot(function(snapshot) {
         const now = Date.now();
@@ -2476,6 +2531,7 @@ if (typeof db !== 'undefined') {
             const isExpired = now > item.expiresAt;
             const isShowingNow = item.isActive && !isExpired;
 
+            // 1. كروت الطلاب (استخدام كلاسات تيلويند القياسية dark: لمنع توقف السكريبت)
             if (isShowingNow) {
                 studentListHtml += `
                     <div class="swiper-slide">
@@ -2488,6 +2544,7 @@ if (typeof db !== 'undefined') {
                 `;
             }
 
+            // 2. أسطر الجدول للأدمن (ألوان ثابتة وآمنة تماماً - لم يتم لمسها)
             adminTableHtml += `
                 <tr style="border-bottom: 1px solid #f3f4f6; font-size: 13px; text-align: right;">
                     <td style="padding: 14px; font-weight: bold;">
@@ -2508,8 +2565,9 @@ if (typeof db !== 'undefined') {
                     </td>
                 </tr>
             `;
-        }); 
+        }); // نهاية الـ Loops
 
+        // 🔄 دالة الحقن لجدول الإعلانات
         function tryInjectingAdminTable() {
             const aTable = document.getElementById('admin-table-body');
             if (aTable) {
@@ -2519,6 +2577,7 @@ if (typeof db !== 'undefined') {
             }
         }
 
+        // حقن واجهة الطلاب (السلايدر)
         const aList = document.getElementById('announcements-list');
         if (aList) {
             aList.innerHTML = studentListHtml || `<div class="swiper-slide text-center text-gray-400 text-sm py-4">لا توجد إعلانات نشطة حالياً.</div>`;
@@ -2529,8 +2588,9 @@ if (typeof db !== 'undefined') {
     });
 }
 
+// 📝 دالة إرسال داتا السطر إلى حقول حارة الإدخال فوق للتعديل عليها
 function prepareAnnouncementForEdit(id, title, content) {
-    currentEditingId = id; 
+    currentEditingId = id; // حفظ المعرف لتعديله لاحقاً بدلاً من إضافة سجل جديد
     
     const titleField = document.getElementById('form-title');
     const contentField = document.getElementById('form-content');
@@ -2539,15 +2599,19 @@ function prepareAnnouncementForEdit(id, title, content) {
     if (titleField && contentField) {
         titleField.value = title;
         contentField.value = content;
-        titleField.focus(); 
+        titleField.focus(); // نقل التركيز للحقل تلقائياً
         
+        // تغيير نص زر الإرسال عشان الأدمن يعرف إنه في وضع التعديل
         if (submitBtn) {
             submitBtn.innerHTML = "تحديث وحفظ التعديلات 💾";
-            submitBtn.style.backgroundColor = "#d69e2e"; 
+            submitBtn.style.backgroundColor = "#d69e2e"; // تمييز الزر بلون ذهبي/برتقالي أثناء التعديل
         }
     }
 }
 
+// =========================================================================
+// [الدالة الجديدة المتوافقة تماماً مع الريأكت وتمنع الريلود]
+// =========================================================================
 function handlePublishAnnouncement() {
     const titleField = document.getElementById('form-title');
     const contentField = document.getElementById('form-content');
@@ -2566,12 +2630,12 @@ function handlePublishAnnouncement() {
 
     if (typeof db !== 'undefined') {
         if (currentEditingId) {
-
+            // 📝 [وضع التعديل]: تحديث الوثيقة الحالية بالمعرف المحفوظ
             db.collection('announcements').doc(currentEditingId).update({
                 title: title,
                 content: content,
                 expiresAt: expiresTimestamp
-
+                // نحتفظ بـ createdAt و isActive القديمة كما هي
             }).then(function() {
                 alert("📝 تم تحديث وتعديل الإعلان بنجاح في قاعدة البيانات!");
                 resetFormState();
@@ -2579,7 +2643,7 @@ function handlePublishAnnouncement() {
                 console.error("خطأ أثناء التعديل: ", error);
             });
         } else {
-
+            // 🚀 [وضع الإضافة الجديد التقليدي]
             db.collection('announcements').add({
                 title: title,
                 content: content,
@@ -2596,15 +2660,16 @@ function handlePublishAnnouncement() {
     }
 }
 
+// دالة مساعدة لتصفير الفورمة وإعادتها لحالتها الطبيعية بعد الحفظ أو التعديل
 function resetFormState() {
-    currentEditingId = null;
+    currentEditingId = null; // تصفير الـ ID
     document.getElementById('form-title').value = '';
     document.getElementById('form-content').value = '';
     
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
         submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
-        submitBtn.style.backgroundColor = "";
+        submitBtn.style.backgroundColor = ""; // يعود للون الـ Tailwind الافتراضي
     }
 }
 
