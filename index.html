@@ -87,74 +87,7 @@ OneSignalDeferred.push(async function (OneSignal) {
   const db = firebase.firestore();
   const analytics = firebase.analytics();
  
-  // messaging requires HTTPS + service worker; guard against HTTP / unsupported browsers
-  let messaging = null;
-  try {
-    if (firebase.messaging.isSupported()) {
-      messaging = firebase.messaging();
-    }
-  } catch(e) {
-    console.warn('Firebase Messaging not supported in this environment:', e.message);
-  }
  
-function setupNotificationSystem() {
-    if (!messaging) return;
-    if (typeof Notification === 'undefined') return;
-    Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-            console.log('تم تفعيل نظام الإشعارات بنجاح! 🔔');
-            messaging.getToken({ vapidKey: 'ضع_هنا_الـ_VAPID_KEY_بتاعك' })
-            .then((currentToken) => {
-                if (currentToken) {
-                    subscribeTokenToTopic(currentToken, 'students');
-                }
-            }).catch((err) => console.log('خطأ في جلب التوكن:', err));
-        }
-    });
-}
- 
-function subscribeTokenToTopic(token, topic) {
-    fetch(`https://iid.googleapis.com/iid/v1/${token}/rel/topics/${topic}`, {
-        method: 'POST',
-        headers: {
-            'Authorization': 'Bearer ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' 
-        }
-    }).then(response => {
-        if (response.ok) console.log(`تم ربط الطالب بجروب البث: ${topic}`);
-    }).catch(err => console.error('خطأ في الربط السيرفري:', err));
-}
- 
-function sendNotificationFromAdmin(title, body) {
-    const notificationPayload = {
-        to: "/topics/students", 
-        notification: {
-            title: title,
-            body: body,
-            icon: "/logo.png",
-            click_action: window.location.origin 
-        }
-    };
- 
-    return fetch('https://fcm.googleapis.com/fcm/send', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'key=ضع_هنا_مفتاح_الـ_SERVER_KEY_بتاعك' 
-        },
-        body: JSON.stringify(notificationPayload)
-    })
-    .then(response => {
-        if (response.ok) {
-            alert('🚀 تم بث الإشعار بنغمة لجميع هواتف الطلاب بنجاح!');
-        } else {
-            alert('❌ فشل الإرسال، تحقق من مفتاح السيرفر الخاص بك.');
-        }
-    })
-    .catch(err => console.error('Error:', err));
-}
- 
-setupNotificationSystem();
-if (analytics) { try { firebase.analytics().setUserProperties({ debug_mode: true }); } catch(e) {} }
 </script>
  
     <script src="https://unpkg.com/@babel/standalone@7.23.2/babel.min.js"></script>
