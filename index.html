@@ -29,6 +29,27 @@
   animation: pulseGlow 3s ease-in-out infinite;
 }
     </style>
+
+<script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+
+<script>
+window.OneSignalDeferred = window.OneSignalDeferred || [];
+
+OneSignalDeferred.push(async function (OneSignal) {
+
+    await OneSignal.init({
+        appId: "b8c67b25-faae-4735-8246-238aff51cf4d",
+        notifyButton: {
+            enable: true
+        },
+        allowLocalhostAsSecureOrigin: true
+    });
+
+    console.log("✅ OneSignal Initialized");
+
+});
+</script>
+    
 </head>
 <body class="bg-[#fafafa]">
     <div id="root"></div>
