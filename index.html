@@ -2583,6 +2583,7 @@ window.prepareAnnouncementForEdit = function prepareAnnouncementForEdit(id, titl
     }
 }
  
+ 
 window.handlePublishAnnouncement = function handlePublishAnnouncement() {
     const titleField = document.getElementById('form-title');
     const contentField = document.getElementById('form-content');
@@ -2607,10 +2608,31 @@ window.handlePublishAnnouncement = function handlePublishAnnouncement() {
                 content: content,
                 expiresAt: expiresTimestamp
  
-            }).then(function() {
-                alert("📝 تم تحديث وتعديل الإعلان بنجاح في قاعدة البيانات!");
-                window.resetFormState();
-            }).catch(function(error) {
+            }).then(async function() {
+
+    try {
+
+        await fetch("https://gess-notifications.mazenramos0.workers.dev", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                title: title,
+                message: content,
+                url: window.location.origin
+            })
+        });
+
+    } catch (e) {
+        console.error("Notification Error:", e);
+    }
+
+    alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
+
+    window.resetFormState();
+
+}).catch(function(error) {
                 console.error("خطأ أثناء التعديل: ", error);
             });
         } else {
