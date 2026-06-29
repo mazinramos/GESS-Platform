@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -66,7 +65,7 @@ OneSignalDeferred.push(async function (OneSignal) {
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js"></script>
+<!-- firebase-messaging-compat تمت إزالته: يتعارض مع OneSignal SW -->
  
 <script type="application/javascript">
   const firebaseConfig = {
@@ -2517,70 +2516,101 @@ window.prepareAnnouncementForEdit = function prepareAnnouncementForEdit(id, titl
 }
  
  
-window.handlePublishAnnouncement = function handlePublishAnnouncement() {
-    const titleField = document.getElementById('form-title');
-    const contentField = document.getElementById('form-content');
-    const durationField = document.getElementById('form-duration');
-    const submitBtn = document.getElementById('submit-btn');
- 
-    if (!titleField || !contentField || !titleField.value || !contentField.value) {
-        alert("⚠️ الرجاء ملء جميع الحقول أولاً!");
-        return;
-    }
- 
-    const title = titleField.value;
-    const content = contentField.value;
-    const durationDays = parseInt(durationField.value || 7);
-    const expiresTimestamp = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
- 
-    if (typeof db !== 'undefined') {
-        if (currentEditingId) {
- 
-            db.collection('announcements').doc(currentEditingId).update({
-                title: title,
-                content: content,
-                expiresAt: expiresTimestamp
- 
-            }).then(async function() {
-
+// =====================================================================
+// دالة مشتركة لإرسال الإشعار عبر Cloudflare Worker
+// تُستدعى بعد الحفظ في Firestore سواء كان إنشاء جديد أو تعديل
+// =====================================================================
+async function sendPushNotification(title, message) {
     try {
-
-        await fetch("https://gess-notifications.mazenramos0.workers.dev", {
+        const response = await fetch("https://gess-notifications.mazenramos0.workers.dev", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
                 title: title,
-                message: content,
+                message: message,
                 url: window.location.origin
             })
         });
 
+        const result = await response.json();
+
+        if (result.success) {
+            console.log("✅ الإشعار أُرسل بنجاح لـ", result.recipients, "مشترك");
+        } else {
+            console.warn("⚠️ OneSignal response:", result);
+        }
+
+        return result;
     } catch (e) {
-        console.error("Notification Error:", e);
+        console.error("❌ خطأ في إرسال الإشعار:", e);
+        return null;
+    }
+}
+
+window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
+    const titleField = document.getElementById('form-title');
+    const contentField = document.getElementById('form-content');
+    const durationField = document.getElementById('form-duration');
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (!titleField || !contentField || !titleField.value || !contentField.value) {
+        alert("⚠️ الرجاء ملء جميع الحقول أولاً!");
+        return;
     }
 
-    alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
+    const title = titleField.value;
+    const content = contentField.value;
+    const durationDays = parseInt(durationField.value || 7);
+    const expiresTimestamp = Date.now() + (durationDays * 24 * 60 * 60 * 1000);
 
-    window.resetFormState();
+    // تعطيل الزر أثناء الإرسال
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = "⏳ جاري النشر والإرسال...";
+    }
 
-}).catch(function(error) {
-                console.error("خطأ أثناء التعديل: ", error);
+    if (typeof db !== 'undefined') {
+        if (currentEditingId) {
+            // ── تعديل إعلان موجود ──
+            db.collection('announcements').doc(currentEditingId).update({
+                title: title,
+                content: content,
+                expiresAt: expiresTimestamp
+            }).then(async function() {
+                // ✅ إرسال الإشعار بعد التعديل
+                await sendPushNotification(title, content);
+                alert("🚀 تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
+                window.resetFormState();
+            }).catch(function(error) {
+                console.error("خطأ أثناء التعديل:", error);
+                alert("❌ حدث خطأ أثناء التعديل: " + error.message);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "تحديث وحفظ التعديلات 💾";
+                }
             });
         } else {
- 
+            // ── نشر إعلان جديد ──
             db.collection('announcements').add({
                 title: title,
                 content: content,
                 createdAt: Date.now(),
                 expiresAt: expiresTimestamp,
-                isActive: true 
-            }).then(function() {
-                alert("🚀 تم نشر الإعلان الجديد بنجاح وظهر للطلاب!");
+                isActive: true
+            }).then(async function() {
+                // ✅ إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
+                await sendPushNotification(title, content);
+                alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
-                console.error("حدث خطأ أثناء الحفظ: ", error);
+                console.error("حدث خطأ أثناء الحفظ:", error);
+                alert("❌ حدث خطأ أثناء الحفظ: " + error.message);
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
+                }
             });
         }
     }
@@ -2605,6 +2635,4 @@ window.resetFormState = function resetFormState() {
  
  
 </body>
-</html>                                           
- 
-
+</html>
