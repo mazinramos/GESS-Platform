@@ -230,20 +230,20 @@ const t = {
                 path[0]?.id === 'supplications' ? 'duas' : null;
 
             return (
-                <nav className={`fixed bottom-0 left-0 right-0 z-[90] border-t backdrop-blur-xl transition-colors ${
-                    darkMode ? 'bg-gray-900/95 border-gray-800' : 'bg-white/95 border-gray-100'
-                }`}>
-                    <div className="max-w-2xl mx-auto grid grid-cols-5">
+                <nav className={`fixed bottom-0 left-0 right-0 z-[90] border-t transition-colors ${
+                    darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-200'
+                }`} style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+                    <div className="max-w-md mx-auto grid grid-cols-5">
                         {items.map(item => (
                             <button
                                 key={item.id}
                                 onClick={item.onClick}
-                                className={`flex flex-col items-center justify-center gap-1 py-2.5 transition-all ${
+                                className={`flex flex-col items-center justify-center gap-0.5 pt-2 pb-1.5 transition-colors ${
                                     activeId === item.id ? 'text-[#f58220]' : (darkMode ? 'text-gray-500' : 'text-gray-400')
                                 }`}
                             >
-                                <i data-lucide={item.icon} className={`w-5 h-5 ${activeId === item.id ? 'scale-110' : ''} transition-transform`}></i>
-                                <span className="text-[10px] font-black leading-none">{item.label}</span>
+                                <i data-lucide={item.icon} className="w-6 h-6" style={{ strokeWidth: activeId === item.id ? 2.4 : 1.8 }}></i>
+                                <span className={`text-[10px] leading-none ${activeId === item.id ? 'font-bold' : 'font-medium'}`}>{item.label}</span>
                             </button>
                         ))}
                     </div>
@@ -1479,7 +1479,6 @@ React.useEffect(() => {
  
                                 {path.length === 0 && !selectedItem && (
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                        <>
                                         {years.map(y => (
                                            <button key={y.id} onClick={() => setPath([{type: 'year', ...y}])} className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}>
                                                 <i data-lucide="graduation-cap" className="w-12 h-12 text-[#f58220] mb-4"></i>
@@ -1487,14 +1486,6 @@ React.useEffect(() => {
                                                 <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض المواد الدراسية" : "View Academic Subjects"}</p>
                                             </button>
                                         ))}
-                                            <button 
-                                                onClick={() => setPath([{ id: 'courses', title: lang === 'ar' ? 'الكورسات التدريبية' : 'Training Courses', type: 'courses_section' }])}
-                                                className={`p-8 rounded-2xl cursor-pointer shadow-lg transform transition hover:scale-105 text-center flex flex-col items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 text-white`}>
-                                                <i data-lucide="rocket" className="w-12 h-12 mb-4"></i>
-                                                <h3 className="text-2xl font-black">{lang === 'ar' ? "الكورسات التدريبية" : "Training Courses"}</h3>
-                                                <p className="text-white/80 text-sm mt-2">{lang === 'ar' ? "تطوير المهارات والبرامج الخارجية" : "Skills Development & External Programs"}</p>
-                                            </button>
-                                        </>
                                     </div>
                                     
                                 )}
