@@ -532,6 +532,30 @@ const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
         }
     }
 };
+
+const handleEditMagazineDescription = async (docId, currentDescription) => {
+    if (!docId) {
+        alert("خطأ في المعرف (ID)");
+        return;
+    }
+
+    const newDescription = window.prompt(
+        lang === 'ar' ? "تعديل الوصف/التعليق:" : "Edit description/caption:",
+        currentDescription || ""
+    );
+
+    if (newDescription === null) return; // المستخدم ضغط إلغاء
+
+    try {
+        await db.collection("materials").doc(docId).update({
+            description: newDescription.trim()
+        });
+        alert(lang === 'ar' ? "✅ تم تعديل الوصف بنجاح" : "✅ Description updated");
+    } catch (error) {
+        console.error("Error updating description: ", error);
+        alert((lang === 'ar' ? "فشل التعديل: " : "Update failed: ") + error.message);
+    }
+};
  
  
  
@@ -1189,9 +1213,21 @@ React.useEffect(() => {
                                                     <div className="flex items-center gap-3 min-w-0">
                                                         <img src={driveImageDirectUrl(mag.coverUrl)} alt={mag.title}
                                                              className="w-12 h-16 object-cover rounded-lg border border-gray-200 shrink-0" />
-                                                        <h4 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{mag.title}</h4>
+                                                        <div className="min-w-0">
+                                                            <h4 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{mag.title}</h4>
+                                                            <p className={`text-xs truncate ${mag.description ? (darkMode ? 'text-gray-400' : 'text-gray-500') : 'text-gray-300 italic'}`}>
+                                                                {mag.description || (lang === 'ar' ? "بدون وصف" : "No description")}
+                                                            </p>
+                                                        </div>
                                                     </div>
                                                     <div className="flex gap-2 shrink-0">
+                                                        <button
+                                                            onClick={() => handleEditMagazineDescription(mag.id, mag.description)}
+                                                            className="p-2 bg-orange-50 text-orange-600 rounded-xl hover:bg-orange-600 hover:text-white transition-colors"
+                                                            title={lang === 'ar' ? "تعديل الوصف/التعليق" : "Edit description"}
+                                                        >
+                                                            <i data-lucide="message-square-text" className="w-4 h-4"></i>
+                                                        </button>
                                                         <button
                                                             onClick={() => handleEdit("materials", mag.id, mag.title, mag.url)}
                                                             className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
@@ -1677,7 +1713,15 @@ React.useEffect(() => {
                             </div>
                         )}
                     </div>
-                    <h4 className={`font-bold text-sm mt-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{mag.title}</h4>
+                    <div className="mt-3 px-1">
+                        <h4 className={`font-black text-sm leading-snug truncate ${darkMode ? 'text-white' : 'text-gray-900'}`} title={mag.title}>{mag.title}</h4>
+                        {mag.description && (
+                            <p className={`text-[11px] font-bold mt-1 flex items-center justify-center gap-1 truncate ${darkMode ? 'text-orange-400' : 'text-[#f58220]'}`} title={mag.description}>
+                                <span className="opacity-70">✦</span>
+                                <span className="truncate">{mag.description}</span>
+                            </p>
+                        )}
+                    </div>
                 </button>
                 ));
             })()}
