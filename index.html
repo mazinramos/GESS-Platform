@@ -1715,7 +1715,7 @@ React.useEffect(() => {
 )}
 
 {/* صفحة المجلات */}
-{path.length === 1 && path[0]?.id === 'magazines' && (
+{path.length === 1 && path[0]?.id === 'magazines' && !selectedItem && (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
         <div className="text-center mb-10">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-orange-100 text-orange-600 font-black text-sm mb-5">
