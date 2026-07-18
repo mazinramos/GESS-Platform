@@ -156,7 +156,7 @@ const t = {
             if (!url) return url;
             if (url.includes('drive.google.com')) {
                 const match = url.match(/\/d\/([a-zA-Z0-9-_]+)/) || url.match(/id=([a-zA-Z0-9-_]+)/);
-                if (match && match[1]) return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+                if (match && match[1]) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
             }
             return url;
         }
@@ -205,17 +205,14 @@ const t = {
         }
 
         function AIChatPanel({ lang, darkMode }) {
-            const emptyGreeting = lang === 'ar'
-                ? 'أهلاً بيك! 👋 أنا المساعد الذكي لمنصة GESS EDU، اسألني عن أي مادة، مفهوم هندسي، أو حتى تنظيم مذاكرتك.'
-                : "Hi there! 👋 I'm the GESS EDU AI Assistant. Ask me about any subject, engineering concept, or how to organize your study time.";
-
             const [messages, setMessages] = React.useState([
-                { role: 'assistant', content: emptyGreeting }
+                { role: 'assistant', content: lang === 'ar'
+                    ? 'أهلاً! أنا المساعد الذكي لمنصة GESS EDU. اسألني عن أي مادة أو موضوع هندسي 👋'
+                    : 'Hi! I am the GESS EDU AI Assistant. Ask me anything 👋' }
             ]);
             const [input, setInput] = React.useState('');
             const [loading, setLoading] = React.useState(false);
             const scrollRef = React.useRef(null);
-            const inputRef = React.useRef(null);
 
             React.useEffect(() => {
                 if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
@@ -224,20 +221,8 @@ const t = {
             // 👇 غيّر الرابط دا برابط الـ Cloudflare Worker بتاعك بعد نشره (شوف الدليل المرفق)
             const AI_WORKER_URL = "https://gess-ai-chat.YOUR-SUBDOMAIN.workers.dev";
 
-            const suggestedPrompts = lang === 'ar' ? [
-                { icon: '📐', text: 'اشرح لي فكرة التسوية التفاضلية ببساطة' },
-                { icon: '🗓️', text: 'ساعدني أنظم خطة مذاكرة لأسبوع الامتحانات' },
-                { icon: '📏', text: 'ما الفرق بين GPS و Total Station؟' },
-                { icon: '✍️', text: 'لخّص لي أهم نقاط نظرية الأخطاء' },
-            ] : [
-                { icon: '📐', text: 'Explain differential leveling simply' },
-                { icon: '🗓️', text: 'Help me plan a study schedule for exam week' },
-                { icon: '📏', text: 'What is the difference between GPS and Total Station?' },
-                { icon: '✍️', text: 'Summarize the key points of error theory' },
-            ];
-
-            const sendMessage = async (overrideText) => {
-                const text = (overrideText ?? input).trim();
+            const sendMessage = async () => {
+                const text = input.trim();
                 if (!text || loading) return;
                 const newMessages = [...messages, { role: 'user', content: text }];
                 setMessages(newMessages);
@@ -252,119 +237,53 @@ const t = {
                     const data = await res.json();
                     setMessages([...newMessages, { role: 'assistant', content: data.reply || (lang === 'ar' ? 'تعذر الحصول على رد الآن.' : 'Could not get a reply.') }]);
                 } catch (err) {
-                    setMessages([...newMessages, { role: 'assistant', content: lang === 'ar' ? '⚠️ تعذر الاتصال بالمساعد الذكي. تأكد من ربط رابط الـ Worker الخاص بالمنصة.' : '⚠️ Could not reach the AI assistant. Make sure the platform Worker link is configured.' }]);
+                    setMessages([...newMessages, { role: 'assistant', content: lang === 'ar' ? '⚠️ تعذر الاتصال بالمساعد الذكي. تأكد من ربط رابط الـ Worker.' : '⚠️ Could not reach the AI assistant.' }]);
                 } finally {
                     setLoading(false);
-                    if (inputRef.current) inputRef.current.focus();
                 }
             };
 
-            const clearChat = () => setMessages([{ role: 'assistant', content: emptyGreeting }]);
-
             return (
                 <div className="max-w-2xl mx-auto animate-in fade-in duration-500">
-                    <div className={`rounded-[2.5rem] border shadow-2xl overflow-hidden flex flex-col h-[75vh] ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
-
-                        {/* هيدر متدرج */}
-                        <div className="relative shrink-0 px-6 py-5 bg-gradient-to-l from-[#f58220] via-[#ff9d4d] to-[#f58220] bg-[length:200%_auto] animate-[pulseGlow_6s_ease-in-out_infinite]">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-11 h-11 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center border border-white/30">
-                                        <i data-lucide="sparkles" className="w-6 h-6 text-white"></i>
-                                    </div>
-                                    <div>
-                                        <h3 className="text-white font-black text-base leading-tight">
-                                            {lang === 'ar' ? 'المساعد الذكي GESS' : 'GESS AI Assistant'}
-                                        </h3>
-                                        <p className="text-white/80 text-[11px] font-bold flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-green-300 animate-pulse"></span>
-                                            {lang === 'ar' ? 'جاهز للمساعدة الآن' : 'Ready to help now'}
-                                        </p>
-                                    </div>
-                                </div>
-                                <button
-                                    onClick={clearChat}
-                                    title={lang === 'ar' ? 'محادثة جديدة' : 'New chat'}
-                                    className="w-9 h-9 rounded-xl bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition-all"
-                                >
-                                    <i data-lucide="rotate-ccw" className="w-4 h-4"></i>
-                                </button>
-                            </div>
+                    <div className="text-center mb-6">
+                        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-orange-100 text-orange-600 font-black text-sm mb-4">
+                            <i data-lucide="sparkles" className="w-5 h-5"></i>
+                            {lang === 'ar' ? 'المساعد الذكي' : 'AI Assistant'}
                         </div>
+                    </div>
 
-                        {/* منطقة الرسائل */}
-                        <div ref={scrollRef} className={`flex-1 overflow-y-auto p-5 space-y-4 ${darkMode ? 'bg-gray-900' : 'bg-gradient-to-b from-orange-50/30 to-transparent'}`}>
+                    <div className={`rounded-[2.5rem] border shadow-xl overflow-hidden flex flex-col h-[65vh] ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+                        <div ref={scrollRef} className="flex-1 overflow-y-auto p-5 space-y-4">
                             {messages.map((m, i) => (
-                                <div key={i} className={`flex items-end gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
-                                    <div className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center ${
+                                <div key={i} className={`flex ${m.role === 'user' ? 'justify-start' : 'justify-end'}`}>
+                                    <div className={`max-w-[80%] px-4 py-3 rounded-2xl text-sm font-medium leading-relaxed ${
                                         m.role === 'user'
-                                            ? (darkMode ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-500')
-                                            : 'bg-gradient-to-br from-[#f58220] to-[#ff9d4d] text-white'
-                                    }`}>
-                                        <i data-lucide={m.role === 'user' ? 'user' : 'sparkles'} className="w-4 h-4"></i>
-                                    </div>
-                                    <div className={`max-w-[78%] px-4 py-3 rounded-3xl text-sm font-medium leading-relaxed whitespace-pre-wrap shadow-sm ${
-                                        m.role === 'user'
-                                            ? (darkMode ? 'bg-gray-800 text-white rounded-tr-md' : 'bg-white text-gray-800 rounded-tr-md border border-gray-100')
-                                            : (darkMode ? 'bg-gray-800 text-white rounded-tl-md border border-gray-700' : 'bg-white text-gray-800 rounded-tl-md border border-orange-100')
+                                            ? (darkMode ? 'bg-gray-800 text-white rounded-tl-sm' : 'bg-gray-100 text-gray-800 rounded-tl-sm')
+                                            : 'bg-[#f58220] text-white rounded-tr-sm'
                                     }`}>
                                         {m.content}
                                     </div>
                                 </div>
                             ))}
-
                             {loading && (
-                                <div className="flex items-end gap-2">
-                                    <div className="w-8 h-8 rounded-xl shrink-0 flex items-center justify-center bg-gradient-to-br from-[#f58220] to-[#ff9d4d] text-white">
-                                        <i data-lucide="sparkles" className="w-4 h-4"></i>
+                                <div className="flex justify-end">
+                                    <div className="px-4 py-3 rounded-2xl bg-[#f58220]/70 text-white text-sm font-bold animate-pulse">
+                                        {lang === 'ar' ? 'يكتب...' : 'Typing...'}
                                     </div>
-                                    <div className={`px-4 py-3.5 rounded-3xl rounded-tl-md flex items-center gap-1.5 ${darkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-orange-100'}`}>
-                                        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:-0.3s]"></span>
-                                        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce [animation-delay:-0.15s]"></span>
-                                        <span className="w-2 h-2 rounded-full bg-orange-400 animate-bounce"></span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {messages.length <= 1 && !loading && (
-                                <div className="pt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                                    {suggestedPrompts.map((p, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => sendMessage(p.text)}
-                                            className={`text-right p-3.5 rounded-2xl border text-xs font-bold transition-all hover:-translate-y-0.5 hover:shadow-md flex items-start gap-2 ${darkMode ? 'bg-gray-800 border-gray-700 text-gray-200 hover:border-orange-500/50' : 'bg-white border-gray-100 text-gray-700 hover:border-orange-300'}`}
-                                        >
-                                            <span className="text-base leading-none">{p.icon}</span>
-                                            <span className="leading-relaxed">{p.text}</span>
-                                        </button>
-                                    ))}
                                 </div>
                             )}
                         </div>
-
-                        {/* شريط الإدخال */}
-                        <div className={`p-3 border-t shrink-0 ${darkMode ? 'border-gray-800 bg-gray-900' : 'border-gray-100 bg-white'}`}>
-                            <div className={`flex items-end gap-2 p-1.5 rounded-2xl border-2 transition-all ${darkMode ? 'bg-gray-800 border-gray-700 focus-within:border-orange-500' : 'bg-gray-50 border-gray-100 focus-within:border-orange-400'}`}>
-                                <textarea
-                                    ref={inputRef}
-                                    value={input}
-                                    onChange={(e) => setInput(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
-                                    placeholder={lang === 'ar' ? 'اكتب سؤالك هنا... (Enter للإرسال)' : 'Type your question... (Enter to send)'}
-                                    rows={1}
-                                    className={`flex-1 resize-none bg-transparent outline-none text-sm font-medium py-2.5 px-3 max-h-28 ${darkMode ? 'text-white placeholder:text-gray-500' : 'text-gray-800 placeholder:text-gray-400'}`}
-                                />
-                                <button
-                                    onClick={() => sendMessage()}
-                                    disabled={loading || !input.trim()}
-                                    className="w-11 h-11 shrink-0 rounded-xl bg-gradient-to-br from-[#f58220] to-[#ff9d4d] hover:brightness-105 disabled:opacity-40 disabled:grayscale text-white flex items-center justify-center transition-all shadow-md shadow-orange-500/20"
-                                >
-                                    <i data-lucide="send-horizontal" className="w-4 h-4"></i>
-                                </button>
-                            </div>
-                            <p className={`text-center text-[10px] mt-2 font-bold ${darkMode ? 'text-gray-600' : 'text-gray-300'}`}>
-                                {lang === 'ar' ? 'GESS EDU AI • قد يخطئ المساعد أحياناً' : 'GESS EDU AI • Responses may occasionally be inaccurate'}
-                            </p>
+                        <div className={`p-3 border-t flex gap-2 ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
+                            <input
+                                value={input}
+                                onChange={(e) => setInput(e.target.value)}
+                                onKeyDown={(e) => { if (e.key === 'Enter') sendMessage(); }}
+                                placeholder={lang === 'ar' ? 'اكتب سؤالك هنا...' : 'Type your question...'}
+                                className={`flex-1 p-3 rounded-xl border-2 outline-none text-sm ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
+                            />
+                            <button onClick={sendMessage} disabled={loading} className="bg-[#f58220] hover:bg-[#e67610] disabled:opacity-50 text-white px-5 rounded-xl font-black text-sm">
+                                {lang === 'ar' ? 'إرسال' : 'Send'}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -394,7 +313,6 @@ const t = {
             const [customSubject, setCustomSubject] = React.useState('');
             const [selectedYear, setSelectedYear] = React.useState('1');
             const [searchQuery, setSearchQuery] = React.useState('');
-            const [magazineSearch, setMagazineSearch] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
             const [contents, setContents] = React.useState([]);
             const [newLoginPass, setNewLoginPass] = React.useState('');
@@ -408,26 +326,6 @@ const t = {
             const [isExistingLecture, setIsExistingLecture] = React.useState(false);
             const [selectedLectureId, setSelectedLectureId] = React.useState('');
             const [isFolderOnly, setIsFolderOnly] = React.useState(false);
-
-            const modalGroupMatches = (c) => {
-                if (!modalSubjectData) return false;
-                const cat = modalSubjectData.category || 'academic';
-                if (cat === 'academic') {
-                    return c.category === 'academic' &&
-                        c.subject?.trim().toLowerCase() === modalSubjectData.subject?.trim().toLowerCase() &&
-                        String(c.yearId) === String(modalSubjectData.yearId) &&
-                        String(c.semesterId) === String(modalSubjectData.semesterId);
-                }
-                if (cat === 'special_course') {
-                    return c.category === 'special_course' &&
-                        c.courseName?.trim().toLowerCase() === modalSubjectData.subject?.trim().toLowerCase();
-                }
-                if (cat === 'training') {
-                    return c.category === 'training' &&
-                        c.trainingName?.trim().toLowerCase() === modalSubjectData.subject?.trim().toLowerCase();
-                }
-                return false;
-            };
             
             
             
@@ -762,7 +660,6 @@ React.useEffect(() => {
   const data = {
     subject: subjectName,
     courseName: adminAddMode === 'special_course' ? subjectName : null,
-    trainingName: adminAddMode === 'training' ? subjectName : null,
     title: subjectName + " - محتوى جديد", 
     url: urlValue,
     type: typeValue,
@@ -1065,229 +962,172 @@ React.useEffect(() => {
                         
                         {view === 'admin' ? (
                             <div className="max-w-4xl mx-auto animate-in">
-                                <div className={`p-6 md:p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
-                                   <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i>{lang === 'ar' ? "إضافة محتوى جديد" : "Add New Content"}</h2>
-
-                                    {/* شريط تبويبات الأقسام */}
-                                    <div className={`flex gap-2 mb-8 p-1.5 rounded-2xl overflow-x-auto transition-all ${darkMode ? 'bg-gray-900/60' : 'bg-gray-100'}`}>
-                                        {[
-                                            { key: 'academic', icon: 'book-marked', label: lang === 'ar' ? "مادة دراسية" : "Academic" },
-                                            { key: 'special_course', icon: 'rocket', label: lang === 'ar' ? "كورسات" : "Courses" },
-                                            { key: 'training', icon: 'dumbbell', label: lang === 'ar' ? "تدريب" : "Training" },
-                                            { key: 'magazine', icon: 'library', label: lang === 'ar' ? "مجلات" : "Magazines" },
-                                        ].map(tab => (
-                                            <button
-                                                key={tab.key}
-                                                type="button"
-                                                onClick={() => setAdminAddMode(tab.key)}
-                                                className={`flex-1 min-w-[110px] flex flex-col items-center gap-1.5 px-3 py-3.5 rounded-xl text-sm transition-all duration-300 ${adminAddMode === tab.key
-                                                    ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-black' : 'bg-white shadow text-orange-600 font-black')
-                                                    : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
-                                            >
-                                                <i data-lucide={tab.icon} className="w-5 h-5"></i>
-                                                {tab.label}
-                                            </button>
-                                        ))}
-                                    </div>
-
-                                    {/* ====== مادة دراسية ====== */}
-                                    {adminAddMode === 'academic' && (
+                                <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
+                                   <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i>{lang === 'ar' ? "إضافة محتوى جديد" : "Add New Content"}</h2> 
                                     <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                                      <div className={`flex gap-4 mb-6 p-1 rounded-2xl transition-all ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+ 
+  <button
+    type="button"
+    onClick={() => setAdminAddMode('academic')}
+    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'academic' 
+      ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold') 
+      : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
+  >
+   {lang === 'ar' ? "مادة دراسية" : "Academic Subject"}
+  </button>
+ 
+  <button
+    type="button"
+    onClick={() => setAdminAddMode('special_course')}
+    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'special_course' 
+      ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold') 
+      : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
+  >
+   {lang === 'ar' ? "كورس تدريب" : "Training Course"}
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setAdminAddMode('magazine')}
+    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'magazine' 
+      ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold') 
+      : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
+  >
+   {lang === 'ar' ? "مجلة" : "Magazine"}
+  </button>
+ 
+</div>
+                                        {adminAddMode !== 'magazine' && (
+                                        <>
                                         <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="mt-2 space-y-6">
-                                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                                    <div>
-                                                        <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                                                            {lang === 'ar' ? "إدارة المواد" : "Manage Subjects"}
-                                                        </h3>
-                                                        <p className="text-sm text-gray-400">
-                                                            {lang === 'ar' ? "فلتر المواد حسب السنة والسمستر" : "Filter subjects by year and semester"}
-                                                        </p>
-                                                    </div>
-                                                    <div className="relative">
-                                                        <i data-lucide="search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                                                        <input
-                                                            type="text"
-                                                            placeholder={lang === 'ar' ? "بحث عن مادة..." : "Search subject..."}
-                                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                                            className={`ps-10 p-3 rounded-xl border-2 outline-none transition-all text-sm w-full md:w-64 ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-500'}`}
-                                                        />
-                                                    </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                    {contents && contents
-                                                        .filter(c =>
-                                                            c.category === 'academic' &&
-                                                            String(c.yearId) === String(selectedYear) &&
-                                                            String(c.semesterId) === String(selectedSemester) &&
-                                                            (c.subject.toLowerCase().includes(searchQuery.toLowerCase()))
-                                                        )
-                                                        .reduce((acc, current) => {
-                                                            const x = acc.find(item => item.subject === current.subject);
-                                                            if (!x) return acc.concat([current]);
-                                                            return acc;
-                                                        }, [])
-                                                        .map((subjectItem, index) => (
-                                                            <div key={index} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all hover:shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
-                                                                        <i data-lucide="book-marked" className="w-5 h-5"></i>
-                                                                    </div>
-                                                                    <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setModalSubjectData({ subject: subjectItem.subject, yearId: subjectItem.yearId, semesterId: subjectItem.semesterId, category: 'academic' });
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
-                                                                >
-                                                                    <i data-lucide="plus" className="w-4 h-4"></i>
-                                                                </button>
-                                                            </div>
-                                                        ))
-                                                    }
-                                                </div>
-
-                                                {(!contents || contents.filter(c => c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester)).length === 0) && (
-                                                    <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
-                                                        <p className="text-gray-400 font-bold">
-                                                            {lang === 'ar' ? "لا توجد مواد مضافة لهذه السنة/السمستر" : "No subjects for this year/semester"}
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <input
-                                                type="text"
-                                                placeholder={lang === 'ar' ? "أو اكتب مادة جديدة" : "Or enter new subject"}
-                                                value={customSubject}
-                                                onChange={(e) => setCustomSubject(e.target.value)}
-                                                className={`p-4 rounded-2xl border-2 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
-                                            />
-                                        </div>
-
+ 
+ <div className="mt-8 space-y-6">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                {lang === 'ar' ? "إدارة المواد" : "Manage Subjects"}
+            </h3>
+            <p className="text-sm text-gray-400">
+                {lang === 'ar' ? "فلتر المواد حسب السنة والسمستر" : "Filter subjects by year and semester"}
+            </p>
+        </div>
+ 
+    
+        <div className="relative">
+            <i data-lucide="search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
+            <input 
+                type="text"
+                placeholder={lang === 'ar' ? "بحث عن مادة..." : "Search subject..."}
+                onChange={(e) => setSearchQuery(e.target.value)} 
+                className={`ps-10 p-3 rounded-xl border-2 outline-none transition-all text-sm w-full md:w-64 ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-500'}`}
+            />
+        </div>
+    </div>
+ 
+ 
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {contents && contents
+            .filter(c => 
+                c.category === 'academic' && 
+                String(c.yearId) === String(selectedYear) && 
+                String(c.semesterId) === String(selectedSemester) &&
+                (c.subject.toLowerCase().includes(searchQuery.toLowerCase())) 
+            )
+            .reduce((acc, current) => {
+                const x = acc.find(item => item.subject === current.subject);
+                if (!x) return acc.concat([current]);
+                return acc;
+            }, [])
+            .map((subjectItem, index) => (
+                <div key={index} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all hover:shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
+                            <i data-lucide="book-marked" className="w-5 h-5"></i>
+                        </div>
+                        <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
+                    </div>
+                    
+                    <button 
+                        type="button"
+                        onClick={() => {
+                            setModalSubjectData(subjectItem);
+                            setIsModalOpen(true);
+                        }}
+                        className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
+                    >
+                        <i data-lucide="plus" className="w-4 h-4"></i>
+                    </button>
+                </div>
+            ))
+        }
+    </div>
+ 
+   
+    {(!contents || contents.filter(c => c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester)).length === 0) && (
+        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
+            <p className="text-gray-400 font-bold">
+                {lang === 'ar' ? "لا توجد مواد مضافة لهذه السنة/السمستر" : "No subjects for this year/semester"}
+            </p>
+        </div>
+    )}
+</div>
+ 
+  <input
+    type="text"
+    placeholder={lang === 'ar' ? "أو اكتب مادة جديدة" : "Or enter new subject"}
+    value={customSubject}
+    onChange={(e) => setCustomSubject(e.target.value)}
+    className={`p-4 rounded-2xl border-2 ${
+      darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'
+    }`}
+  />
+ 
+</div>
+                                       
                                         <input name="url" required placeholder={lang === 'ar' ? "الرابط المباشر" : "Direct Link"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                        <select name="yearId" onChange={(e) => setSelectedYear(e.target.value)} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}>
+                                        {adminAddMode === 'academic' && (<>
+                                        <select name="yearId" onChange={(e) => setSelectedYear(e.target.value)}>
                                             {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
                                         </select>
-                                        <select name="semesterId" onChange={(e) => setSelectedSemester(e.target.value)} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}>
+                                        <select name="semesterId" onChange={(e) => setSelectedSemester(e.target.value)}>
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
-                                        </select>
+                                        </select></>)}
                                         <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
                                             <option value="video">{lang === 'ar' ? "محاضرة فيديو" : "Video Lecture"}</option>
                                             <option value="pdf">{lang === 'ar' ? "ملف ملخص" : "Summary PDF"}</option>
                                             <option value="exam">{lang === 'ar' ? "امتحان" : "Exam"}</option>
                                             <option value="references">{lang === 'ar' ? "مرجع" : "Reference"}</option>
                                         </select>
-                                        <button className="md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200">
-                                            {lang === 'ar' ? "نشر المحتوى الآن" : "Post Content Now"}
-                                        </button>
-                                    </form>
-                                    )}
+                                        <button className={`md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg ${
+  darkMode 
+    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20' 
+    : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
+}`}>{lang === 'ar' ? "نشر المحتوى الآن" : "Post Content Now"}</button>
+                                        </>
+                                        )}
 
-                                    {/* ====== كورسات / تدريب (نفس البنية، حقل تجميع مختلف) ====== */}
-                                    {(adminAddMode === 'special_course' || adminAddMode === 'training') && (() => {
-                                        const groupField = adminAddMode === 'special_course' ? 'courseName' : 'trainingName';
-                                        const groupLabel = adminAddMode === 'special_course'
-                                            ? (lang === 'ar' ? "إدارة الكورسات" : "Manage Courses")
-                                            : (lang === 'ar' ? "إدارة برامج التدريب" : "Manage Training Programs");
-                                        const nameLabel = adminAddMode === 'special_course'
-                                            ? (lang === 'ar' ? "أو اكتب اسم كورس جديد" : "Or enter a new course name")
-                                            : (lang === 'ar' ? "أو اكتب اسم برنامج تدريبي جديد" : "Or enter a new training program name");
-                                        const groups = contents
-                                            .filter(c => c.category === adminAddMode && c[groupField])
-                                            .reduce((acc, current) => {
-                                                if (!acc.find(item => item[groupField] === current[groupField])) acc.push(current);
-                                                return acc;
-                                            }, []);
-                                        return (
-                                        <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                            <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <div className="mt-2 space-y-6">
-                                                    <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>{groupLabel}</h3>
-
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                                        {groups.map((item, index) => (
-                                                            <div key={index} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all hover:shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                                                                <div className="flex items-center gap-3">
-                                                                    <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
-                                                                        <i data-lucide={adminAddMode === 'special_course' ? 'rocket' : 'dumbbell'} className="w-5 h-5"></i>
-                                                                    </div>
-                                                                    <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item[groupField]}</h4>
-                                                                </div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => {
-                                                                        setModalSubjectData({ subject: item[groupField], yearId: null, semesterId: null, category: adminAddMode });
-                                                                        setIsModalOpen(true);
-                                                                    }}
-                                                                    className="p-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-all"
-                                                                >
-                                                                    <i data-lucide="plus" className="w-4 h-4"></i>
-                                                                </button>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-
-                                                    {groups.length === 0 && (
-                                                        <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
-                                                            <p className="text-gray-400 font-bold">
-                                                                {lang === 'ar' ? "لا يوجد شيء مضاف بعد" : "Nothing added yet"}
-                                                            </p>
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                <input
-                                                    type="text"
-                                                    placeholder={nameLabel}
-                                                    value={customSubject}
-                                                    onChange={(e) => setCustomSubject(e.target.value)}
-                                                    className={`p-4 rounded-2xl border-2 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'}`}
-                                                />
-                                            </div>
-
-                                            <input name="url" required placeholder={lang === 'ar' ? "الرابط المباشر" : "Direct Link"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                            <select name="type" className={`md:col-span-2 w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
-                                                <option value="video">{lang === 'ar' ? "محاضرة فيديو" : "Video Lecture"}</option>
-                                                <option value="pdf">{lang === 'ar' ? "ملف ملخص" : "Summary PDF"}</option>
-                                                <option value="exam">{lang === 'ar' ? "امتحان" : "Exam"}</option>
-                                                <option value="references">{lang === 'ar' ? "مرجع" : "Reference"}</option>
-                                                <option value="ppt">{lang === 'ar' ? "بوربوينت" : "PowerPoint"}</option>
-                                                <option value="voice">{lang === 'ar' ? "فويس" : "Voice"}</option>
-                                            </select>
+                                        {adminAddMode === 'magazine' && (
+                                        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <input name="magTitle" required placeholder={lang === 'ar' ? "اسم المجلة" : "Magazine title"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <input name="magCover" required placeholder={lang === 'ar' ? "رابط صورة الغلاف" : "Cover image URL"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <input name="magUrl" required placeholder={lang === 'ar' ? "رابط المجلة (Drive)" : "Magazine Drive link"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <p className={`md:col-span-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                {lang === 'ar'
+                                                    ? "💡 لصورة الغلاف: ارفعها في جوجل درايف، خليها Anyone with the link، وحُط نفس رابط الملف هنا (بيتحول تلقائياً)."
+                                                    : "💡 For the cover: upload it to Google Drive, set sharing to Anyone with the link, and paste that link here."}
+                                            </p>
                                             <button className="md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200">
-                                                {adminAddMode === 'special_course'
-                                                    ? (lang === 'ar' ? "نشر محتوى الكورس الآن" : "Post Course Content Now")
-                                                    : (lang === 'ar' ? "نشر محتوى التدريب الآن" : "Post Training Content Now")}
+                                                {lang === 'ar' ? "نشر المجلة الآن" : "Publish Magazine"}
                                             </button>
-                                        </form>
-                                        );
-                                    })()}
-
-                                    {/* ====== مجلة ====== */}
-                                    {adminAddMode === 'magazine' && (
-                                    <>
-                                    <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <input name="magTitle" required placeholder={lang === 'ar' ? "اسم المجلة" : "Magazine title"}
-                                            className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                        <input name="magCover" required placeholder={lang === 'ar' ? "رابط صورة الغلاف" : "Cover image URL"}
-                                            className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                        <input name="magUrl" required placeholder={lang === 'ar' ? "رابط المجلة (Drive)" : "Magazine Drive link"}
-                                            className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                        <p className={`md:col-span-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                            {lang === 'ar'
-                                                ? "💡 لصورة الغلاف: ارفعها في جوجل درايف، خليها Anyone with the link، وحُط نفس رابط الملف هنا (بيتحول تلقائياً)."
-                                                : "💡 For the cover: upload it to Google Drive, set sharing to Anyone with the link, and paste that link here."}
-                                        </p>
-                                        <button className="md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200">
-                                            {lang === 'ar' ? "نشر المجلة الآن" : "Publish Magazine"}
-                                        </button>
+                                        </div>
+                                        )}
                                     </form>
 
+                                    {adminAddMode === 'magazine' && (
                                     <div className="mt-8 space-y-4">
                                         <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                                             {lang === 'ar' ? "المجلات المضافة حالياً" : "Current Magazines"}
@@ -1325,7 +1165,6 @@ React.useEffect(() => {
                                             </div>
                                         )}
                                     </div>
-                                    </>
                                     )}
  
 {/* ==================== [ لوحة  الأدمن - الإعلانات ] ==================== */}
@@ -1546,68 +1385,32 @@ React.useEffect(() => {
                                     </div>
                                 )}
  
-{path.length == 1 && path[0].id == 'courses' && (() => {
-    const activeCat = path[0].category || 'special_course';
-    const catContents = contents.filter(c => c.category === activeCat);
-    const groupField = activeCat === 'special_course' ? 'courseName' : 'trainingName';
-    const names = [...new Set(catContents.map(c => c[groupField]).filter(Boolean))];
-    return (
-    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
-        <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-orange-100 text-orange-600 font-black text-sm mb-5">
-                <i data-lucide="rocket" className="w-5 h-5"></i>
-                {lang === 'ar' ? 'الكورسات والتدريب' : 'Courses & Training'}
+{path.length == 1 && path[0].id == 'courses' && (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
+ 
+        {[...new Set(
+  contents
+    .filter(c => c.category === 'special_course')
+    .map(c => c.courseName)
+)].map(courseName => (
+            <button 
+                key={courseName}
+                onClick={() => setPath([...path, { id: courseName, title: courseName, type: 'inside_course' }])}
+                className="p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl hover:scale-105 transition text-center border-2 border-orange-500"
+            >
+                <i data-lucide="book" className="w-12 h-12 mb-4 text-orange-500"></i>
+                <h3 className="text-2xl font-bold">{courseName}</h3>
+                <p>{lang === 'ar' ? "اضغط لعرض المحتويات" : "Click to view contents"}</p>
+            </button>
+        ))}
+        
+        {contents.filter(c => c.category == 'special_course').length == 0 && (
+            <div className="col-span-full text-center p-10 opacity-50">
+               <p>{lang === 'ar' ? "..لا توجد كورسات مضافة حالياً" : "No courses added yet.."}</p>
             </div>
-            <h1 className={`text-4xl font-black mb-6 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {activeCat === 'special_course' ? (lang === 'ar' ? 'الكورسات التدريبية' : 'Training Courses') : (lang === 'ar' ? 'برامج التدريب' : 'Training Programs')}
-            </h1>
-
-            <div className={`inline-flex gap-1 p-1.5 rounded-2xl ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
-                <button
-                    onClick={() => setPath([{ ...path[0], category: 'special_course' }])}
-                    className={`px-6 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${activeCat === 'special_course' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow' : 'bg-white text-orange-600 shadow') : (darkMode ? 'text-gray-400' : 'text-gray-500')}`}
-                >
-                    <i data-lucide="rocket" className="w-4 h-4"></i>
-                    {lang === 'ar' ? 'الكورسات' : 'Courses'}
-                </button>
-                <button
-                    onClick={() => setPath([{ ...path[0], category: 'training' }])}
-                    className={`px-6 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 ${activeCat === 'training' ? (darkMode ? 'bg-gray-700 text-orange-400 shadow' : 'bg-white text-orange-600 shadow') : (darkMode ? 'text-gray-400' : 'text-gray-500')}`}
-                >
-                    <i data-lucide="dumbbell" className="w-4 h-4"></i>
-                    {lang === 'ar' ? 'التدريب' : 'Training'}
-                </button>
-            </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {names.map(name => (
-                <button
-                    key={name}
-                    onClick={() => setPath([...path, { id: name, title: name, type: 'inside_course', category: activeCat }])}
-                    className={`p-8 rounded-[2rem] border-2 flex flex-col items-center text-center transition-all hover:-translate-y-1 hover:shadow-xl ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-orange-100 shadow-md'}`}
-                >
-                    <div className="w-16 h-16 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center mb-4">
-                        <i data-lucide={activeCat === 'special_course' ? 'rocket' : 'dumbbell'} className="w-8 h-8"></i>
-                    </div>
-                    <h3 className={`text-xl font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>{name}</h3>
-                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "اضغط لعرض المحتويات" : "Click to view contents"}</p>
-                </button>
-            ))}
-
-            {names.length === 0 && (
-                <div className="col-span-full text-center p-10 border-2 border-dashed border-gray-200 rounded-3xl opacity-70">
-                    <p className="text-gray-400 font-bold">
-                        {activeCat === 'special_course'
-                            ? (lang === 'ar' ? "لا توجد كورسات مضافة حالياً" : "No courses added yet")
-                            : (lang === 'ar' ? "لا توجد برامج تدريب مضافة حالياً" : "No training programs added yet")}
-                    </p>
-                </div>
-            )}
-        </div>
+        )}
     </div>
-    );
-})()}
+)}
  
                                {path.length == 2 && (
   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1787,91 +1590,56 @@ React.useEffect(() => {
 )}
 
 {/* صفحة المجلات */}
-{path.length === 1 && path[0]?.id === 'magazines' && (() => {
-    const allMags = contents.filter(c => c.category === 'magazine');
-    const filteredMags = allMags.filter(m => (m.title || '').toLowerCase().includes(magazineSearch.toLowerCase()));
-    return (
+{path.length === 1 && path[0]?.id === 'magazines' && (
     <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
-        <div className="text-center mb-8">
+        <div className="text-center mb-10">
             <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-orange-100 text-orange-600 font-black text-sm mb-5">
                 <i data-lucide="library" className="w-5 h-5"></i>
-                {lang === 'ar' ? `ركن المجلات • ${allMags.length}` : `Magazines Corner • ${allMags.length}`}
+                {lang === 'ar' ? 'ركن المجلات' : 'Magazines Corner'}
             </div>
             <h1 className={`text-4xl font-black mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                 {lang === 'ar' ? 'المجلات العلمية' : 'Magazines'}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto mb-6">
+            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
                 {lang === 'ar' ? "اضغط على غلاف أي مجلة عشان تقرأها مباشرة." : "Tap a cover to read it right away."}
             </p>
-
-            {allMags.length > 4 && (
-                <div className="relative max-w-sm mx-auto">
-                    <i data-lucide="search" className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
-                    <input
-                        type="text"
-                        onChange={(e) => setMagazineSearch(e.target.value)}
-                        placeholder={lang === 'ar' ? "ابحث عن مجلة..." : "Search magazines..."}
-                        className={`w-full ps-10 p-3 rounded-2xl border-2 outline-none text-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-400'}`}
-                    />
-                </div>
-            )}
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {filteredMags.map(mag => (
+            {contents.filter(c => c.category === 'magazine').map(mag => (
                 <button key={mag.id} onClick={() => setSelectedItem({ ...mag, type: 'magazine' })} className="group text-center">
-                    <div className={`relative aspect-[3/4] rounded-2xl overflow-hidden border-2 shadow-md group-hover:shadow-2xl group-hover:-translate-y-1.5 transition-all duration-300 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                    <div className={`aspect-[3/4] rounded-2xl overflow-hidden border-2 shadow-md group-hover:shadow-xl group-hover:-translate-y-1 transition-all ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
                         <img
                             src={driveImageDirectUrl(mag.coverUrl)}
                             alt={mag.title}
                             className="w-full h-full object-cover"
                             onError={(e) => { e.target.src = 'https://placehold.co/300x400/f58220/white?text=GESS'; }}
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-black/0 opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center pb-4">
-                            <span className="flex items-center gap-1.5 text-white text-xs font-black bg-[#f58220] px-3 py-1.5 rounded-full">
-                                <i data-lucide="book-open" className="w-3.5 h-3.5"></i>
-                                {lang === 'ar' ? 'اقرأ الآن' : 'Read now'}
-                            </span>
-                        </div>
                     </div>
-                    <h4 className={`font-bold text-sm mt-2 truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{mag.title}</h4>
+                    <h4 className={`font-bold text-sm mt-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{mag.title}</h4>
                 </button>
             ))}
         </div>
 
-        {allMags.length === 0 && (
-            <div className="text-center py-14 border-2 border-dashed border-gray-200 rounded-3xl">
-                <i data-lucide="library" className="w-12 h-12 text-orange-300 mx-auto mb-3"></i>
+        {contents.filter(c => c.category === 'magazine').length === 0 && (
+            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
                 <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مجلات مضافة حالياً" : "No magazines yet"}</p>
             </div>
         )}
-
-        {allMags.length > 0 && filteredMags.length === 0 && (
-            <div className="text-center py-14 border-2 border-dashed border-gray-200 rounded-3xl">
-                <p className="text-gray-400 font-bold">{lang === 'ar' ? "ما في نتائج مطابقة للبحث" : "No matching results"}</p>
-            </div>
-        )}
     </div>
-    );
-})()}
+)}
 
 {/* صفحة المساعد الذكي */}
 {path.length === 1 && path[0]?.id === 'ai_chat' && (
     <AIChatPanel lang={lang} darkMode={darkMode} />
 )}
 
-{/* اختيار نوع المحتوى جوة الكورس/التدريب */}
+{/* اختيار نوع المحتوى جوة الكورس */}
 {path.length === 2 && path[1]?.type === 'inside_course' && !selectedItem && (
-  <div className="max-w-2xl mx-auto">
-    <div className="text-center mb-6">
-      <h2 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>{path[1].title}</h2>
-    </div>
-    <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+  <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
     {(() => {
-      const cat = path[1].category || 'special_course';
-      const groupField = cat === 'special_course' ? 'courseName' : 'trainingName';
-      const groupContents = contents.filter(c => c.category === cat && c[groupField] === path[1].id);
-      const groupTypes = [...new Set(groupContents.map(c => c.type))];
+      const courseContents = contents.filter(c => c.category === 'special_course' && c.courseName === path[1].id);
+      const courseTypes = [...new Set(courseContents.map(c => c.type))];
       const typeMeta = [
         { key: 'video', icon: 'video', label: lang === 'ar' ? "فيديو" : "Video" },
         { key: 'pdf', icon: 'file-text', label: lang === 'ar' ? "ملفات PDF" : "PDF Files" },
@@ -1882,11 +1650,11 @@ React.useEffect(() => {
         { key: 'labs', icon: 'flask-conical', label: lang === 'ar' ? "معامل" : "Labs" },
         { key: 'sheets', icon: 'table', label: lang === 'ar' ? "شيتات" : "Sheets" },
       ];
-      const available = typeMeta.filter(item => groupTypes.includes(item.key));
+      const available = typeMeta.filter(item => courseTypes.includes(item.key));
       if (available.length === 0) {
         return (
           <div className="col-span-full text-center p-10 opacity-50">
-            <p>{lang === 'ar' ? "لا يوجد محتوى مضاف هنا بعد" : "No content added here yet"}</p>
+            <p>{lang === 'ar' ? "لا يوجد محتوى مضاف لهذا الكورس بعد" : "No content added to this course yet"}</p>
           </div>
         );
       }
@@ -1894,30 +1662,26 @@ React.useEffect(() => {
         <button
           key={item.key}
           onClick={() => { setView(item.key); setPath([...path, { type: 'courseContentType' }]); }}
-          className={`p-6 rounded-2xl flex flex-col items-center shadow-sm hover:shadow-md transition ${darkMode ? 'bg-gray-800' : 'bg-white'}`}
+          className="p-6 rounded-xl bg-white dark:bg-gray-900 flex flex-col items-center shadow-sm hover:shadow-md transition"
         >
           <i data-lucide={item.icon} className="w-10 h-10 mb-2 text-orange-500"></i>
-          <span className={`font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{item.label}</span>
+          <span className="font-bold text-gray-800 dark:text-white">{item.label}</span>
         </button>
       ));
     })()}
-    </div>
   </div>
 )}
 
-{/* عرض محتوى الكورس/التدريب */}
-{path.length === 3 && path[2]?.type === 'courseContentType' && !selectedItem && (() => {
-  const cat = path[1].category || 'special_course';
-  const groupField = cat === 'special_course' ? 'courseName' : 'trainingName';
-  return (
-  <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+{/* عرض محتوى الكورس */}
+{path.length === 3 && path[2]?.type === 'courseContentType' && !selectedItem && (
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
     {contents
-      .filter(c => c.category === cat && c[groupField] === path[1].id && c.type === view)
+      .filter(c => c.category === 'special_course' && c.courseName === path[1].id && c.type === view)
       .map(item => (
         <button
           key={item.id}
           onClick={() => setSelectedItem(item)}
-          className={`p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white'}`}
+          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
         >
           <div className="flex items-center gap-4">
             <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
@@ -1932,7 +1696,7 @@ React.useEffect(() => {
               }></i>
             </div>
             <div className="text-left">
-              <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+              <h4 className="font-black text-lg text-gray-900">{item.title}</h4>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{item.type}</p>
             </div>
           </div>
@@ -1940,8 +1704,7 @@ React.useEffect(() => {
         </button>
       ))}
   </div>
-  );
-})()}
+)}
  
  
                               {path.length == 3 && path[2].type == 'subject' && !selectedItem && (
@@ -2473,12 +2236,10 @@ if (
         
             <div className="mb-4 pr-6">
                 <h2 className="text-2xl font-black text-orange-500 mb-1">
-                    {lang === 'ar' ? "إضافة محتوى جديد" : "Add New Content"}
+                    {lang === 'ar' ? "إضافة محاضرة جديدة" : "Add New Lecture"}
                 </h2>
                 <p className={`text-sm ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    {modalSubjectData.category === 'special_course' ? (lang === 'ar' ? "الكورس المحدد:" : "Course:") :
-                     modalSubjectData.category === 'training' ? (lang === 'ar' ? "برنامج التدريب المحدد:" : "Training program:") :
-                     (lang === 'ar' ? "المادة المحددة:" : "Subject:")} <strong className={darkMode ? 'text-white' : 'text-black'}>{modalSubjectData.subject}</strong>
+                    {lang === 'ar' ? "المادة المحددة:" : "Subject:"} <strong className={darkMode ? 'text-white' : 'text-black'}>{modalSubjectData.subject}</strong>
                 </p>
             </div>
  
@@ -2519,12 +2280,10 @@ const lectureData = {
             const newLecture = {
                 title: formData.get('title'),
                 type: formData.get('type'),
-                category: modalSubjectData.category || 'academic',
-                subject: modalSubjectData.category === 'academic' ? modalSubjectData.subject : null,
-                courseName: modalSubjectData.category === 'special_course' ? modalSubjectData.subject : null,
-                trainingName: modalSubjectData.category === 'training' ? modalSubjectData.subject : null,
-                yearId: modalSubjectData.category === 'academic' ? String(modalSubjectData.yearId) : null,
-                semesterId: modalSubjectData.category === 'academic' ? String(modalSubjectData.semesterId) : null,
+                category: 'academic',
+                subject: modalSubjectData.subject,
+                yearId: String(modalSubjectData.yearId),
+                semesterId: String(modalSubjectData.semesterId),
           links: formData.get('lectureUrl')?.trim()
     ? [{
         type: formData.get('type'),
@@ -2698,7 +2457,11 @@ style={{ scrollbarWidth: 'thin' }}
                 >
                     <option value="">{lang === 'ar' ? "-- اختر الدرس المستهدف --" : "-- Select Target Lecture --"}</option>
                     {contents
-                        .filter(modalGroupMatches)
+                        .filter(c => 
+                            String(c.yearId) === String(modalSubjectData.yearId) &&
+                            String(c.semesterId) === String(modalSubjectData.semesterId) &&
+                            c.subject?.trim().toLowerCase() === modalSubjectData.subject?.trim().toLowerCase()
+                        )
                         .map(lecture => (
                             <option key={lecture.id} value={lecture.id}>
                                 {lecture.title} ({lecture.type})
@@ -2933,7 +2696,11 @@ style={{ scrollbarWidth: 'thin' }}
     
     <div className="space-y-3 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
         {contents
-            .filter(modalGroupMatches)
+            .filter(c => 
+                c.subject === modalSubjectData.subject && 
+                String(c.yearId) === String(modalSubjectData.yearId) && 
+                String(c.semesterId) === String(modalSubjectData.semesterId)
+            )
             .sort((a, b) => a.title.toLowerCase().localeCompare(b.title.toLowerCase()))
             .map((lecture, index) => (
                 <div key={lecture.id || index} className={`p-4 rounded-2xl flex justify-between items-center border transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100 hover:bg-white hover:shadow-md'}`}>
@@ -2977,9 +2744,9 @@ style={{ scrollbarWidth: 'thin' }}
         }
  
    
-        {contents.filter(modalGroupMatches).length === 0 && (
+        {contents.filter(c => c.subject === modalSubjectData.subject).length === 0 && (
             <p className="text-center py-4 text-gray-400 text-sm italic">
-                {lang === 'ar' ? "لا توجد عناصر مضافة هنا بعد" : "No content added here yet"}
+                {lang === 'ar' ? "لا توجد دروس مضافة لهذه المادة بعد" : "No lectures added for this subject yet"}
             </p>
         )}
     </div>
@@ -3106,10 +2873,6 @@ window.prepareAnnouncementForEdit = function prepareAnnouncementForEdit(id, titl
 }
  
  
-// =====================================================================
-// دالة مشتركة لإرسال الإشعار عبر Cloudflare Worker
-// تُستدعى بعد الحفظ في Firestore سواء كان إنشاء جديد أو تعديل
-// =====================================================================
 async function sendPushNotification(title, message) {
     try {
         const response = await fetch("https://gess-notifications.mazenramos0.workers.dev", {
