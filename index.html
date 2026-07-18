@@ -27,6 +27,25 @@
 .animate-earth-glow {
   animation: pulseGlow 3s ease-in-out infinite;
 }
+
+@keyframes newBadgePop {
+  0%, 100% { transform: scale(1) rotate(-6deg); box-shadow: 0 4px 14px rgba(245, 80, 32, 0.55); }
+  50% { transform: scale(1.08) rotate(-6deg); box-shadow: 0 6px 22px rgba(245, 80, 32, 0.8); }
+}
+@keyframes newBadgeShine {
+  0% { transform: translateX(-120%) skewX(-20deg); }
+  60%, 100% { transform: translateX(220%) skewX(-20deg); }
+}
+.new-badge {
+  animation: newBadgePop 2.2s ease-in-out infinite;
+}
+.new-badge .shine {
+  position: absolute;
+  top: 0; left: 0;
+  width: 40%; height: 100%;
+  background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
+  animation: newBadgeShine 2.6s ease-in-out infinite;
+}
     </style>
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -159,6 +178,34 @@ const t = {
                 if (match && match[1]) return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1000`;
             }
             return url;
+        }
+
+        // يحوّل createdAt (سواء Firestore Timestamp أو تاريخ عادي) لعدد ميلي ثانية للمقارنة
+        function toMillis(createdAt) {
+            if (!createdAt) return 0;
+            const date = createdAt.toDate ? createdAt.toDate() : new Date(createdAt);
+            const ms = date.getTime();
+            return isNaN(ms) ? 0 : ms;
+        }
+
+        // بيرجع id آخر مجلة تمت إضافتها (الأحدث بتاريخ createdAt) عشان نعرض شارة "جديد" عليها بس
+        function getLatestMagazineId(magazinesList) {
+            if (!magazinesList || magazinesList.length === 0) return null;
+            let latest = magazinesList[0];
+            for (const m of magazinesList) {
+                if (toMillis(m.createdAt) > toMillis(latest.createdAt)) latest = m;
+            }
+            return latest.id;
+        }
+
+        function NewBadge({ lang }) {
+            return (
+                <span className="new-badge relative overflow-hidden inline-flex items-center gap-1 px-3 py-1 rounded-full bg-gradient-to-r from-[#f58220] to-[#ff3d3d] text-white text-[10px] font-black tracking-wide ring-2 ring-white">
+                    <i data-lucide="sparkles" className="w-3 h-3"></i>
+                    {lang === 'ar' ? 'جديد' : 'NEW'}
+                    <span className="shine"></span>
+                </span>
+            );
         }
 
         function BottomNav({ lang, darkMode, path, setPath, setSelectedItem }) {
@@ -622,6 +669,7 @@ React.useEffect(() => {
     const magTitle = form.magTitle?.value?.trim();
     const magCover = form.magCover?.value?.trim();
     const magUrl = form.magUrl?.value?.trim();
+    const magDescription = form.magDescription?.value?.trim() || "";
     if (!magTitle || !magCover || !magUrl) {
       alert(lang === 'ar' ? "الرجاء تعبئة اسم المجلة، رابط الغلاف، ورابط المجلة" : "Please fill title, cover, and link");
       return;
@@ -633,6 +681,7 @@ React.useEffect(() => {
         title: magTitle,
         coverUrl: magCover,
         url: magUrl,
+        description: magDescription,
         createdAt: new Date()
       });
       alert("✅ تم رفع المجلة بنجاح - " + magTitle);
@@ -1115,6 +1164,8 @@ React.useEffect(() => {
                                                 className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                             <input name="magUrl" required placeholder={lang === 'ar' ? "رابط المجلة (Drive)" : "Magazine Drive link"}
                                                 className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <textarea name="magDescription" rows="2" placeholder={lang === 'ar' ? "وصف أو تعليق مختصر عن المجلة (اختياري)" : "Short description or caption (optional)"}
+                                                className={`md:col-span-3 p-4 rounded-2xl border-2 transition-all outline-none resize-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}></textarea>
                                             <p className={`md:col-span-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 {lang === 'ar'
                                                     ? "💡 لصورة الغلاف: ارفعها في جوجل درايف، خليها Anyone with the link، وحُط نفس رابط الملف هنا (بيتحول تلقائياً)."
@@ -1606,19 +1657,30 @@ React.useEffect(() => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            {contents.filter(c => c.category === 'magazine').map(mag => (
+            {(() => {
+                const magazinesList = contents.filter(c => c.category === 'magazine');
+                const latestMagazineId = getLatestMagazineId(magazinesList);
+                return magazinesList.map(mag => (
                 <button key={mag.id} onClick={() => setSelectedItem({ ...mag, type: 'magazine' })} className="group text-center">
-                    <div className={`aspect-[3/4] rounded-2xl overflow-hidden border-2 shadow-md group-hover:shadow-xl group-hover:-translate-y-1 transition-all ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                        <img
-                            src={driveImageDirectUrl(mag.coverUrl)}
-                            alt={mag.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.target.src = 'https://placehold.co/300x400/f58220/white?text=GESS'; }}
-                        />
+                    <div className="relative">
+                        <div className={`aspect-[3/4] rounded-2xl overflow-hidden border-2 shadow-md group-hover:shadow-xl group-hover:-translate-y-1 transition-all ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <img
+                                src={driveImageDirectUrl(mag.coverUrl)}
+                                alt={mag.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.target.src = 'https://placehold.co/300x400/f58220/white?text=GESS'; }}
+                            />
+                        </div>
+                        {mag.id === latestMagazineId && (
+                            <div className="absolute -top-2 -right-2 z-10">
+                                <NewBadge lang={lang} />
+                            </div>
+                        )}
                     </div>
                     <h4 className={`font-bold text-sm mt-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{mag.title}</h4>
                 </button>
-            ))}
+                ));
+            })()}
         </div>
 
         {contents.filter(c => c.category === 'magazine').length === 0 && (
@@ -1879,6 +1941,9 @@ React.useEffect(() => {
             <div className="flex flex-col">
                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem?.subject || ""}</span>
                 <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem?.title || ""}</h2>
+                {selectedItem?.type === 'magazine' && selectedItem?.description && (
+                    <p className="text-sm font-normal text-gray-400 mt-1 max-w-xl">{selectedItem.description}</p>
+                )}
             </div>
             <button onClick={() => setSelectedItem(null)} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
                 <i data-lucide="x" className="w-5 h-5 text-gray-500"></i>
