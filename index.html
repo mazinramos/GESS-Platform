@@ -251,7 +251,7 @@ const t = {
             );
         }
 
-        function AIChatPanel({ lang, darkMode }) {
+        function AIChatPanel({ lang, darkMode, contents }) {
             const [messages, setMessages] = React.useState([
                 { role: 'assistant', content: lang === 'ar'
                     ? 'أهلاً! أنا المساعد الذكي لمنصة GESS EDU. اسألني عن أي مادة أو موضوع هندسي 👋'
@@ -266,7 +266,19 @@ const t = {
             }, [messages, loading]);
 
             // 👇 غيّر الرابط دا برابط الـ Cloudflare Worker بتاعك بعد نشره (شوف الدليل المرفق)
-            const AI_WORKER_URL = "https://gess-ai-chat.YOUR-SUBDOMAIN.workers.dev";
+            const AI_WORKER_URL = "https://gess-ai-chat.mazenramos0.workers.dev/";
+
+            // بناء قائمة مختصرة بمحتوى المنهج (المواد/الدروس/المجلات) الموجود فعليًا في المنصة
+            // عشان المساعد الذكي يعرف يجاوب في حدود المنهج المتاح، ويرشد الطالب للمحتوى المناسب
+            const buildCurriculumSummary = () => {
+                if (!contents || contents.length === 0) return "";
+                const lines = contents.slice(0, 200).map(c => {
+                    const subject = c.subject ? `[${c.subject}] ` : '';
+                    const category = c.category || c.type || '';
+                    return `- ${subject}${c.title || ''}${category ? ` (${category})` : ''}`;
+                });
+                return lines.join('\n');
+            };
 
             const sendMessage = async () => {
                 const text = input.trim();
@@ -279,7 +291,11 @@ const t = {
                     const res = await fetch(AI_WORKER_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ messages: newMessages })
+                        body: JSON.stringify({
+                            messages: newMessages,
+                            lang,
+                            curriculum: buildCurriculumSummary()
+                        })
                     });
                     const data = await res.json();
                     setMessages([...newMessages, { role: 'assistant', content: data.reply || (lang === 'ar' ? 'تعذر الحصول على رد الآن.' : 'Could not get a reply.') }]);
@@ -1766,7 +1782,7 @@ React.useEffect(() => {
 
 {/* صفحة المساعد الذكي */}
 {path.length === 1 && path[0]?.id === 'ai_chat' && (
-    <AIChatPanel lang={lang} darkMode={darkMode} />
+    <AIChatPanel lang={lang} darkMode={darkMode} contents={contents} />
 )}
 
 {/* اختيار نوع المحتوى جوة الكورس */}
