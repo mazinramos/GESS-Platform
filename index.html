@@ -556,6 +556,30 @@ const handleEditMagazineDescription = async (docId, currentDescription) => {
         alert((lang === 'ar' ? "فشل التعديل: " : "Update failed: ") + error.message);
     }
 };
+
+const handleEditMagazineTargetBatch = async (docId, currentTargetBatch) => {
+    if (!docId) {
+        alert("خطأ في المعرف (ID)");
+        return;
+    }
+
+    const newTargetBatch = window.prompt(
+        lang === 'ar' ? "تعديل الدفعة الموجهة لها المجلة:" : "Edit target batch/cohort:",
+        currentTargetBatch || ""
+    );
+
+    if (newTargetBatch === null) return; // المستخدم ضغط إلغاء
+
+    try {
+        await db.collection("materials").doc(docId).update({
+            targetBatch: newTargetBatch.trim()
+        });
+        alert(lang === 'ar' ? "✅ تم تعديل الدفعة بنجاح" : "✅ Target batch updated");
+    } catch (error) {
+        console.error("Error updating target batch: ", error);
+        alert((lang === 'ar' ? "فشل التعديل: " : "Update failed: ") + error.message);
+    }
+};
  
  
  
@@ -694,6 +718,7 @@ React.useEffect(() => {
     const magCover = form.magCover?.value?.trim();
     const magUrl = form.magUrl?.value?.trim();
     const magDescription = form.magDescription?.value?.trim() || "";
+    const magTargetBatch = form.magTargetBatch?.value?.trim() || "";
     if (!magTitle || !magCover || !magUrl) {
       alert(lang === 'ar' ? "الرجاء تعبئة اسم المجلة، رابط الغلاف، ورابط المجلة" : "Please fill title, cover, and link");
       return;
@@ -706,6 +731,7 @@ React.useEffect(() => {
         coverUrl: magCover,
         url: magUrl,
         description: magDescription,
+        targetBatch: magTargetBatch,
         createdAt: new Date()
       });
       alert("✅ تم رفع المجلة بنجاح - " + magTitle);
@@ -1190,6 +1216,8 @@ React.useEffect(() => {
                                                 className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                             <textarea name="magDescription" rows="2" placeholder={lang === 'ar' ? "وصف أو تعليق مختصر عن المجلة (اختياري)" : "Short description or caption (optional)"}
                                                 className={`md:col-span-3 p-4 rounded-2xl border-2 transition-all outline-none resize-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}></textarea>
+                                            <input name="magTargetBatch" placeholder={lang === 'ar' ? "الدفعة الموجهة لها المجلة (اختياري، مثال: دفعة 2026)" : "Target batch/cohort (optional)"}
+                                                className={`md:col-span-3 p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                             <p className={`md:col-span-3 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
                                                 {lang === 'ar'
                                                     ? "💡 لصورة الغلاف: ارفعها في جوجل درايف، خليها Anyone with the link، وحُط نفس رابط الملف هنا (بيتحول تلقائياً)."
@@ -1218,6 +1246,9 @@ React.useEffect(() => {
                                                             <p className={`text-xs truncate ${mag.description ? (darkMode ? 'text-gray-400' : 'text-gray-500') : 'text-gray-300 italic'}`}>
                                                                 {mag.description || (lang === 'ar' ? "بدون وصف" : "No description")}
                                                             </p>
+                                                            <p className={`text-xs truncate ${mag.targetBatch ? 'text-blue-400' : 'text-gray-300 italic'}`}>
+                                                                {mag.targetBatch || (lang === 'ar' ? "بدون دفعة محددة" : "No target batch")}
+                                                            </p>
                                                         </div>
                                                     </div>
                                                     <div className="flex gap-2 shrink-0">
@@ -1227,6 +1258,13 @@ React.useEffect(() => {
                                                             title={lang === 'ar' ? "تعديل الوصف/التعليق" : "Edit description"}
                                                         >
                                                             <i data-lucide="message-square-text" className="w-4 h-4"></i>
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleEditMagazineTargetBatch(mag.id, mag.targetBatch)}
+                                                            className="p-2 bg-blue-50 text-blue-500 rounded-xl hover:bg-blue-500 hover:text-white transition-colors"
+                                                            title={lang === 'ar' ? "تعديل الدفعة الموجهة" : "Edit target batch"}
+                                                        >
+                                                            <i data-lucide="users" className="w-4 h-4"></i>
                                                         </button>
                                                         <button
                                                             onClick={() => handleEdit("materials", mag.id, mag.title, mag.url)}
@@ -1985,8 +2023,8 @@ React.useEffect(() => {
             <div className="flex flex-col">
                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem?.subject || ""}</span>
                 <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem?.title || ""}</h2>
-                {selectedItem?.type === 'magazine' && selectedItem?.description && (
-                    <p className="text-sm font-normal text-gray-400 mt-1 max-w-xl">{selectedItem.description}</p>
+                {selectedItem?.type === 'magazine' && selectedItem?.targetBatch && (
+                    <p className="text-sm font-normal text-gray-400 mt-1 max-w-xl">{selectedItem.targetBatch}</p>
                 )}
             </div>
             <button onClick={() => setSelectedItem(null)} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
