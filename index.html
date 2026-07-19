@@ -28,6 +28,20 @@
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
+/* تنسيق نقاط السلايدر (الإعلانات) بألوان المنصة */
+.mySwiper .swiper-pagination-bullet {
+  background: #d1d5db;
+  opacity: 1;
+  width: 6px;
+  height: 6px;
+  transition: all .25s ease;
+}
+.mySwiper .swiper-pagination-bullet-active {
+  background: linear-gradient(90deg, #f58220, #ff9d4d);
+  width: 18px;
+  border-radius: 999px;
+}
+
 @keyframes newBadgePop {
   0%, 100% { transform: scale(1) rotate(-6deg); box-shadow: 0 4px 14px rgba(245, 80, 32, 0.55); }
   50% { transform: scale(1.08) rotate(-6deg); box-shadow: 0 6px 22px rgba(245, 80, 32, 0.8); }
@@ -251,6 +265,106 @@ const t = {
             );
         }
 
+        function GlobalSearchModal({ lang, darkMode, contents, onClose, onSelectItem }) {
+            const [query, setQuery] = React.useState('');
+            const inputRef = React.useRef(null);
+
+            React.useEffect(() => {
+                if (inputRef.current) inputRef.current.focus();
+                const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
+                window.addEventListener('keydown', handleKey);
+                return () => window.removeEventListener('keydown', handleKey);
+            }, []);
+
+            const typeMeta = {
+                academic: { icon: 'book-marked', label: lang === 'ar' ? 'مادة دراسية' : 'Subject' },
+                special_course: { icon: 'rocket', label: lang === 'ar' ? 'كورس تدريبي' : 'Course' },
+                training: { icon: 'dumbbell', label: lang === 'ar' ? 'تدريب' : 'Training' },
+                magazine: { icon: 'library', label: lang === 'ar' ? 'مجلة' : 'Magazine' },
+            };
+            const typeIcons = {
+                video: 'video', pdf: 'file-text', exam: 'clipboard-list', references: 'external-link',
+                ppt: 'presentation', voice: 'mic', labs: 'flask-conical', sheets: 'table', magazine: 'library'
+            };
+
+            const results = React.useMemo(() => {
+                const q = query.trim().toLowerCase();
+                if (q.length < 2) return [];
+                return contents.filter(item => {
+                    const haystack = [item.title, item.subject, item.courseName, item.trainingName, item.description, item.type]
+                        .filter(Boolean).join(' ').toLowerCase();
+                    return haystack.includes(q);
+                }).slice(0, 40);
+            }, [query, contents]);
+
+            return (
+                <div
+                    className="fixed inset-0 z-[200] flex items-start justify-center bg-black/60 backdrop-blur-md p-4 pt-16 md:pt-24 animate-in fade-in duration-200"
+                    onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+                >
+                    <div className={`w-full max-w-xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[75vh] border ${darkMode ? 'bg-gray-900 border-gray-800' : 'bg-white border-gray-100'}`}>
+                        <div className={`p-4 flex items-center gap-3 border-b ${darkMode ? 'border-gray-800' : 'border-gray-100'}`}>
+                            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#f58220] to-[#ff9d4d] flex items-center justify-center shrink-0">
+                                <i data-lucide="search" className="w-4 h-4 text-white"></i>
+                            </div>
+                            <input
+                                ref={inputRef}
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                                placeholder={lang === 'ar' ? 'ابحث عن مادة، كورس، تدريب، مجلة...' : 'Search subjects, courses, training, magazines...'}
+                                className={`flex-1 bg-transparent outline-none text-sm font-bold ${darkMode ? 'text-white placeholder:text-gray-500' : 'text-gray-800 placeholder:text-gray-400'}`}
+                            />
+                            <button onClick={onClose} className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
+                                <i data-lucide="x" className="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-3">
+                            {query.trim().length < 2 && (
+                                <div className="text-center py-16 opacity-70">
+                                    <i data-lucide="search" className="w-10 h-10 mx-auto mb-3 text-orange-300"></i>
+                                    <p className="text-sm text-gray-400 font-bold">{lang === 'ar' ? 'اكتب حرفين على الأقل للبحث في كل المنصة' : 'Type at least 2 characters to search the whole platform'}</p>
+                                </div>
+                            )}
+
+                            {query.trim().length >= 2 && results.length === 0 && (
+                                <div className="text-center py-16 opacity-70">
+                                    <i data-lucide="search-x" className="w-10 h-10 mx-auto mb-3 text-gray-300"></i>
+                                    <p className="text-sm text-gray-400 font-bold">{lang === 'ar' ? 'ما في نتائج مطابقة' : 'No matching results'}</p>
+                                </div>
+                            )}
+
+                            <div className="space-y-1.5">
+                                {results.map(item => {
+                                    const meta = typeMeta[item.category] || { label: item.type };
+                                    const icon = typeIcons[item.type] || 'file-text';
+                                    const subLabel = item.subject || item.courseName || item.trainingName || '';
+                                    return (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => onSelectItem(item)}
+                                            className={`w-full flex items-center gap-3 p-3 rounded-2xl text-right transition-all ${darkMode ? 'hover:bg-gray-800' : 'hover:bg-orange-50'}`}
+                                        >
+                                            <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center shrink-0">
+                                                <i data-lucide={icon} className="w-5 h-5"></i>
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                                <h4 className={`font-bold text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+                                                <p className="text-[11px] text-gray-400 font-bold truncate">
+                                                    {meta.label}{subLabel ? ' • ' + subLabel : ''}
+                                                </p>
+                                            </div>
+                                            <i data-lucide="chevron-left" className="w-4 h-4 text-gray-300 shrink-0"></i>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function AIChatPanel({ lang, darkMode, contents }) {
             const [messages, setMessages] = React.useState([
                 { role: 'assistant', content: lang === 'ar'
@@ -377,6 +491,7 @@ const t = {
             const [selectedYear, setSelectedYear] = React.useState('1');
             const [searchQuery, setSearchQuery] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
+            const [showSearch, setShowSearch] = React.useState(false);
             const [contents, setContents] = React.useState([]);
             const [newLoginPass, setNewLoginPass] = React.useState('');
             const [newAdminPass, setNewAdminPass] = React.useState('');
@@ -456,29 +571,61 @@ const handleDownloadApp = async () => {
   }
 }, []);
  
+            // ============================================================
+            // جلب "المحتوى" (materials) — تم تحويلها من onSnapshot (اتصال حي دائم)
+            // إلى جلب لمرة واحدة + تخزين مؤقت في المتصفح (localStorage).
+            // السبب: onSnapshot كانت بترسل كل مستند لكل طالب فاتح الموقع لحظة اتصاله،
+            // وأي إضافة/تعديل/حذف من الأدمن كانت بتتبعث لحظياً لكل الطلاب المتصلين
+            // (ممكن تكون آلاف القراءات من حدث واحد بس). الجلب لمرة واحدة + الكاش
+            // بيقلل الاستهلاك بشكل كبير مع الحفاظ على تحديث معقول للمحتوى.
+            const MATERIALS_CACHE_KEY = 'gess_materials_cache_v1';
+            const MATERIALS_CACHE_TTL_MS = 20 * 60 * 1000; // 20 دقيقة
+
+            const sortMaterials = (data) => {
+                data.sort((a, b) => {
+                    const subjectSort = (a.subject || "").localeCompare((b.subject || ""), undefined, { numeric: true });
+                    if (subjectSort !== 0) return subjectSort;
+                    return (a.title || "").localeCompare((b.title || ""), undefined, { numeric: true });
+                });
+                return data;
+            };
+
+            const fetchMaterialsFromServer = React.useCallback(() => {
+                return db.collection("materials").get().then(snapshot => {
+                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    const sorted = sortMaterials(data);
+                    setContents(sorted);
+                    try {
+                        localStorage.setItem(MATERIALS_CACHE_KEY, JSON.stringify({ data: sorted, ts: Date.now() }));
+                    } catch (e) { /* تجاهل لو الكاش ممتلئ */ }
+                    return sorted;
+                }).catch(err => {
+                    console.error("Materials fetch error:", err);
+                });
+            }, []);
+
             React.useEffect(() => {
-  const unsubscribe = db.collection("materials")
-   
-    .onSnapshot(snapshot => {
-      let data = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
- 
-     
-      data.sort((a, b) => {
-   
-        const subjectSort = (a.subject || "").localeCompare((b.subject || ""), undefined, { numeric: true });
-        if (subjectSort !== 0) return subjectSort;
- 
-        return (a.title || "").localeCompare((b.title || ""), undefined, { numeric: true });
-      });
- 
-      setContents(data);
-    });
- 
-  return () => unsubscribe();
-}, []);
+                let usedCache = false;
+                try {
+                    const cachedRaw = localStorage.getItem(MATERIALS_CACHE_KEY);
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw);
+                        if (cached && Array.isArray(cached.data)) {
+                            setContents(cached.data); // اعرض فوراً من الكاش بدون أي قراءة من فايربيز
+                            usedCache = true;
+                            const isFresh = cached.ts && (Date.now() - cached.ts < MATERIALS_CACHE_TTL_MS);
+                            if (isFresh) return; // الكاش لسه طازة، ما في داعي لطلب جديد الآن
+                        }
+                    }
+                } catch (e) { /* تجاهل أخطاء الكاش التالف */ }
+
+                fetchMaterialsFromServer();
+            }, [fetchMaterialsFromServer]);
+
+            // تحديث يدوي (يستخدمه زر "تحديث المحتوى" وأزرار لوحة الأدمن بعد كل إضافة/تعديل/حذف)
+            React.useEffect(() => {
+                window.gessRefreshMaterials = fetchMaterialsFromServer;
+            }, [fetchMaterialsFromServer]);
  
   React.useEffect(() => {
     if (darkMode) {
@@ -517,6 +664,7 @@ const handleDelete = async (collectionName, docId) => {
         try {
            
             await db.collection(collectionName).doc(docId).delete();
+            if (window.gessRefreshMaterials) window.gessRefreshMaterials();
             alert("تم الحذف بنجاح");
         } catch (error) {
             console.error("Error deleting document: ", error);
@@ -541,6 +689,7 @@ const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
                 title: newTitle,
                 url: newUrl
             });
+            if (window.gessRefreshMaterials) window.gessRefreshMaterials();
             alert("تم التعديل بنجاح");
         } catch (error) {
             console.error("Error updating document: ", error);
@@ -566,6 +715,7 @@ const handleEditMagazineDescription = async (docId, currentDescription) => {
         await db.collection("materials").doc(docId).update({
             description: newDescription.trim()
         });
+        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
         alert(lang === 'ar' ? "✅ تم تعديل الوصف بنجاح" : "✅ Description updated");
     } catch (error) {
         console.error("Error updating description: ", error);
@@ -590,6 +740,7 @@ const handleEditMagazineTargetBatch = async (docId, currentTargetBatch) => {
         await db.collection("materials").doc(docId).update({
             targetBatch: newTargetBatch.trim()
         });
+        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
         alert(lang === 'ar' ? "✅ تم تعديل الدفعة بنجاح" : "✅ Target batch updated");
     } catch (error) {
         console.error("Error updating target batch: ", error);
@@ -751,6 +902,7 @@ React.useEffect(() => {
         createdAt: new Date()
       });
       alert("✅ تم رفع المجلة بنجاح - " + magTitle);
+      if (window.gessRefreshMaterials) window.gessRefreshMaterials();
       form.reset();
     } catch (error) {
       console.error("Firebase Error:", error);
@@ -787,6 +939,7 @@ React.useEffect(() => {
   try {
    
     await db.collection("materials").add(data); 
+    if (window.gessRefreshMaterials) window.gessRefreshMaterials();
  
     alert("✅ تم الرفع بنجاح - " + subjectName);
  
@@ -871,6 +1024,13 @@ React.useEffect(() => {
                 <i data-lucide="user" className="w-4 h-4"></i>
                 <span className="text-sm font-black italic">{studentName}</span>
             </div>
+            <button
+                onClick={() => setShowSearch(true)}
+                title={lang === 'ar' ? 'بحث' : 'Search'}
+                className={`p-3 rounded-xl transition-all shadow-sm border ${darkMode ? 'bg-gray-800 border-gray-700 text-gray-300' : 'bg-white border-orange-100 text-[#f58220]'}`}
+            >
+                <i data-lucide="search" className="w-5 h-5"></i>
+            </button>
             <div className="relative">
                 <button 
     onClick={() => setShowToolsMenu(!showToolsMenu)} 
@@ -955,6 +1115,21 @@ React.useEffect(() => {
     </div>
 </button>
  
+            {/* تحديث المحتوى يدوياً (بدل الانتظار للكاش) */}
+            <button
+                onClick={() => {
+                    if (window.gessRefreshMaterials) window.gessRefreshMaterials();
+                    if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
+                    setShowToolsMenu(false);
+                    setToast({ show: true, message: lang === 'ar' ? 'جاري تحديث المحتوى...' : 'Refreshing content...' });
+                    setTimeout(() => setToast({ show: false, message: '' }), 2000);
+                }}
+                className={`flex items-center gap-3 w-full p-3 rounded-xl text-sm font-bold transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600'}`}
+            >
+                <i data-lucide="refresh-cw" className="w-4 h-4"></i>
+                {lang === 'ar' ? 'تحديث المحتوى' : 'Refresh Content'}
+            </button>
+
             {/* 5.  تحميل التطبيق  */}
             {showDownloadOption && (
                 <button
@@ -994,79 +1169,56 @@ React.useEffect(() => {
 </header> 
  
 {/* شريط التنبيهات */}
-<div className={`my-5 max-w-7xl mx-auto w-full overflow-hidden rounded-[2rem] transition-all duration-300 ${
-    darkMode
-        ? 'bg-gradient-to-br from-gray-900 to-gray-800 shadow-2xl shadow-black/30'
-        : 'bg-white shadow-xl shadow-gray-200/40'
-}`}>
- 
-    {/* الهيدر */}
-    <div className={`flex items-center justify-between px-5 py-4 ${
+<div id="announcements-wrapper" style={{ display: 'none' }} className="my-5 max-w-7xl mx-auto w-full">
+    <div className={`relative overflow-hidden rounded-[2rem] transition-all duration-300 border ${
         darkMode
-            ? 'bg-white/[0.03]'
-            : 'bg-orange-50/40'
+            ? 'bg-gradient-to-br from-gray-900 via-gray-900 to-gray-800 border-gray-800 shadow-2xl shadow-black/40'
+            : 'bg-gradient-to-br from-white via-white to-orange-50/30 border-orange-100/60 shadow-xl shadow-orange-100/40'
     }`}>
- 
-        <div className="flex items-center gap-3">
- 
-            {/* النقطة المتحركة */}
-            <div className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-60"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
-            </div>
- 
-            {/* العنوان */}
-            <h3 className={`text-sm font-black tracking-wide ${
-                darkMode
-                    ? 'text-orange-400'
-                    : 'text-orange-600'
-            }`}>
-                {lang === 'ar'
-                    ? 'التنبيهات والإعلانات'
-                    : 'Announcements & Alerts'}
-            </h3>
- 
-        </div>
- 
-        <div className={`text-[11px] font-bold ${
-            darkMode
-                ? 'text-gray-500'
-                : 'text-gray-400'
+        {/* زخرفة خلفية خرافية */}
+        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-orange-400/10 blur-3xl pointer-events-none"></div>
+        <div className="absolute -bottom-10 -left-10 w-32 h-32 rounded-full bg-orange-500/10 blur-3xl pointer-events-none"></div>
+
+        {/* الهيدر */}
+        <div className={`relative flex items-center justify-between px-5 py-4 border-b ${
+            darkMode ? 'border-gray-800' : 'border-orange-100/60'
         }`}>
-            {lang === 'ar'
-                ? 'اسحب للمزيد ←'
-                : 'Swipe for more →'}
-        </div>
- 
-    </div>
- 
-    {/* السلايدر */}
-    <div className="swiper mySwiper w-full overflow-hidden">
- 
-        <div
-            id="announcements-list"
-            className="swiper-wrapper"
-        >
- 
-            {/* اللودينق */}
-            <div className="swiper-slide px-5 py-6 flex items-center min-h-[90px]">
- 
-                <div className={`animate-pulse text-sm font-semibold ${
-                    darkMode
-                        ? 'text-gray-500'
-                        : 'text-gray-400'
-                }`}>
-                    {lang === 'ar'
-                        ? 'جاري تحميل الإعلانات...'
-                        : 'Loading announcements...'}
+            <div className="flex items-center gap-3">
+                <div className="relative w-10 h-10 rounded-2xl bg-gradient-to-br from-[#f58220] to-[#ff9d4d] flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                    <i data-lucide="megaphone" className="w-5 h-5 text-white"></i>
+                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-white dark:border-gray-900"></span>
+                    </span>
                 </div>
- 
+                <div>
+                    <h3 className={`text-sm font-black tracking-wide ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                        {lang === 'ar' ? 'التنبيهات والإعلانات' : 'Announcements & Alerts'}
+                    </h3>
+                    <p className={`text-[11px] font-bold ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        {lang === 'ar' ? 'آخر مستجدات المنصة' : 'Latest platform updates'}
+                    </p>
+                </div>
             </div>
- 
+            <span id="announcements-count-badge" className={`text-[11px] font-black px-3 py-1.5 rounded-full ${darkMode ? 'bg-orange-500/15 text-orange-400' : 'bg-orange-100 text-orange-600'}`}></span>
         </div>
- 
+
+        {/* السلايدر */}
+        <div className="relative swiper mySwiper w-full overflow-hidden">
+            <div id="announcements-list" className="swiper-wrapper">
+                {/* اللودينق */}
+                <div className="swiper-slide px-5 py-6 flex items-center min-h-[90px]">
+                    <div className={`flex items-center gap-2 text-sm font-semibold ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:-0.3s]"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce [animation-delay:-0.15s]"></span>
+                        <span className="w-1.5 h-1.5 rounded-full bg-orange-400 animate-bounce"></span>
+                        <span className="ms-1">{lang === 'ar' ? 'جاري تحميل الإعلانات...' : 'Loading announcements...'}</span>
+                    </div>
+                </div>
+            </div>
+            <div className="swiper-pagination !static !mt-0 pb-4"></div>
+        </div>
     </div>
- 
 </div>
  
  
@@ -2365,6 +2517,15 @@ if (
     </div>
   </div>
 )}
+{showSearch && (
+    <GlobalSearchModal
+        lang={lang}
+        darkMode={darkMode}
+        contents={contents}
+        onClose={() => setShowSearch(false)}
+        onSelectItem={(item) => { setSelectedItem(item); setShowSearch(false); }}
+    />
+)}
 {isModalOpen && modalSubjectData && (
   
     <div 
@@ -2449,6 +2610,8 @@ const lectureData = {
             };
             await db.collection("materials").add(newLecture);
         }
+
+        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
  
         setToast({ 
             show: true, 
@@ -2934,6 +3097,11 @@ function initSwiperSafely() {
         spaceBetween: 20,
         loop: false,
         grabCursor: true,
+        autoplay: {
+            delay: 6000,
+            disableOnInteraction: true,
+            pauseOnMouseEnter: true,
+        },
         pagination: {
             el: '.swiper-pagination',
             clickable: true,
@@ -2941,26 +3109,46 @@ function initSwiperSafely() {
     });
 }
  
-if (typeof db !== 'undefined') {
-    db.collection('announcements').onSnapshot(function(snapshot) {
+// ============================================================
+// الإعلانات (announcements) — تحويل من onSnapshot (اتصال حي دائم)
+// إلى جلب لمرة واحدة عند تحميل الصفحة + إعادة جلب فقط بعد أي عملية
+// نشر/تعديل/حذف/تفعيل من الأدمن نفسه. الإشعارات الفورية بترسل أصلاً
+// عبر OneSignal Push، فمفيش داعي لاتصال حي مستمر يستهلك القراءات.
+function fetchAndRenderAnnouncements() {
+    if (typeof db === 'undefined') return;
+    db.collection('announcements').get().then(function(snapshot) {
         const now = Date.now();
         let studentListHtml = '';
         let adminTableHtml = '';
- 
+        let activeCount = 0;
+
         snapshot.forEach(function(doc) {
             const item = doc.data();
             const itemId = doc.id;
             
             const isExpired = now > item.expiresAt;
             const isShowingNow = item.isActive && !isExpired;
+            const createdMs = typeof item.createdAt === 'number' ? item.createdAt : (item.createdAt && item.createdAt.toMillis ? item.createdAt.toMillis() : 0);
+            const isNew = createdMs && (now - createdMs) < (48 * 60 * 60 * 1000);
  
             if (isShowingNow) {
+                activeCount++;
                 studentListHtml += `
                     <div class="swiper-slide">
-                        <div style="padding: 20px; border-radius: 24px; border-right: 5px solid #f58220; text-align: right;" 
-                             class="border transition-colors duration-300 shadow-sm bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-700 text-gray-800 dark:text-white shadow-gray-100/30 dark:shadow-black/20">
-                            <h4 style="font-weight: 900; margin: 0; font-size: 15px;" class="text-gray-800 dark:text-white"> ${item.title}</h4>
-                            <p style="font-size: 13px; margin: 8px 0 0 0; line-height: 1.6;" class="text-gray-600 dark:text-gray-300">${item.content}</p>
+                        <div class="relative overflow-hidden mx-1 mb-1 rounded-3xl border transition-colors duration-300 bg-white dark:bg-gray-800/80 border-orange-100 dark:border-gray-700 shadow-sm">
+                            <div class="absolute top-0 bottom-0 right-0 w-1.5 bg-gradient-to-b from-[#f58220] to-[#ff9d4d]"></div>
+                            <div class="p-5 pr-6 flex items-start gap-3">
+                                <div class="w-10 h-10 shrink-0 rounded-2xl bg-orange-100 dark:bg-orange-900/30 text-orange-500 flex items-center justify-center mt-0.5">
+                                    <i data-lucide="megaphone" class="w-5 h-5"></i>
+                                </div>
+                                <div class="min-w-0 flex-1">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <h4 class="font-black text-[15px] text-gray-900 dark:text-white truncate">${item.title}</h4>
+                                        ${isNew ? '<span class="shrink-0 text-[9px] font-black text-white bg-gradient-to-r from-red-500 to-orange-500 px-2 py-0.5 rounded-full">' + (typeof lang !== 'undefined' && lang === 'ar' ? 'جديد' : 'NEW') + '</span>' : ''}
+                                    </div>
+                                    <p class="text-[13px] leading-relaxed text-gray-500 dark:text-gray-300">${item.content}</p>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 `;
@@ -2979,9 +3167,9 @@ if (typeof db !== 'undefined') {
                     </td>
                     <td style="padding: 14px; text-align: center;">
                         <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
-                            <button type="button" onclick="db.collection('announcements').doc('${itemId}').update({isActive: ${!item.isActive}})" style="padding: 6px 10px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 8px; font-size: 12px;">👁️</button>
+                            <button type="button" onclick="db.collection('announcements').doc('${itemId}').update({isActive: ${!item.isActive}}).then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })" style="padding: 6px 10px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 8px; font-size: 12px;">👁️</button>
                             <button type="button" onclick="prepareAnnouncementForEdit('${itemId}', '${item.title.replace(/'/g, "\\'")}', '${item.content.replace(/'/g, "\\'")}')" style="padding: 6px 10px; border: none; background: #feebc8; color: #c05621; cursor: pointer; border-radius: 8px; font-size: 12px; font-weight: bold;">📝</button>
-                            <button type="button" onclick="if(confirm('حذف؟')){db.collection('announcements').doc('${itemId}').delete()}" style="padding: 6px 10px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 8px; font-size: 12px;">🗑️</button>
+                            <button type="button" onclick="if(confirm('حذف؟')){db.collection('announcements').doc('${itemId}').delete().then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })}" style="padding: 6px 10px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 8px; font-size: 12px;">🗑️</button>
                         </div>
                     </td>
                 </tr>
@@ -2997,14 +3185,36 @@ if (typeof db !== 'undefined') {
             }
         }
  
+        // إظهار/إخفاء الكارت بالكامل حسب وجود إعلانات نشطة — بدون ما ياخد مساحة من غير داعي
+        const wrapper = document.getElementById('announcements-wrapper');
+        if (wrapper) {
+            wrapper.style.display = activeCount > 0 ? '' : 'none';
+        }
+
+        const countBadge = document.getElementById('announcements-count-badge');
+        if (countBadge) {
+            const arLabel = activeCount + ' نشط';
+            const enLabel = activeCount + ' active';
+            countBadge.textContent = (typeof lang !== 'undefined' && lang === 'ar') ? arLabel : enLabel;
+        }
+
         const aList = document.getElementById('announcements-list');
-        if (aList) {
-            aList.innerHTML = studentListHtml || `<div class="swiper-slide text-center text-gray-400 text-sm py-4">لا توجد إعلانات نشطة حالياً.</div>`;
+        if (aList && activeCount > 0) {
+            aList.innerHTML = studentListHtml;
             if (typeof initSwiperSafely === 'function') initSwiperSafely();
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         }
         
         tryInjectingAdminTable();
+    }).catch(function(err) {
+        console.error('Announcements fetch error:', err);
     });
+}
+
+window.gessRefreshAnnouncements = fetchAndRenderAnnouncements;
+
+if (typeof db !== 'undefined') {
+    fetchAndRenderAnnouncements(); // جلب لمرة واحدة عند تحميل الصفحة
 }
  
 window.prepareAnnouncementForEdit = function prepareAnnouncementForEdit(id, title, content) {
@@ -3088,6 +3298,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
             }).then(async function() {
                 // ✅ إرسال الإشعار بعد التعديل
                 await sendPushNotification(title, content);
+                if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
                 alert("🚀 تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
@@ -3109,6 +3320,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
             }).then(async function() {
                 // ✅ إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
                 await sendPushNotification(title, content);
+                if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
                 alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
