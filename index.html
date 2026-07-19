@@ -1404,11 +1404,21 @@ React.useEffect(() => {
                                             {lang === 'ar' ? "المجلات المضافة حالياً" : "Current Magazines"}
                                         </h3>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            {contents.filter(c => c.category === 'magazine').map(mag => (
+                                            {(() => {
+                                                const magazinesList = contents.filter(c => c.category === 'magazine');
+                                                const latestMagazineId = getLatestMagazineId(magazinesList);
+                                                return magazinesList.map(mag => (
                                                 <div key={mag.id} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <img src={driveImageDirectUrl(mag.coverUrl)} alt={mag.title}
-                                                             className="w-12 h-16 object-cover rounded-lg border border-gray-200 shrink-0" />
+                                                        <div className="relative shrink-0">
+                                                            <img src={driveImageDirectUrl(mag.coverUrl)} alt={mag.title}
+                                                                 className="w-12 h-16 object-cover rounded-lg border border-gray-200" />
+                                                            {mag.id === latestMagazineId && (
+                                                                <div className="absolute -top-2 -right-2 scale-75 origin-top-right">
+                                                                    <NewBadge lang={lang} />
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                         <div className="min-w-0">
                                                             <h4 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{mag.title}</h4>
                                                             <p className={`text-xs truncate ${mag.description ? (darkMode ? 'text-gray-400' : 'text-gray-500') : 'text-gray-300 italic'}`}>
@@ -1450,7 +1460,8 @@ React.useEffect(() => {
                                                         </button>
                                                     </div>
                                                 </div>
-                                            ))}
+                                                ));
+                                            })()}
                                         </div>
                                         {contents.filter(c => c.category === 'magazine').length === 0 && (
                                             <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
