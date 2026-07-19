@@ -1808,7 +1808,7 @@ React.useEffect(() => {
     },
  
     {
-        title: "أدعية داخل لجنة الامتحان",
+        title: "أدعية داخل قاعة الامتحان",
         text: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
  
 اللَّهُمَّ لَا تَجْعَلْ لِلْخَوْفِ سَبِيلًا إِلَى قَلْبِي، وَأَنْزِلْ عَلَيَّ السَّكِينَةَ.`
@@ -1893,11 +1893,9 @@ React.useEffect(() => {
                 {lang === 'ar' ? 'ركن المجلات' : 'Magazines Corner'}
             </div>
             <h1 className={`text-4xl font-black mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'ar' ? 'المجلات العلمية' : 'Magazines'}
+                {lang === 'ar' ? 'المجلات الطلابية' : 'Magazines'}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-                {lang === 'ar' ? "اضغط على غلاف أي مجلة عشان تقرأها مباشرة." : "Tap a cover to read it right away."}
-            </p>
+           
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
