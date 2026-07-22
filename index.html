@@ -60,16 +60,6 @@
   background: linear-gradient(120deg, transparent, rgba(255,255,255,0.55), transparent);
   animation: newBadgeShine 2.6s ease-in-out infinite;
 }
-
-/* ===== طباعة (جدول الطلاب / ملف الطالب) ===== */
-.print-area { display: none; }
-@media print {
-  body * { visibility: hidden; }
-  .print-area, .print-area * { visibility: visible; }
-  .print-area { display: block; position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
-  .no-print { display: none !important; }
-  @page { margin: 14mm; }
-}
     </style>
 
 <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
@@ -99,62 +89,15 @@ OneSignalDeferred.push(async function (OneSignal) {
     <!-- ═══ JS Libraries (loaded here so Babel processes them before scanning) ═══ -->
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        darkMode: 'class',
-        theme: {
-          extend: {
-            colors: {
-              // توحيد كل درجات orange-* في التطبيق مع لون الهوية الفعلي #F58220
-              orange: {
-                50: '#FFF4E9',
-                100: '#FFE6CC',
-                200: '#FFCB99',
-                300: '#FFAD66',
-                400: '#FF9A3D',
-                500: '#F58220',
-                600: '#DD6E10',
-                700: '#B8590C',
-                800: '#93470A',
-                900: '#783B09',
-              },
-            },
-          },
-        },
-      }
-    </script>
+    <script>tailwind.config = {darkMode: 'class',}</script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script>
-      // إصلاح تعارض lucide.createIcons() مع React: لما lucide بيستبدل عنصر <i> بـ <svg> مباشرة في الـ DOM،
-      // React بيفضل شايف مرجع قديم للعنصر، ولما يحاول يشيله بيحصل خطأ removeChild ويوقع الصفحة شاشة بيضاء.
-      // الباتش ده بيتأكد إن العنصر لسه موجود فعلاً جوه أبوه قبل ما يحاول يشيله أو يضيف قبله.
-      (function () {
-        const origRemoveChild = Node.prototype.removeChild;
-        Node.prototype.removeChild = function (child) {
-          if (child.parentNode !== this) {
-            if (console) console.warn('تم تجاهل محاولة إزالة عنصر غير موجود (حماية من تعارض lucide)', child);
-            return child;
-          }
-          return origRemoveChild.apply(this, arguments);
-        };
-        const origInsertBefore = Node.prototype.insertBefore;
-        Node.prototype.insertBefore = function (newNode, referenceNode) {
-          if (referenceNode && referenceNode.parentNode !== this) {
-            if (console) console.warn('تم تجاهل محاولة إدراج قبل عنصر غير موجود (حماية من تعارض lucide)', referenceNode);
-            return this.appendChild(newNode);
-          }
-          return origInsertBefore.apply(this, arguments);
-        };
-      })();
-    </script>
  
     <!-- Firebase: Single SDK load - v10.12.2 compat (includes app, firestore, analytics, messaging) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <!-- firebase-messaging-compat تمت إزالته: يتعارض مع OneSignal SW -->
  
 <script type="application/javascript">
@@ -175,7 +118,6 @@ OneSignalDeferred.push(async function (OneSignal) {
   
   const db = firebase.firestore();
   const analytics = firebase.analytics();
-  const auth = firebase.auth();
  
  
 </script>
@@ -525,870 +467,6 @@ const t = {
             );
         }
 
-        // ============================================================
-        // نافذة تسجيل الدخول / إنشاء حساب (اختيارية بالكامل)
-        // زجاجية (glassmorphism) + متحركة + بهوية GESS البصرية
-        // ============================================================
-        function AuthModal({ lang, darkMode, mode, setMode, onClose, onAuthSuccess }) {
-            const [fullName, setFullName] = React.useState('');
-            const [email, setEmail] = React.useState('');
-            const [password, setPassword] = React.useState('');
-            const [year, setYear] = React.useState('1');
-            const [specialization, setSpecialization] = React.useState(lang === 'ar' ? 'هندسة المساحة' : 'Geomatics Engineering');
-            const [studentId, setStudentId] = React.useState('');
-            const [loading, setLoading] = React.useState(false);
-            const [error, setError] = React.useState('');
-            const isSignup = mode === 'signup';
-
-            const friendlyError = (code) => {
-                const map = {
-                    'auth/email-already-in-use': lang === 'ar' ? 'البريد الإلكتروني ده مسجل قبل كده' : 'This email is already registered',
-                    'auth/invalid-email': lang === 'ar' ? 'صيغة البريد الإلكتروني غير صحيحة' : 'Invalid email format',
-                    'auth/weak-password': lang === 'ar' ? 'كلمة المرور لازم تكون 6 أحرف على الأقل' : 'Password must be at least 6 characters',
-                    'auth/wrong-password': lang === 'ar' ? 'كلمة المرور غير صحيحة' : 'Incorrect password',
-                    'auth/user-not-found': lang === 'ar' ? 'مفيش حساب بهذا البريد الإلكتروني' : 'No account found with this email',
-                    'auth/invalid-credential': lang === 'ar' ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة' : 'Incorrect email or password',
-                    'auth/too-many-requests': lang === 'ar' ? 'محاولات كتيرة جدًا، حاول بعد شوية' : 'Too many attempts, try again later',
-                };
-                return map[code] || (lang === 'ar' ? 'حصل خطأ، حاول تاني' : 'Something went wrong, please try again');
-            };
-
-            const handleSubmit = async (e) => {
-                e.preventDefault();
-                setError('');
-                setLoading(true);
-                try {
-                    if (isSignup) {
-                        const cred = await auth.createUserWithEmailAndPassword(email.trim(), password);
-                        await cred.user.updateProfile({ displayName: fullName.trim() });
-                        await db.collection('users').doc(cred.user.uid).set({
-                            fullName: fullName.trim(),
-                            email: email.trim(),
-                            year: year,
-                            specialization: specialization.trim(),
-                            studentId: studentId.trim(),
-                            phone: '',
-                            bio: '',
-                            status: 'active',
-                            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                        });
-                    } else {
-                        await auth.signInWithEmailAndPassword(email.trim(), password);
-                    }
-                    onAuthSuccess();
-                } catch (err) {
-                    console.error('Auth error:', err);
-                    setError(friendlyError(err.code));
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const handleForgotPassword = async () => {
-                if (!email.trim()) {
-                    setError(lang === 'ar' ? 'اكتب بريدك الإلكتروني الأول عشان نبعتلك رابط الاستعادة' : 'Enter your email first so we can send a reset link');
-                    return;
-                }
-                try {
-                    await auth.sendPasswordResetEmail(email.trim());
-                    setError('');
-                    alert(lang === 'ar' ? '✅ اتبعت رابط استعادة كلمة المرور لبريدك الإلكتروني' : '✅ Password reset link sent to your email');
-                } catch (err) {
-                    setError(friendlyError(err.code));
-                }
-            };
-
-            return (
-                <div
-                    className="fixed inset-0 z-[300] flex items-center justify-center p-4 animate-in fade-in duration-300"
-                    onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-                >
-                    {/* خلفية زجاجية داكنة متدرجة */}
-                    <div className="absolute inset-0 bg-gradient-to-br from-[#1a1006]/90 via-black/80 to-[#2b1400]/90 backdrop-blur-xl"></div>
-
-                    {/* دوائر زخرفية متحركة عائمة */}
-                    <div className="absolute -top-20 -left-20 w-72 h-72 rounded-full bg-[#f58220]/20 blur-3xl animate-pulse"></div>
-                    <div className="absolute -bottom-24 -right-16 w-96 h-96 rounded-full bg-[#f58220]/15 blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
-                    <div className="absolute top-1/3 right-10 w-24 h-24 rounded-full bg-white/10 blur-2xl animate-bounce" style={{ animationDuration: '4s' }}></div>
-
-                    {/* بطاقة النافذة الزجاجية */}
-                    <div
-                        key={mode}
-                        className="relative w-full max-w-md rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-300 max-h-[92vh] flex flex-col"
-                        style={{ background: 'rgba(255,255,255,0.08)', backdropFilter: 'blur(24px)', WebkitBackdropFilter: 'blur(24px)' }}
-                    >
-                        <div className="p-8 pb-4 shrink-0 text-center">
-                            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-[#f58220] to-[#ff5b3d] flex items-center justify-center shadow-lg shadow-orange-900/40 mb-4">
-                                <i data-lucide={isSignup ? 'user-plus' : 'log-in'} className="w-8 h-8 text-white"></i>
-                            </div>
-                            <h2 className="text-2xl font-black text-white">
-                                {isSignup
-                                    ? (lang === 'ar' ? 'إنشاء حساب جديد' : 'Create an Account')
-                                    : (lang === 'ar' ? 'تسجيل الدخول' : 'Welcome Back')}
-                            </h2>
-                            <p className="text-sm text-white/60 mt-1 font-medium">
-                                {isSignup
-                                    ? (lang === 'ar' ? 'احصل على ملف شخصي ومسار أكاديمي محفوظ' : 'Get a saved profile & academic path')
-                                    : (lang === 'ar' ? 'سجّل دخولك للوصول لملفك الشخصي' : 'Log in to access your profile')}
-                            </p>
-                        </div>
-
-                        <form onSubmit={handleSubmit} className="px-8 pb-8 space-y-3 overflow-y-auto">
-                            {error && (
-                                <div className="bg-red-500/15 border border-red-400/30 text-red-100 text-xs font-bold rounded-xl p-3 text-center">
-                                    {error}
-                                </div>
-                            )}
-
-                            {isSignup && (
-                                <input
-                                    required
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    placeholder={lang === 'ar' ? 'الاسم الكامل' : 'Full Name'}
-                                    className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-[#f58220] transition-all font-medium"
-                                />
-                            )}
-
-                            <input
-                                required
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder={lang === 'ar' ? 'البريد الإلكتروني' : 'Email'}
-                                className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-[#f58220] transition-all font-medium"
-                                dir="ltr"
-                            />
-
-                            <input
-                                required
-                                type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                placeholder={lang === 'ar' ? 'كلمة المرور' : 'Password'}
-                                className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-[#f58220] transition-all font-medium"
-                                dir="ltr"
-                            />
-
-                            {isSignup && (
-                                <>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        <select
-                                            value={year}
-                                            onChange={(e) => setYear(e.target.value)}
-                                            className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white outline-none focus:border-[#f58220] transition-all font-medium [&>option]:text-black"
-                                        >
-                                            {[1, 2, 3, 4, 5].map(y => (
-                                                <option key={y} value={y}>{lang === 'ar' ? `السنة ${['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة'][y - 1]}` : `Year ${y}`}</option>
-                                            ))}
-                                        </select>
-                                        <input
-                                            value={studentId}
-                                            onChange={(e) => setStudentId(e.target.value)}
-                                            placeholder={lang === 'ar' ? 'الرقم الجامعي (اختياري)' : 'Student ID (optional)'}
-                                            className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-[#f58220] transition-all font-medium text-sm"
-                                        />
-                                    </div>
-                                    <input
-                                        value={specialization}
-                                        onChange={(e) => setSpecialization(e.target.value)}
-                                        placeholder={lang === 'ar' ? 'التخصص' : 'Specialization'}
-                                        className="w-full p-3.5 rounded-2xl bg-white/10 border border-white/20 text-white placeholder:text-white/40 outline-none focus:border-[#f58220] transition-all font-medium"
-                                    />
-                                </>
-                            )}
-
-                            {!isSignup && (
-                                <button type="button" onClick={handleForgotPassword} className="text-xs text-white/60 hover:text-white font-bold transition-colors">
-                                    {lang === 'ar' ? 'نسيت كلمة المرور؟' : 'Forgot password?'}
-                                </button>
-                            )}
-
-                            <button
-                                type="submit"
-                                disabled={loading}
-                                className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#f58220] to-[#ff5b3d] text-white font-black shadow-lg shadow-orange-900/30 hover:shadow-orange-900/50 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-60 disabled:hover:scale-100 flex items-center justify-center gap-2"
-                            >
-                                {loading ? (
-                                    <i data-lucide="loader-2" className="w-5 h-5 animate-spin"></i>
-                                ) : (
-                                    <span>{isSignup ? (lang === 'ar' ? 'إنشاء الحساب' : 'Create Account') : (lang === 'ar' ? 'دخول' : 'Log In')}</span>
-                                )}
-                            </button>
-
-                            <div className="text-center pt-2">
-                                <button
-                                    type="button"
-                                    onClick={() => { setMode(isSignup ? 'login' : 'signup'); setError(''); }}
-                                    className="text-sm text-white/70 hover:text-white font-bold transition-colors"
-                                >
-                                    {isSignup
-                                        ? (lang === 'ar' ? 'عندك حساب؟ سجّل دخولك' : 'Have an account? Log in')
-                                        : (lang === 'ar' ? 'ما عندك حساب؟ أنشئ واحد' : "Don't have an account? Sign up")}
-                                </button>
-                            </div>
-
-                            <button
-                                type="button"
-                                onClick={onClose}
-                                className="w-full text-center text-xs text-white/40 hover:text-white/70 font-medium pt-1 transition-colors"
-                            >
-                                {lang === 'ar' ? 'متابعة التصفح كزائر' : 'Continue browsing as guest'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            );
-        }
-
-        // ============================================================
-        // صفحة الملف الشخصي: بيانات الطالب، مساره الأكاديمي، وتفاصيله الشخصية
-        // ============================================================
-        function ProfilePage({ lang, darkMode, authUser, userProfile, onBack, onSignOut, onSaved }) {
-            const [year, setYear] = React.useState(userProfile?.year || '1');
-            const [specialization, setSpecialization] = React.useState(userProfile?.specialization || '');
-            const [studentId, setStudentId] = React.useState(userProfile?.studentId || '');
-            const [phone, setPhone] = React.useState(userProfile?.phone || '');
-            const [bio, setBio] = React.useState(userProfile?.bio || '');
-            const [saving, setSaving] = React.useState(false);
-            const [saved, setSaved] = React.useState(false);
-
-            React.useEffect(() => {
-                setYear(userProfile?.year || '1');
-                setSpecialization(userProfile?.specialization || '');
-                setStudentId(userProfile?.studentId || '');
-                setPhone(userProfile?.phone || '');
-                setBio(userProfile?.bio || '');
-            }, [userProfile]);
-
-            const yearLabels = lang === 'ar'
-                ? ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة']
-                : ['1st', '2nd', '3rd', '4th', '5th'];
-
-            const handleSave = async () => {
-                if (!authUser) return;
-                setSaving(true);
-                try {
-                    await db.collection('users').doc(authUser.uid).set({
-                        year, specialization: specialization.trim(), studentId: studentId.trim(),
-                        phone: phone.trim(), bio: bio.trim(),
-                    }, { merge: true });
-                    if (window.gessRefreshProfile) window.gessRefreshProfile();
-                    setSaved(true);
-                    setTimeout(() => setSaved(false), 2500);
-                    if (onSaved) onSaved();
-                } catch (err) {
-                    console.error('Profile save error:', err);
-                    alert(lang === 'ar' ? '⚠️ تعذر حفظ التعديلات' : '⚠️ Could not save changes');
-                } finally {
-                    setSaving(false);
-                }
-            };
-
-            const initial = (userProfile?.fullName || authUser?.displayName || '?').trim().charAt(0).toUpperCase();
-
-            return (
-                <div className="max-w-2xl mx-auto animate-in">
-                    <button
-                        onClick={onBack}
-                        className={`flex items-center gap-2 mb-5 font-bold text-sm ${darkMode ? 'text-gray-300 hover:text-white' : 'text-gray-600 hover:text-gray-900'}`}
-                    >
-                        <i data-lucide="chevron-right" className="w-4 h-4"></i>
-                        {lang === 'ar' ? 'رجوع للرئيسية' : 'Back to Home'}
-                    </button>
-
-                    {/* بطاقة الهيدر: صورة رمزية + الاسم + البريد */}
-                    <div className="relative rounded-[2.5rem] overflow-hidden mb-6 p-8 bg-gradient-to-br from-[#f58220] to-[#ff5b3d] text-white shadow-xl shadow-orange-900/20">
-                        <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-white/10 blur-2xl"></div>
-                        <div className="absolute -bottom-14 -left-10 w-48 h-48 rounded-full bg-white/10 blur-2xl"></div>
-                        <div className="relative flex items-center gap-5">
-                            <div className="w-20 h-20 rounded-3xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-3xl font-black shrink-0">
-                                {initial}
-                            </div>
-                            <div className="min-w-0">
-                                <h2 className="text-2xl font-black truncate">{userProfile?.fullName || authUser?.displayName}</h2>
-                                <p className="text-white/80 text-sm font-medium truncate" dir="ltr">{authUser?.email}</p>
-                                {userProfile?.studentId && (
-                                    <p className="text-white/70 text-xs font-bold mt-1">{lang === 'ar' ? 'رقم جامعي: ' : 'ID: '}{userProfile.studentId}</p>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* المسار الأكاديمي - Stepper بصري */}
-                    <div className={`rounded-[2rem] border p-6 mb-6 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
-                        <h3 className={`font-black mb-5 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                            <i data-lucide="route" className="w-4 h-4 text-[#f58220]"></i>
-                            {lang === 'ar' ? 'المسار الأكاديمي' : 'Academic Path'}
-                        </h3>
-                        <div className="flex items-center justify-between">
-                            {yearLabels.map((label, idx) => {
-                                const stepYear = String(idx + 1);
-                                const isDone = Number(stepYear) < Number(year);
-                                const isCurrent = stepYear === String(year);
-                                return (
-                                    <React.Fragment key={idx}>
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-black transition-all ${
-                                                isCurrent ? 'bg-[#f58220] text-white ring-4 ring-orange-200 scale-110' :
-                                                isDone ? 'bg-orange-100 text-[#f58220]' :
-                                                (darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-400')
-                                            }`}>
-                                                {isDone ? <i data-lucide="check" className="w-4 h-4"></i> : idx + 1}
-                                            </div>
-                                            <span className={`text-[10px] font-bold ${isCurrent ? 'text-[#f58220]' : 'text-gray-400'}`}>{label}</span>
-                                        </div>
-                                        {idx < yearLabels.length - 1 && (
-                                            <div className={`flex-1 h-1 rounded-full mx-1 ${Number(stepYear) < Number(year) ? 'bg-[#f58220]' : (darkMode ? 'bg-gray-700' : 'bg-gray-100')}`}></div>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* بيانات قابلة للتعديل */}
-                    <div className={`rounded-[2rem] border p-6 mb-6 space-y-4 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
-                        <h3 className={`font-black mb-2 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                            <i data-lucide="id-card" className="w-4 h-4 text-[#f58220]"></i>
-                            {lang === 'ar' ? 'التفاصيل الشخصية والأكاديمية' : 'Personal & Academic Details'}
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'السنة الدراسية' : 'Academic Year'}</label>
-                                <select
-                                    value={year}
-                                    onChange={(e) => setYear(e.target.value)}
-                                    className={`w-full p-3 rounded-xl border-2 outline-none font-bold transition-all ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                                >
-                                    {[1, 2, 3, 4, 5].map(y => (
-                                        <option key={y} value={y}>{lang === 'ar' ? `السنة ${yearLabels[y - 1]}` : `Year ${y}`}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'الرقم الجامعي' : 'Student ID'}</label>
-                                <input
-                                    value={studentId}
-                                    onChange={(e) => setStudentId(e.target.value)}
-                                    className={`w-full p-3 rounded-xl border-2 outline-none font-bold transition-all ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'التخصص' : 'Specialization'}</label>
-                            <input
-                                value={specialization}
-                                onChange={(e) => setSpecialization(e.target.value)}
-                                className={`w-full p-3 rounded-xl border-2 outline-none font-bold transition-all ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'رقم الهاتف' : 'Phone Number'}</label>
-                            <input
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                dir="ltr"
-                                className={`w-full p-3 rounded-xl border-2 outline-none font-bold transition-all ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            />
-                        </div>
-
-                        <div>
-                            <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'نبذة عني' : 'About Me'}</label>
-                            <textarea
-                                value={bio}
-                                onChange={(e) => setBio(e.target.value)}
-                                rows="3"
-                                className={`w-full p-3 rounded-xl border-2 outline-none font-medium resize-none transition-all ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            />
-                        </div>
-
-                        <button
-                            onClick={handleSave}
-                            disabled={saving}
-                            className="w-full p-4 rounded-2xl bg-gradient-to-r from-[#f58220] to-[#ff5b3d] text-white font-black shadow-lg hover:shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all disabled:opacity-60 flex items-center justify-center gap-2"
-                        >
-                            {saving ? <i data-lucide="loader-2" className="w-5 h-5 animate-spin"></i> :
-                             saved ? <><i data-lucide="check" className="w-5 h-5"></i>{lang === 'ar' ? 'تم الحفظ' : 'Saved'}</> :
-                             (lang === 'ar' ? 'حفظ التعديلات' : 'Save Changes')}
-                        </button>
-                    </div>
-
-                    <button
-                        onClick={onSignOut}
-                        className={`w-full p-4 rounded-2xl font-black transition-all flex items-center justify-center gap-2 border-2 ${darkMode ? 'border-red-900/50 text-red-400 hover:bg-red-900/20' : 'border-red-100 text-red-500 hover:bg-red-50'}`}
-                    >
-                        <i data-lucide="log-out" className="w-4 h-4"></i>
-                        {lang === 'ar' ? 'تسجيل الخروج' : 'Sign Out'}
-                    </button>
-                </div>
-            );
-        }
-
-        // ============================================================
-        // لوحة الأدمن: عرض كل الطلاب المسجلين، فلترة بالسنة والحالة، وبحث
-        // ============================================================
-        // تنسيق تاريخ Firestore Timestamp أو Date عادي لعرض مقروء
-        function formatStudentDate(ts, lang) {
-            if (!ts) return '-';
-            const date = ts.toDate ? ts.toDate() : new Date(ts);
-            if (isNaN(date.getTime())) return '-';
-            return date.toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-        }
-
-        function yearLabelText(y, lang) {
-            const labels = lang === 'ar'
-                ? { '1': 'الأولى', '2': 'الثانية', '3': 'الثالثة', '4': 'الرابعة', '5': 'الخامسة' }
-                : { '1': '1st', '2': '2nd', '3': '3rd', '4': '4th', '5': '5th' };
-            return labels[String(y)] || y || '-';
-        }
-
-        // ============================================================
-        // الملف الرسمي القابل للطباعة/الحفظ كـ PDF لطالب واحد
-        // ============================================================
-        function StudentPrintFile({ student, lang }) {
-            if (!student) return null;
-            const yearLabels = lang === 'ar' ? ['الأولى', 'الثانية', 'الثالثة', 'الرابعة', 'الخامسة'] : ['1st', '2nd', '3rd', '4th', '5th'];
-            const rows = [
-                [lang === 'ar' ? 'الاسم الكامل' : 'Full Name', student.fullName || '-'],
-                [lang === 'ar' ? 'البريد الإلكتروني' : 'Email', student.email || '-'],
-                [lang === 'ar' ? 'الرقم الجامعي' : 'Student ID', student.studentId || '-'],
-                [lang === 'ar' ? 'السنة الدراسية' : 'Academic Year', lang === 'ar' ? `السنة ${yearLabelText(student.year, lang)}` : `Year ${student.year || '-'}`],
-                [lang === 'ar' ? 'التخصص' : 'Specialization', student.specialization || '-'],
-                [lang === 'ar' ? 'رقم الهاتف' : 'Phone', student.phone || '-'],
-                [lang === 'ar' ? 'الحالة' : 'Status', (student.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')],
-                [lang === 'ar' ? 'تاريخ التسجيل بالمنصة' : 'Registered On', formatStudentDate(student.createdAt, lang)],
-            ];
-
-            return (
-                <div className="print-area" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
-                    {/* ترويسة رسمية */}
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '16px', marginBottom: '24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                            <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '22px' }}>
-                                GESS
-                            </div>
-                            <div>
-                                <div style={{ fontWeight: 900, fontSize: '20px' }}>{lang === 'ar' ? 'جامعة الخرطوم' : 'University of Khartoum'}</div>
-                                <div style={{ fontWeight: 700, fontSize: '13px', color: '#555' }}>{lang === 'ar' ? 'كلية الهندسة - قسم هندسة المساحة' : 'Faculty of Engineering - Dept. of Surveying Engineering'}</div>
-                            </div>
-                        </div>
-                        <div style={{ textAlign: lang === 'ar' ? 'left' : 'right' }}>
-                            <div style={{ fontWeight: 900, fontSize: '14px', color: '#F58220' }}>GESS EDU</div>
-                            <div style={{ fontSize: '11px', color: '#888' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</div>
-                        </div>
-                    </div>
-
-                    <h1 style={{ textAlign: 'center', fontSize: '22px', fontWeight: 900, marginBottom: '4px' }}>
-                        {lang === 'ar' ? 'ملف بيانات الطالب' : 'Student Data File'}
-                    </h1>
-                    <p style={{ textAlign: 'center', fontSize: '12px', color: '#888', marginBottom: '28px' }}>
-                        {lang === 'ar' ? 'صادر إلكترونيًا من منصة GESS EDU' : 'Issued electronically by GESS EDU platform'}
-                    </p>
-
-                    {/* بطاقة الطالب */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', background: '#FFF4E9', borderRadius: '20px', padding: '20px', marginBottom: '24px' }}>
-                        <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '26px', flexShrink: 0 }}>
-                            {(student.fullName || '?').trim().charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                            <div style={{ fontWeight: 900, fontSize: '19px' }}>{student.fullName || '-'}</div>
-                            <div style={{ fontSize: '13px', color: '#555', fontWeight: 700 }} dir="ltr">{student.email}</div>
-                        </div>
-                    </div>
-
-                    {/* جدول البيانات */}
-                    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '28px' }}>
-                        <tbody>
-                            {rows.map(([label, value], idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '10px 6px', fontWeight: 800, color: '#888', fontSize: '13px', width: '40%' }}>{label}</td>
-                                    <td style={{ padding: '10px 6px', fontWeight: 700, fontSize: '14px' }}>{value}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    {student.bio && (
-                        <div style={{ marginBottom: '28px' }}>
-                            <div style={{ fontWeight: 900, fontSize: '13px', color: '#888', marginBottom: '6px' }}>{lang === 'ar' ? 'نبذة' : 'About'}</div>
-                            <div style={{ fontSize: '13px', lineHeight: 1.7, background: '#FAFAFA', borderRadius: '14px', padding: '14px' }}>{student.bio}</div>
-                        </div>
-                    )}
-
-                    {/* المسار الأكاديمي */}
-                    <div style={{ marginBottom: '36px' }}>
-                        <div style={{ fontWeight: 900, fontSize: '13px', color: '#888', marginBottom: '12px' }}>{lang === 'ar' ? 'المسار الأكاديمي' : 'Academic Path'}</div>
-                        <div style={{ display: 'flex', alignItems: 'center' }}>
-                            {yearLabels.map((label, idx) => {
-                                const stepYear = String(idx + 1);
-                                const isDone = Number(stepYear) < Number(student.year || 1);
-                                const isCurrent = stepYear === String(student.year || 1);
-                                return (
-                                    <React.Fragment key={idx}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                            <div style={{
-                                                width: '26px', height: '26px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                fontSize: '11px', fontWeight: 900, color: isCurrent || isDone ? '#fff' : '#999',
-                                                background: isCurrent ? '#F58220' : isDone ? '#ffab5e' : '#eee'
-                                            }}>{idx + 1}</div>
-                                            <span style={{ fontSize: '9px', fontWeight: 700, color: isCurrent ? '#F58220' : '#999' }}>{label}</span>
-                                        </div>
-                                        {idx < yearLabels.length - 1 && (
-                                            <div style={{ flex: 1, height: '3px', background: Number(stepYear) < Number(student.year || 1) ? '#F58220' : '#eee', margin: '0 4px', marginBottom: '14px' }}></div>
-                                        )}
-                                    </React.Fragment>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* تذييل: توقيع وختم */}
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '50px', paddingTop: '20px', borderTop: '1px solid #eee' }}>
-                        <div style={{ textAlign: 'center', width: '180px' }}>
-                            <div style={{ borderBottom: '1px solid #999', marginBottom: '6px', height: '40px' }}></div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#888' }}>{lang === 'ar' ? 'توقيع مسؤول القسم' : "Department Officer's Signature"}</div>
-                        </div>
-                        <div style={{ textAlign: 'center', width: '180px' }}>
-                            <div style={{ borderBottom: '1px solid #999', marginBottom: '6px', height: '40px' }}></div>
-                            <div style={{ fontSize: '11px', fontWeight: 700, color: '#888' }}>{lang === 'ar' ? 'الختم الرسمي' : 'Official Seal'}</div>
-                        </div>
-                    </div>
-                    <p style={{ textAlign: 'center', fontSize: '10px', color: '#bbb', marginTop: '20px' }}>
-                        {lang === 'ar' ? 'هذا الملف صادر إلكترونيًا ولا يحتاج توقيعًا لاستخدامه داخل منصة GESS EDU' : 'This file is issued electronically and needs no signature for internal GESS EDU use'}
-                    </p>
-                </div>
-            );
-        }
-
-        // ============================================================
-        // نافذة تفاصيل الطالب (تظهر عند الضغط على صف في الجدول)
-        // ============================================================
-        function StudentDetailModal({ student, lang, darkMode, onClose, onPrint, onToggleStatus }) {
-            if (!student) return null;
-            return (
-                <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 no-print" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"></div>
-                    <div className={`relative w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200 max-h-[90vh] flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
-                        <div className="bg-gradient-to-br from-[#f58220] to-[#ff5b3d] p-6 text-white relative shrink-0">
-                            <button onClick={onClose} className="absolute top-4 left-4 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
-                                <i data-lucide="x" className="w-4 h-4"></i>
-                            </button>
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-2xl bg-white/20 border-2 border-white/40 flex items-center justify-center text-2xl font-black shrink-0">
-                                    {(student.fullName || '?').trim().charAt(0).toUpperCase()}
-                                </div>
-                                <div className="min-w-0">
-                                    <h2 className="text-xl font-black truncate">{student.fullName || '-'}</h2>
-                                    <p className="text-white/80 text-sm font-medium truncate" dir="ltr">{student.email}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="p-6 space-y-3 overflow-y-auto">
-                            {[
-                                [lang === 'ar' ? 'الرقم الجامعي' : 'Student ID', student.studentId || '-', 'hash'],
-                                [lang === 'ar' ? 'السنة الدراسية' : 'Academic Year', lang === 'ar' ? `السنة ${yearLabelText(student.year, lang)}` : `Year ${student.year || '-'}`, 'graduation-cap'],
-                                [lang === 'ar' ? 'التخصص' : 'Specialization', student.specialization || '-', 'compass'],
-                                [lang === 'ar' ? 'رقم الهاتف' : 'Phone', student.phone || '-', 'phone'],
-                                [lang === 'ar' ? 'تاريخ التسجيل' : 'Registered On', formatStudentDate(student.createdAt, lang), 'calendar'],
-                            ].map(([label, value, icon], idx) => (
-                                <div key={idx} className={`flex items-center gap-3 p-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                    <i data-lucide={icon} className="w-4 h-4 text-[#f58220] shrink-0"></i>
-                                    <span className="text-xs font-bold text-gray-400 w-28 shrink-0">{label}</span>
-                                    <span className={`text-sm font-black truncate ${darkMode ? 'text-white' : 'text-gray-800'}`} dir={icon === 'phone' ? 'ltr' : undefined}>{value}</span>
-                                </div>
-                            ))}
-                            {student.bio && (
-                                <div className={`p-3 rounded-xl ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
-                                    <span className="text-xs font-bold text-gray-400 block mb-1">{lang === 'ar' ? 'نبذة' : 'About'}</span>
-                                    <p className={`text-sm font-medium ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>{student.bio}</p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="p-4 border-t flex gap-2 shrink-0" style={{ borderColor: darkMode ? '#374151' : '#f0f0f0' }}>
-                            <button
-                                onClick={() => onToggleStatus(student)}
-                                className={`flex-1 p-3 rounded-xl font-black text-sm transition-colors ${
-                                    (student.status || 'active') === 'suspended'
-                                        ? 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
-                                        : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
-                                }`}
-                            >
-                                {(student.status || 'active') === 'suspended' ? (lang === 'ar' ? 'تفعيل الحساب' : 'Activate') : (lang === 'ar' ? 'إيقاف الحساب' : 'Suspend')}
-                            </button>
-                            <button
-                                onClick={() => onPrint(student)}
-                                className="flex-1 p-3 rounded-xl font-black text-sm bg-[#f58220] text-white hover:bg-[#dd6e10] transition-colors flex items-center justify-center gap-2"
-                            >
-                                <i data-lucide="printer" className="w-4 h-4"></i>
-                                {lang === 'ar' ? 'طباعة ملف الطالب' : 'Print Student File'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            );
-        }
-
-        function StudentsAdminPanel({ lang, darkMode }) {
-            const [students, setStudents] = React.useState([]);
-            const [loading, setLoading] = React.useState(true);
-            const [yearFilter, setYearFilter] = React.useState('all');
-            const [statusFilter, setStatusFilter] = React.useState('all');
-            const [search, setSearch] = React.useState('');
-            const [selectedStudent, setSelectedStudent] = React.useState(null);
-            const [printStudent, setPrintStudent] = React.useState(null);
-            const [printTableMode, setPrintTableMode] = React.useState(false);
-
-            const loadStudents = React.useCallback(() => {
-                setLoading(true);
-                db.collection('users').get().then(snapshot => {
-                    const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                    data.sort((a, b) => (a.fullName || '').localeCompare(b.fullName || '', undefined, { numeric: true }));
-                    setStudents(data);
-                }).catch(err => {
-                    console.error('Students fetch error:', err);
-                }).finally(() => setLoading(false));
-            }, []);
-
-            React.useEffect(() => { loadStudents(); }, [loadStudents]);
-
-            const toggleStatus = async (student) => {
-                const newStatus = student.status === 'suspended' ? 'active' : 'suspended';
-                try {
-                    await db.collection('users').doc(student.id).update({ status: newStatus });
-                    setStudents(prev => prev.map(s => s.id === student.id ? { ...s, status: newStatus } : s));
-                    setSelectedStudent(prev => prev && prev.id === student.id ? { ...prev, status: newStatus } : prev);
-                } catch (err) {
-                    console.error('Status update error:', err);
-                    alert(lang === 'ar' ? '⚠️ تعذر تحديث الحالة' : '⚠️ Could not update status');
-                }
-            };
-
-            const filtered = students.filter(s => {
-                if (yearFilter !== 'all' && String(s.year) !== yearFilter) return false;
-                if (statusFilter !== 'all' && (s.status || 'active') !== statusFilter) return false;
-                if (search.trim()) {
-                    const q = search.trim().toLowerCase();
-                    const hay = [s.fullName, s.email, s.studentId, s.specialization].filter(Boolean).join(' ').toLowerCase();
-                    if (!hay.includes(q)) return false;
-                }
-                return true;
-            });
-
-            const counts = [1, 2, 3, 4, 5].map(y => students.filter(s => String(s.year) === String(y)).length);
-
-            // طباعة ملف طالب واحد
-            React.useEffect(() => {
-                if (printStudent) {
-                    const t = setTimeout(() => { window.print(); }, 150);
-                    return () => clearTimeout(t);
-                }
-            }, [printStudent]);
-
-            // طباعة الجدول كامل
-            React.useEffect(() => {
-                if (printTableMode) {
-                    const t = setTimeout(() => { window.print(); }, 150);
-                    return () => clearTimeout(t);
-                }
-            }, [printTableMode]);
-
-            React.useEffect(() => {
-                const handleAfterPrint = () => { setPrintStudent(null); setPrintTableMode(false); };
-                window.addEventListener('afterprint', handleAfterPrint);
-                return () => window.removeEventListener('afterprint', handleAfterPrint);
-            }, []);
-
-            return (
-                <div className="max-w-5xl mx-auto animate-in">
-
-                    {/* بطاقات إحصائية سريعة لكل سنة */}
-                    <div className="grid grid-cols-5 gap-2 mb-5 no-print">
-                        {counts.map((c, idx) => (
-                            <div key={idx} className={`rounded-2xl p-3 text-center border ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100 shadow-sm'}`}>
-                                <div className="text-lg font-black text-[#f58220]">{c}</div>
-                                <div className="text-[10px] font-bold text-gray-400">{lang === 'ar' ? `سنة ${yearLabelText(idx + 1, lang)}` : `Year ${idx + 1}`}</div>
-                            </div>
-                        ))}
-                    </div>
-
-                    <div className={`p-6 rounded-[2.5rem] shadow-sm border transition-all no-print ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                        <div className="flex items-center justify-between mb-5">
-                            <h2 className={`text-xl font-black flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                                <i data-lucide="users" className="w-5 h-5 text-[#f58220]"></i>
-                                {lang === 'ar' ? `الطلاب المسجلون (${filtered.length})` : `Registered Students (${filtered.length})`}
-                            </h2>
-                            <div className="flex gap-2">
-                                <button onClick={() => setPrintTableMode(true)} className={`p-2 rounded-xl transition-colors flex items-center gap-1.5 text-xs font-black px-3 ${darkMode ? 'bg-gray-700 hover:bg-gray-600 text-gray-200' : 'bg-gray-100 hover:bg-gray-200 text-gray-600'}`} title={lang === 'ar' ? 'طباعة الجدول' : 'Print table'}>
-                                    <i data-lucide="printer" className="w-4 h-4"></i>
-                                    {lang === 'ar' ? 'طباعة الجدول' : 'Print'}
-                                </button>
-                                <button onClick={loadStudents} className={`p-2 rounded-xl transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-100 text-gray-500'}`} title={lang === 'ar' ? 'تحديث' : 'Refresh'}>
-                                    <i data-lucide="refresh-cw" className="w-4 h-4"></i>
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* أدوات الفلترة والبحث */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-                            <input
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder={lang === 'ar' ? 'ابحث بالاسم، الإيميل، الرقم الجامعي...' : 'Search name, email, student ID...'}
-                                className={`p-3 rounded-xl border-2 outline-none font-medium text-sm md:col-span-1 ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            />
-                            <select
-                                value={yearFilter}
-                                onChange={(e) => setYearFilter(e.target.value)}
-                                className={`p-3 rounded-xl border-2 outline-none font-bold text-sm ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            >
-                                <option value="all">{lang === 'ar' ? 'كل السنوات' : 'All Years'}</option>
-                                {[1, 2, 3, 4, 5].map(y => (
-                                    <option key={y} value={y}>{lang === 'ar' ? `السنة ${yearLabelText(y, lang)}` : `Year ${y}`}</option>
-                                ))}
-                            </select>
-                            <select
-                                value={statusFilter}
-                                onChange={(e) => setStatusFilter(e.target.value)}
-                                className={`p-3 rounded-xl border-2 outline-none font-bold text-sm ${darkMode ? 'bg-gray-900 border-gray-700 text-white' : 'bg-gray-50 border-gray-200'}`}
-                            >
-                                <option value="all">{lang === 'ar' ? 'كل الحالات' : 'All Statuses'}</option>
-                                <option value="active">{lang === 'ar' ? 'نشط' : 'Active'}</option>
-                                <option value="suspended">{lang === 'ar' ? 'موقوف' : 'Suspended'}</option>
-                            </select>
-                        </div>
-
-                        {loading ? (
-                            <div className="text-center py-16 text-gray-400 font-bold">
-                                <i data-lucide="loader-2" className="w-8 h-8 mx-auto mb-3 animate-spin text-[#f58220]"></i>
-                                {lang === 'ar' ? 'جاري التحميل...' : 'Loading...'}
-                            </div>
-                        ) : filtered.length === 0 ? (
-                            <div className="text-center py-16 text-gray-400 font-bold">
-                                <i data-lucide="user-x" className="w-10 h-10 mx-auto mb-3 opacity-40"></i>
-                                {lang === 'ar' ? 'لا يوجد طلاب مطابقون' : 'No matching students'}
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto max-h-[60vh] overflow-y-auto rounded-2xl border" style={{ borderColor: darkMode ? '#374151' : '#f0f0f0' }}>
-                                <table className="w-full text-sm">
-                                    <thead className={`sticky top-0 z-10 ${darkMode ? 'bg-gray-900' : 'bg-gray-50'}`}>
-                                        <tr>
-                                            {[
-                                                lang === 'ar' ? 'الاسم' : 'Name',
-                                                lang === 'ar' ? 'البريد الإلكتروني' : 'Email',
-                                                lang === 'ar' ? 'الرقم الجامعي' : 'Student ID',
-                                                lang === 'ar' ? 'السنة' : 'Year',
-                                                lang === 'ar' ? 'التخصص' : 'Specialization',
-                                                lang === 'ar' ? 'الهاتف' : 'Phone',
-                                                lang === 'ar' ? 'الحالة' : 'Status',
-                                            ].map((h, i) => (
-                                                <th key={i} className={`text-right px-4 py-3 font-black text-xs whitespace-nowrap ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}>{h}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {filtered.map(s => (
-                                            <tr
-                                                key={s.id}
-                                                onClick={() => setSelectedStudent(s)}
-                                                className={`cursor-pointer border-t transition-colors ${darkMode ? 'border-gray-800 hover:bg-gray-700/50' : 'border-gray-50 hover:bg-orange-50/50'}`}
-                                            >
-                                                <td className={`px-4 py-3 font-black whitespace-nowrap ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#f58220] to-[#ff5b3d] flex items-center justify-center text-white font-black text-[10px] shrink-0">
-                                                            {(s.fullName || '?').trim().charAt(0).toUpperCase()}
-                                                        </div>
-                                                        {s.fullName || '-'}
-                                                    </div>
-                                                </td>
-                                                <td className="px-4 py-3 text-gray-400 font-bold whitespace-nowrap" dir="ltr">{s.email}</td>
-                                                <td className="px-4 py-3 text-gray-400 font-bold whitespace-nowrap">{s.studentId || '-'}</td>
-                                                <td className="px-4 py-3 text-gray-400 font-bold whitespace-nowrap">{yearLabelText(s.year, lang)}</td>
-                                                <td className="px-4 py-3 text-gray-400 font-bold whitespace-nowrap">{s.specialization || '-'}</td>
-                                                <td className="px-4 py-3 text-gray-400 font-bold whitespace-nowrap" dir="ltr">{s.phone || '-'}</td>
-                                                <td className="px-4 py-3 whitespace-nowrap">
-                                                    <span className={`text-[10px] font-black px-2 py-1 rounded-full ${(s.status || 'active') === 'suspended' ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
-                                                        {(s.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')}
-                                                    </span>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-
-                    {selectedStudent && !printStudent && (
-                        <StudentDetailModal
-                            student={selectedStudent}
-                            lang={lang}
-                            darkMode={darkMode}
-                            onClose={() => setSelectedStudent(null)}
-                            onPrint={(s) => setPrintStudent(s)}
-                            onToggleStatus={toggleStatus}
-                        />
-                    )}
-
-                    {/* منطقة الطباعة: ملف طالب واحد */}
-                    {printStudent && <StudentPrintFile student={printStudent} lang={lang} />}
-
-                    {/* منطقة الطباعة: الجدول كامل */}
-                    {printTableMode && (
-                        <div className="print-area" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '14px', marginBottom: '20px' }}>
-                                <div>
-                                    <div style={{ fontWeight: 900, fontSize: '18px' }}>{lang === 'ar' ? 'جامعة الخرطوم - قسم هندسة المساحة' : 'University of Khartoum - Surveying Engineering'}</div>
-                                    <div style={{ fontWeight: 700, fontSize: '12px', color: '#888' }}>{lang === 'ar' ? `كشف الطلاب المسجلين (${filtered.length})` : `Registered Students List (${filtered.length})`}</div>
-                                </div>
-                                <div style={{ fontWeight: 900, fontSize: '13px', color: '#F58220' }}>GESS EDU</div>
-                            </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                                <thead>
-                                    <tr style={{ background: '#FFF4E9' }}>
-                                        {[
-                                            '#',
-                                            lang === 'ar' ? 'الاسم' : 'Name',
-                                            lang === 'ar' ? 'البريد الإلكتروني' : 'Email',
-                                            lang === 'ar' ? 'الرقم الجامعي' : 'ID',
-                                            lang === 'ar' ? 'السنة' : 'Year',
-                                            lang === 'ar' ? 'التخصص' : 'Specialization',
-                                            lang === 'ar' ? 'الهاتف' : 'Phone',
-                                            lang === 'ar' ? 'الحالة' : 'Status',
-                                        ].map((h, i) => (
-                                            <th key={i} style={{ padding: '8px 6px', textAlign: lang === 'ar' ? 'right' : 'left', fontWeight: 900, borderBottom: '2px solid #F58220' }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map((s, idx) => (
-                                        <tr key={s.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <td style={{ padding: '7px 6px', color: '#999' }}>{idx + 1}</td>
-                                            <td style={{ padding: '7px 6px', fontWeight: 800 }}>{s.fullName || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }} dir="ltr">{s.email}</td>
-                                            <td style={{ padding: '7px 6px' }}>{s.studentId || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }}>{yearLabelText(s.year, lang)}</td>
-                                            <td style={{ padding: '7px 6px' }}>{s.specialization || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }} dir="ltr">{s.phone || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }}>{(s.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <p style={{ textAlign: 'center', fontSize: '10px', color: '#bbb', marginTop: '24px' }}>
-                                {lang === 'ar' ? `تم إنشاء هذا الكشف بتاريخ ${new Date().toLocaleDateString('ar-EG')} عبر منصة GESS EDU` : `Generated on ${new Date().toLocaleDateString('en-US')} via GESS EDU`}
-                            </p>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
         function App() {
             const [user, setUser] = React.useState(null);
             const [isLoggedIn, setIsLoggedIn] = React.useState(localStorage.getItem("gess_is_logged_in") === "true");
@@ -1413,13 +491,7 @@ const t = {
             const [selectedYear, setSelectedYear] = React.useState('1');
             const [searchQuery, setSearchQuery] = React.useState('');
             const [showToolsMenu, setShowToolsMenu] = React.useState(false); 
-            const [showProfileMenu, setShowProfileMenu] = React.useState(false);
             const [showSearch, setShowSearch] = React.useState(false);
-            const [authUser, setAuthUser] = React.useState(null);
-            const [userProfile, setUserProfile] = React.useState(null);
-            const [showAuthModal, setShowAuthModal] = React.useState(false);
-            const [authModalView, setAuthModalView] = React.useState('login');
-            const [adminSection, setAdminSection] = React.useState('content');
             const [contents, setContents] = React.useState([]);
             const [newLoginPass, setNewLoginPass] = React.useState('');
             const [newAdminPass, setNewAdminPass] = React.useState('');
@@ -1554,37 +626,6 @@ const handleDownloadApp = async () => {
             React.useEffect(() => {
                 window.gessRefreshMaterials = fetchMaterialsFromServer;
             }, [fetchMaterialsFromServer]);
-
-            // ============================================================
-            // نظام تسجيل الدخول الاختياري (Firebase Auth)
-            // الطالب يقدر يتصفح المنصة عادي بدون تسجيل دخول خالص،
-            // وده مجرد إضافة اختيارية لمن يريد ملف شخصي ومسار أكاديمي محفوظ.
-            // ============================================================
-            const fetchUserProfile = React.useCallback((uid) => {
-                return db.collection('users').doc(uid).get().then(doc => {
-                    if (doc.exists) {
-                        setUserProfile({ id: doc.id, ...doc.data() });
-                    } else {
-                        setUserProfile(null);
-                    }
-                }).catch(err => console.error('Profile fetch error:', err));
-            }, []);
-
-            React.useEffect(() => {
-                const unsubscribeAuth = auth.onAuthStateChanged((u) => {
-                    setAuthUser(u);
-                    if (u) {
-                        fetchUserProfile(u.uid);
-                    } else {
-                        setUserProfile(null);
-                    }
-                });
-                return () => unsubscribeAuth();
-            }, [fetchUserProfile]);
-
-            React.useEffect(() => {
-                window.gessRefreshProfile = () => { if (authUser) fetchUserProfile(authUser.uid); };
-            }, [authUser, fetchUserProfile]);
  
   React.useEffect(() => {
     if (darkMode) {
@@ -1808,16 +849,6 @@ const handleLogOut = () => {
     setStudentName("");
     setView('login'); 
 };
-
-// تسجيل خروج من الحساب الشخصي الحقيقي (Firebase Auth) - منفصل عن نظام دخول الأدمن القديم فوق
-const handleAccountSignOut = () => {
-    auth.signOut().then(() => {
-        setUserProfile(null);
-        setPath([]);
-        setToast({ show: true, message: lang === 'ar' ? "تم تسجيل الخروج بنجاح" : "Signed out successfully" });
-        setTimeout(() => setToast({ show: false, message: '' }), 3000);
-    });
-};
  
  
 React.useEffect(() => {
@@ -1987,100 +1018,12 @@ React.useEffect(() => {
         </div>
  
         <div className="flex items-center gap-2 order-last">
-            {authUser ? (
-                <div className="relative">
-                    <button
-                        onClick={() => setShowProfileMenu(!showProfileMenu)}
-                        className={`flex items-center gap-2 pl-2 pr-1 py-1 rounded-xl transition-all border ${showProfileMenu ? (darkMode ? 'bg-gray-700 border-gray-600' : 'bg-orange-100 border-orange-200') : (darkMode ? 'bg-gray-800 border-gray-700 hover:bg-gray-700' : 'bg-orange-50 border-orange-100 hover:bg-orange-100')}`}
-                    >
-                        <span className={`hidden sm:inline text-sm font-black ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                            {userProfile?.fullName || authUser.displayName || (lang === 'ar' ? 'طالب' : 'Student')}
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#f58220] to-[#ff5b3d] flex items-center justify-center text-white font-black text-xs shrink-0">
-                            {(userProfile?.fullName || authUser.displayName || '?').trim().charAt(0).toUpperCase()}
-                        </div>
-                    </button>
-
-                    {showProfileMenu && (
-                        <>
-                            <div className="fixed inset-0 z-[105]" onClick={() => setShowProfileMenu(false)}></div>
-                            <div className={`absolute mt-3 w-64 rounded-2xl shadow-2xl border z-[110] animate-in fade-in zoom-in-95 duration-200
-                                ${lang === 'ar' ? 'left-0' : 'right-0'}
-                                ${darkMode ? 'bg-gray-800 border-gray-700 shadow-black/50' : 'bg-white border-gray-100 shadow-orange-200/50'}`}
-                            >
-                                {/* رأس البطاقة: صورة واسم وبريد الطالب */}
-                                <div className={`p-4 border-b ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#f58220] to-[#ff5b3d] flex items-center justify-center text-white font-black text-base shrink-0">
-                                            {(userProfile?.fullName || authUser.displayName || '?').trim().charAt(0).toUpperCase()}
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className={`font-black text-sm truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                                                {userProfile?.fullName || authUser.displayName || (lang === 'ar' ? 'طالب' : 'Student')}
-                                            </p>
-                                            <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                {authUser.email}
-                                            </p>
-                                            {userProfile?.studentId && (
-                                                <p className="text-[10px] font-bold text-[#f58220] mt-0.5">
-                                                    {lang === 'ar' ? 'رقم جامعي: ' : 'ID: '}{userProfile.studentId}
-                                                </p>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-2 space-y-1">
-                                    {/* عرض الملف الشخصي الكامل */}
-                                    <button
-                                        onClick={() => {
-                                            setPath([{ id: 'profile', type: 'profile_page' }]);
-                                            setShowProfileMenu(false);
-                                        }}
-                                        className={`flex items-center gap-3 w-full p-3 rounded-xl text-sm font-bold transition-colors ${darkMode ? 'hover:bg-gray-700 text-orange-400' : 'hover:bg-orange-50 text-orange-600'}`}
-                                    >
-                                        <i data-lucide="user" className="w-4 h-4"></i>
-                                        {lang === 'ar' ? 'الملف الشخصي' : 'My Profile'}
-                                    </button>
-
-                                    {/* الإعدادات (الوضع الداكن/الفاتح واللغة) */}
-                                    <button
-                                        onClick={() => { setDarkMode(!darkMode); }}
-                                        className={`flex items-center justify-between w-full p-3 rounded-xl text-sm transition-colors ${darkMode ? 'hover:bg-gray-700 text-gray-300' : 'hover:bg-gray-50 text-gray-600'}`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <i data-lucide={darkMode ? "sun" : "moon"} className="w-4 h-4"></i>
-                                            {darkMode ? (lang === 'ar' ? "الوضع الفاتح" : "Light Mode") : (lang === 'ar' ? "الوضع الداكن" : "Dark Mode")}
-                                        </div>
-                                    </button>
-
-                                    <div className={`border-t my-1 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}></div>
-
-                                    {/* تسجيل الخروج */}
-                                    <button
-                                        onClick={() => {
-                                            handleLogOut();
-                                            setShowProfileMenu(false);
-                                        }}
-                                        className="flex items-center gap-3 w-full p-3 rounded-xl text-sm font-bold text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
-                                    >
-                                        <i data-lucide="log-out" className="w-4 h-4"></i>
-                                        {lang === 'ar' ? "تسجيل الخروج" : "Log Out"}
-                                    </button>
-                                </div>
-                            </div>
-                        </>
-                    )}
-                </div>
-            ) : (
-                <button
-                    onClick={() => { setAuthModalView('login'); setShowAuthModal(true); }}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-all font-black text-sm ${darkMode ? 'bg-gray-800 text-orange-400 hover:bg-gray-700' : 'bg-orange-50 text-[#f58220] hover:bg-orange-100'}`}
-                >
-                    <i data-lucide="log-in" className="w-4 h-4"></i>
-                    <span className="hidden sm:inline">{lang === 'ar' ? 'تسجيل الدخول' : 'Log In'}</span>
-                </button>
-            )}
+            <div className={`hidden md:flex items-center gap-2 px-4 py-2 rounded-xl transition-all ${
+                darkMode ? 'bg-gray-800 text-yellow-400' : 'bg-orange-50 text-[#f58220]'
+            }`}>
+                <i data-lucide="user" className="w-4 h-4"></i>
+                <span className="text-sm font-black italic">{studentName}</span>
+            </div>
             <button
                 onClick={() => setShowSearch(true)}
                 title={lang === 'ar' ? 'بحث' : 'Search'}
@@ -2285,37 +1228,7 @@ React.useEffect(() => {
  
                         
                         {view === 'admin' ? (
-                            <>
-                            <div className="max-w-4xl mx-auto mb-6 flex gap-3">
-                                <button
-                                    onClick={() => setAdminSection('content')}
-                                    className={`flex-1 p-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                                        adminSection === 'content'
-                                            ? 'bg-[#f58220] text-white shadow-lg shadow-orange-900/20'
-                                            : (darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500 border border-gray-100')
-                                    }`}
-                                >
-                                    <i data-lucide="layout-dashboard" className="w-4 h-4"></i>
-                                    {lang === 'ar' ? 'إدارة المحتوى' : 'Content'}
-                                </button>
-                                <button
-                                    onClick={() => setAdminSection('students')}
-                                    className={`flex-1 p-4 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all ${
-                                        adminSection === 'students'
-                                            ? 'bg-[#f58220] text-white shadow-lg shadow-orange-900/20'
-                                            : (darkMode ? 'bg-gray-800 text-gray-400' : 'bg-white text-gray-500 border border-gray-100')
-                                    }`}
-                                >
-                                    <i data-lucide="users" className="w-4 h-4"></i>
-                                    {lang === 'ar' ? 'الطلاب' : 'Students'}
-                                </button>
-                            </div>
-
-                            {adminSection === 'students' && (
-                                <StudentsAdminPanel lang={lang} darkMode={darkMode} />
-                            )}
-
-                            <div className="max-w-4xl mx-auto animate-in" style={{ display: adminSection === 'students' ? 'none' : undefined }}>
+                            <div className="max-w-4xl mx-auto animate-in">
                                 <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
                                    <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i>{lang === 'ar' ? "إضافة محتوى جديد" : "Add New Content"}</h2> 
                                     <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
@@ -2733,7 +1646,6 @@ React.useEffect(() => {
     </div>
 </div>
                             </div>
-                            </>
                         ) : (
                             <div className={`animate-in transition-colors ${darkMode ? 'text-white' : 'text-gray-900'}`}>
                                 {(path.length > 0 || selectedItem) && (
@@ -2896,7 +1808,7 @@ React.useEffect(() => {
     },
  
     {
-        title: "أدعية داخل لجنة الامتحان",
+        title: "أدعية داخل قاعة الامتحان",
         text: `اللَّهُمَّ اجْعَلِ الْإِجَابَةَ جَارِيَةً عَلَى قَلَمِي، وَثَبِّتْ جَنَانِي.
  
 اللَّهُمَّ لَا تَجْعَلْ لِلْخَوْفِ سَبِيلًا إِلَى قَلْبِي، وَأَنْزِلْ عَلَيَّ السَّكِينَةَ.`
@@ -2981,11 +1893,9 @@ React.useEffect(() => {
                 {lang === 'ar' ? 'ركن المجلات' : 'Magazines Corner'}
             </div>
             <h1 className={`text-4xl font-black mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {lang === 'ar' ? 'المجلات العلمية' : 'Magazines'}
+                {lang === 'ar' ? 'المجلات الطلابية' : 'Magazines'}
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
-                {lang === 'ar' ? "اضغط على غلاف أي مجلة عشان تقرأها مباشرة." : "Tap a cover to read it right away."}
-            </p>
+           
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -3036,18 +1946,6 @@ React.useEffect(() => {
     <AIChatPanel lang={lang} darkMode={darkMode} contents={contents} />
 )}
 
-{/* صفحة الملف الشخصي */}
-{path.length === 1 && path[0]?.id === 'profile' && authUser && !selectedItem && (
-    <ProfilePage
-        lang={lang}
-        darkMode={darkMode}
-        authUser={authUser}
-        userProfile={userProfile}
-        onBack={() => setPath([])}
-        onSignOut={handleAccountSignOut}
-    />
-)}
-
 {/* اختيار نوع المحتوى جوة الكورس */}
 {path.length === 2 && path[1]?.type === 'inside_course' && !selectedItem && (
   <div className="grid grid-cols-2 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
@@ -3095,7 +1993,7 @@ React.useEffect(() => {
         <button
           key={item.id}
           onClick={() => setSelectedItem(item)}
-          className={`p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+          className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
         >
           <div className="flex items-center gap-4">
             <div className="p-4 rounded-xl bg-orange-50 text-orange-500">
@@ -3110,7 +2008,7 @@ React.useEffect(() => {
               }></i>
             </div>
             <div className="text-left">
-              <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>{item.title}</h4>
+              <h4 className="font-black text-lg text-gray-900">{item.title}</h4>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{item.type}</p>
             </div>
           </div>
@@ -3194,7 +2092,7 @@ React.useEffect(() => {
       // ================= فولدر  =================
       <div
         key={item.id}
-        className={`p-6 rounded-[2rem] border flex items-center justify-between ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+        className="bg-white p-6 rounded-[2rem] border flex items-center justify-between"
       >
         <div className="flex items-center gap-4">
  
@@ -3203,7 +2101,7 @@ React.useEffect(() => {
           </div>
  
           <div className="text-left">
-            <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h4 className="font-black text-lg text-gray-900">
               {item.title}
             </h4>
  
@@ -3241,7 +2139,7 @@ React.useEffect(() => {
             });
           }
         }}
-        className={`p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}
+        className="bg-white p-6 rounded-[2rem] border flex items-center justify-between hover:shadow-lg transition-all"
       >
  
         <div className="flex items-center gap-4">
@@ -3266,7 +2164,7 @@ React.useEffect(() => {
           </div>
  
           <div className="text-left">
-            <h4 className={`font-black text-lg ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+            <h4 className="font-black text-lg text-gray-900">
               {item.title}
             </h4>
  
@@ -3287,18 +2185,18 @@ React.useEffect(() => {
   </div>
 )}
 {selectedItem && (
-    <div className={`rounded-[3rem] shadow-2xl overflow-hidden animate-in max-w-4xl w-full mx-auto flex flex-col max-h-[90vh] my-auto ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+    <div className="bg-white rounded-[3rem] shadow-2xl overflow-hidden animate-in max-w-4xl w-full mx-auto flex flex-col max-h-[90vh] my-auto">
         
-        <div className={`p-4 flex items-center justify-between border-b shrink-0 ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+        <div className="p-4 bg-gray-50 flex items-center justify-between border-b border-gray-100 shrink-0">
             <div className="flex flex-col">
                 <span className="text-[10px] font-black text-orange-500 uppercase tracking-widest">{selectedItem?.subject || ""}</span>
-                <h2 className={`text-xl font-black mt-1 ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedItem?.title || ""}</h2>
+                <h2 className="text-xl font-black text-gray-900 mt-1">{selectedItem?.title || ""}</h2>
                 {selectedItem?.type === 'magazine' && selectedItem?.targetBatch && (
                     <p className="text-sm font-normal text-gray-400 mt-1 max-w-xl">{selectedItem.targetBatch}</p>
                 )}
             </div>
-            <button onClick={() => setSelectedItem(null)} className={`p-2 rounded-full shadow-sm transition-colors ${darkMode ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-100'}`}>
-                <i data-lucide="x" className={`w-5 h-5 ${darkMode ? 'text-gray-300' : 'text-gray-500'}`}></i>
+            <button onClick={() => setSelectedItem(null)} className="p-2 bg-white hover:bg-gray-100 rounded-full shadow-sm transition-colors">
+                <i data-lucide="x" className="w-5 h-5 text-gray-500"></i>
             </button>
         </div>
  
@@ -3588,7 +2486,7 @@ if (
                         return (
                             <div className="py-20 text-center bg-gradient-to-br from-orange-500/5 to-transparent">
                                 <i data-lucide={singleLucideIcon} className="w-20 h-20 text-orange-500/20 mx-auto mb-6"></i>
-                                <h3 className={`text-2xl font-black mb-10 px-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>{singleTitle}</h3>
+                                <h3 className="text-2xl font-black mb-10 text-gray-800 px-6">{singleTitle}</h3>
                                 <a href={singleUrl} target="_blank" rel="noreferrer" className="bg-orange-500 hover:bg-gray-900 text-white px-10 py-4 rounded-full font-black shadow-xl transition-all inline-block">
                                     {singleBtnText}
                                 </a>
@@ -3597,7 +2495,7 @@ if (
                     })()}
  
                     <div className="p-8">
-                        <h2 className={`text-2xl font-black ${darkMode ? 'text-white' : 'text-gray-900'}`}>{selectedItem?.title || ""}</h2>
+                        <h2 className="text-2xl font-black text-gray-900">{selectedItem?.title || ""}</h2>
                         <p className="mt-2 text-sm text-gray-500 font-medium">
                             {(typeof lang !== 'undefined' && lang === 'ar') ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب أكاديمياً" : "Content provided by the Geomatics Engineering Department for academic student support"}
                         </p>
@@ -3607,7 +2505,7 @@ if (
         </div>
  
         {/* تذييل المودال  */}
-        <div className={`p-4 border-t shrink-0 text-center text-xs text-gray-400 font-medium ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+        <div className="p-4 bg-gray-50 border-t border-gray-100 shrink-0 text-center text-xs text-gray-400 font-medium">
             {(typeof lang !== 'undefined' && lang === 'ar') ? "المحتوى بواسطة قسم هندسة المساحة لخدمة الطلاب" : "Content provided by the Geomatics Engineering Department"}
         </div>
  
@@ -3635,20 +2533,6 @@ if (
         contents={contents}
         onClose={() => setShowSearch(false)}
         onSelectItem={(item) => { setSelectedItem(item); setShowSearch(false); }}
-    />
-)}
-{showAuthModal && (
-    <AuthModal
-        lang={lang}
-        darkMode={darkMode}
-        mode={authModalView}
-        setMode={setAuthModalView}
-        onClose={() => setShowAuthModal(false)}
-        onAuthSuccess={() => {
-            setShowAuthModal(false);
-            setToast({ show: true, message: lang === 'ar' ? "أهلاً بيك في GESS EDU 👋" : "Welcome to GESS EDU 👋" });
-            setTimeout(() => setToast({ show: false, message: '' }), 3000);
-        }}
     />
 )}
 {isModalOpen && modalSubjectData && (
