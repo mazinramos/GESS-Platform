@@ -68,7 +68,8 @@
   .print-area, .print-area * { visibility: visible; }
   .print-area { display: block; position: absolute; top: 0; left: 0; width: 100%; margin: 0; padding: 0; }
   .no-print { display: none !important; }
-  @page { margin: 14mm; }
+  .print-area table tr { page-break-inside: avoid; }
+  @page { size: A4; margin: 14mm; }
 }
     </style>
 
@@ -969,7 +970,10 @@ const t = {
             ];
 
             return (
-                <div className="print-area" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
+                <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '12mm', position: 'relative' }}>
+                    {/* شريط جانبي زخرفي بلون الهوية */}
+                    <div style={{ position: 'absolute', top: 0, bottom: 0, [lang === 'ar' ? 'right' : 'left']: 0, width: '6px', background: 'linear-gradient(180deg,#F58220,#ff5b3d)' }}></div>
+
                     {/* ترويسة رسمية */}
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '16px', marginBottom: '24px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
@@ -1072,6 +1076,113 @@ const t = {
         // ============================================================
         // نافذة تفاصيل الطالب (تظهر عند الضغط على صف في الجدول)
         // ============================================================
+        // ============================================================
+        // كشف الطلاب الكامل القابل للطباعة/الحفظ كـ PDF
+        // ============================================================
+        function StudentsTablePrintFile({ students, lang }) {
+            return (
+                <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '14px', marginBottom: '20px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '13px' }}>
+                                GESS
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 900, fontSize: '17px' }}>{lang === 'ar' ? 'جامعة الخرطوم - قسم هندسة المساحة' : 'University of Khartoum - Surveying Engineering'}</div>
+                                <div style={{ fontWeight: 700, fontSize: '12px', color: '#888' }}>{lang === 'ar' ? `كشف الطلاب المسجلين (${students.length})` : `Registered Students List (${students.length})`}</div>
+                            </div>
+                        </div>
+                        <div style={{ textAlign: lang === 'ar' ? 'left' : 'right' }}>
+                            <div style={{ fontWeight: 900, fontSize: '13px', color: '#F58220' }}>GESS EDU</div>
+                            <div style={{ fontSize: '10px', color: '#999' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</div>
+                        </div>
+                    </div>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                        <thead>
+                            <tr style={{ background: '#FFF4E9' }}>
+                                {[
+                                    '#',
+                                    lang === 'ar' ? 'الاسم' : 'Name',
+                                    lang === 'ar' ? 'البريد الإلكتروني' : 'Email',
+                                    lang === 'ar' ? 'الرقم الجامعي' : 'ID',
+                                    lang === 'ar' ? 'السنة' : 'Year',
+                                    lang === 'ar' ? 'التخصص' : 'Specialization',
+                                    lang === 'ar' ? 'الهاتف' : 'Phone',
+                                    lang === 'ar' ? 'الحالة' : 'Status',
+                                ].map((h, i) => (
+                                    <th key={i} style={{ padding: '8px 6px', textAlign: lang === 'ar' ? 'right' : 'left', fontWeight: 900, borderBottom: '2px solid #F58220' }}>{h}</th>
+                                ))}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {students.map((s, idx) => (
+                                <tr key={s.id} style={{ borderBottom: '1px solid #eee' }}>
+                                    <td style={{ padding: '7px 6px', color: '#999' }}>{idx + 1}</td>
+                                    <td style={{ padding: '7px 6px', fontWeight: 800 }}>{s.fullName || '-'}</td>
+                                    <td style={{ padding: '7px 6px' }} dir="ltr">{s.email}</td>
+                                    <td style={{ padding: '7px 6px' }}>{s.studentId || '-'}</td>
+                                    <td style={{ padding: '7px 6px' }}>{yearLabelText(s.year, lang)}</td>
+                                    <td style={{ padding: '7px 6px' }}>{s.specialization || '-'}</td>
+                                    <td style={{ padding: '7px 6px' }} dir="ltr">{s.phone || '-'}</td>
+                                    <td style={{ padding: '7px 6px' }}>{(s.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                    <p style={{ textAlign: 'center', fontSize: '10px', color: '#bbb', marginTop: '24px' }}>
+                        {lang === 'ar' ? `تم إنشاء هذا الكشف بتاريخ ${new Date().toLocaleDateString('ar-EG')} عبر منصة GESS EDU` : `Generated on ${new Date().toLocaleDateString('en-US')} via GESS EDU`}
+                    </p>
+                </div>
+            );
+        }
+
+        // ============================================================
+        // معاينة الطباعة: بتوريك شكل المستند فعليًا فوق الشاشة قبل ما تطبع،
+        // وانت اللي بتتحكم متى تطبع بالظبط (بدل الطباعة التلقائية غير المضمونة)
+        // ============================================================
+        function PrintPreviewModal({ lang, darkMode, title, onClose, children }) {
+            return (
+                <div className="fixed inset-0 z-[280] flex items-center justify-center p-4 no-print">
+                    <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose}></div>
+                    <div className={`relative w-full max-w-3xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 fade-in duration-200 max-h-[92vh] flex flex-col ${darkMode ? 'bg-gray-900' : 'bg-white'}`}>
+
+                        <div className={`flex items-center justify-between px-6 py-4 border-b shrink-0 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <div className="flex items-center gap-2">
+                                <i data-lucide="printer" className="w-5 h-5 text-[#f58220]"></i>
+                                <h3 className={`font-black ${darkMode ? 'text-white' : 'text-gray-800'}`}>{title}</h3>
+                            </div>
+                            <button onClick={onClose} className={`p-2 rounded-full transition-colors ${darkMode ? 'hover:bg-gray-800 text-gray-400' : 'hover:bg-gray-100 text-gray-500'}`}>
+                                <i data-lucide="x" className="w-4 h-4"></i>
+                            </button>
+                        </div>
+
+                        {/* معاينة "الورقة" زي ما هتطلع بالظبط */}
+                        <div className={`flex-1 overflow-y-auto p-6 ${darkMode ? 'bg-gray-950' : 'bg-gray-100'}`}>
+                            <div className="bg-white rounded-lg shadow-xl mx-auto" style={{ maxWidth: '210mm', minHeight: '100px' }}>
+                                {children}
+                            </div>
+                        </div>
+
+                        <div className={`flex gap-3 px-6 py-4 border-t shrink-0 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+                            <button
+                                onClick={onClose}
+                                className={`flex-1 p-3 rounded-xl font-black text-sm transition-colors ${darkMode ? 'bg-gray-800 text-gray-300 hover:bg-gray-700' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                            >
+                                {lang === 'ar' ? 'إلغاء' : 'Cancel'}
+                            </button>
+                            <button
+                                onClick={() => window.print()}
+                                className="flex-1 p-3 rounded-xl font-black text-sm bg-[#f58220] text-white hover:bg-[#dd6e10] transition-colors flex items-center justify-center gap-2 shadow-lg shadow-orange-900/20"
+                            >
+                                <i data-lucide="printer" className="w-4 h-4"></i>
+                                {lang === 'ar' ? 'طباعة / حفظ PDF' : 'Print / Save as PDF'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
         function StudentDetailModal({ student, lang, darkMode, isSuperAdmin, currentUid, onClose, onPrint, onToggleStatus, onToggleRole }) {
             if (!student) return null;
             const isAdminRole = student.role === 'admin';
@@ -1252,27 +1363,22 @@ const t = {
 
             const counts = [1, 2, 3, 4, 5].map(y => students.filter(s => String(s.year) === String(y)).length);
 
-            // طباعة ملف طالب واحد
-            React.useEffect(() => {
-                if (printStudent) {
-                    const t = setTimeout(() => { window.print(); }, 150);
-                    return () => clearTimeout(t);
-                }
-            }, [printStudent]);
+            const isPrintPreviewOpen = !!(printStudent || printTableMode);
 
-            // طباعة الجدول كامل
-            React.useEffect(() => {
-                if (printTableMode) {
-                    const t = setTimeout(() => { window.print(); }, 150);
-                    return () => clearTimeout(t);
-                }
-            }, [printTableMode]);
-
+            // إغلاق معاينة الطباعة تلقائيًا بعد إتمام الطباعة أو إلغائها من نافذة المتصفح
             React.useEffect(() => {
                 const handleAfterPrint = () => { setPrintStudent(null); setPrintTableMode(false); };
                 window.addEventListener('afterprint', handleAfterPrint);
                 return () => window.removeEventListener('afterprint', handleAfterPrint);
             }, []);
+
+            // نسجّل هنا "طريقة إقفال" معاينة الطباعة عشان زرار الرجوع يقفلها هي الأول
+            React.useEffect(() => {
+                if (isPrintPreviewOpen) {
+                    window.gessCloseOverlay = () => { setPrintStudent(null); setPrintTableMode(false); };
+                    return () => { window.gessCloseOverlay = null; };
+                }
+            }, [isPrintPreviewOpen]);
 
             return (
                 <div className="max-w-5xl mx-auto animate-in">
@@ -1415,60 +1521,43 @@ const t = {
                             isSuperAdmin={isSuperAdmin}
                             currentUid={currentUid}
                             onClose={() => setSelectedStudent(null)}
-                            onPrint={(s) => setPrintStudent(s)}
+                            onPrint={(s) => { setPrintStudent(s); setSelectedStudent(null); }}
                             onToggleStatus={toggleStatus}
                             onToggleRole={toggleRole}
                         />
                     )}
 
-                    {/* منطقة الطباعة: ملف طالب واحد */}
-                    {printStudent && <StudentPrintFile student={printStudent} lang={lang} />}
-
-                    {/* منطقة الطباعة: الجدول كامل */}
+                    {/* معاينة الطباعة على الشاشة (بتتحكم انت فيها) */}
+                    {printStudent && (
+                        <PrintPreviewModal
+                            lang={lang}
+                            darkMode={darkMode}
+                            title={lang === 'ar' ? `ملف الطالب: ${printStudent.fullName || ''}` : `Student File: ${printStudent.fullName || ''}`}
+                            onClose={() => setPrintStudent(null)}
+                        >
+                            <StudentPrintFile student={printStudent} lang={lang} />
+                        </PrintPreviewModal>
+                    )}
                     {printTableMode && (
-                        <div className="print-area" dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '14px', marginBottom: '20px' }}>
-                                <div>
-                                    <div style={{ fontWeight: 900, fontSize: '18px' }}>{lang === 'ar' ? 'جامعة الخرطوم - قسم هندسة المساحة' : 'University of Khartoum - Surveying Engineering'}</div>
-                                    <div style={{ fontWeight: 700, fontSize: '12px', color: '#888' }}>{lang === 'ar' ? `كشف الطلاب المسجلين (${filtered.length})` : `Registered Students List (${filtered.length})`}</div>
-                                </div>
-                                <div style={{ fontWeight: 900, fontSize: '13px', color: '#F58220' }}>GESS EDU</div>
-                            </div>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                                <thead>
-                                    <tr style={{ background: '#FFF4E9' }}>
-                                        {[
-                                            '#',
-                                            lang === 'ar' ? 'الاسم' : 'Name',
-                                            lang === 'ar' ? 'البريد الإلكتروني' : 'Email',
-                                            lang === 'ar' ? 'الرقم الجامعي' : 'ID',
-                                            lang === 'ar' ? 'السنة' : 'Year',
-                                            lang === 'ar' ? 'التخصص' : 'Specialization',
-                                            lang === 'ar' ? 'الهاتف' : 'Phone',
-                                            lang === 'ar' ? 'الحالة' : 'Status',
-                                        ].map((h, i) => (
-                                            <th key={i} style={{ padding: '8px 6px', textAlign: lang === 'ar' ? 'right' : 'left', fontWeight: 900, borderBottom: '2px solid #F58220' }}>{h}</th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filtered.map((s, idx) => (
-                                        <tr key={s.id} style={{ borderBottom: '1px solid #eee' }}>
-                                            <td style={{ padding: '7px 6px', color: '#999' }}>{idx + 1}</td>
-                                            <td style={{ padding: '7px 6px', fontWeight: 800 }}>{s.fullName || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }} dir="ltr">{s.email}</td>
-                                            <td style={{ padding: '7px 6px' }}>{s.studentId || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }}>{yearLabelText(s.year, lang)}</td>
-                                            <td style={{ padding: '7px 6px' }}>{s.specialization || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }} dir="ltr">{s.phone || '-'}</td>
-                                            <td style={{ padding: '7px 6px' }}>{(s.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            <p style={{ textAlign: 'center', fontSize: '10px', color: '#bbb', marginTop: '24px' }}>
-                                {lang === 'ar' ? `تم إنشاء هذا الكشف بتاريخ ${new Date().toLocaleDateString('ar-EG')} عبر منصة GESS EDU` : `Generated on ${new Date().toLocaleDateString('en-US')} via GESS EDU`}
-                            </p>
+                        <PrintPreviewModal
+                            lang={lang}
+                            darkMode={darkMode}
+                            title={lang === 'ar' ? `كشف الطلاب (${filtered.length})` : `Students List (${filtered.length})`}
+                            onClose={() => setPrintTableMode(false)}
+                        >
+                            <StudentsTablePrintFile students={filtered} lang={lang} />
+                        </PrintPreviewModal>
+                    )}
+
+                    {/* منطقة الطباعة الفعلية (مخفية إلا وقت الطباعة الحقيقية) */}
+                    {printStudent && (
+                        <div className="print-area">
+                            <StudentPrintFile student={printStudent} lang={lang} />
+                        </div>
+                    )}
+                    {printTableMode && (
+                        <div className="print-area">
+                            <StudentsTablePrintFile students={filtered} lang={lang} />
                         </div>
                     )}
                 </div>
@@ -1509,7 +1598,6 @@ const t = {
             const [authModalView, setAuthModalView] = React.useState('login');
             const [adminSection, setAdminSection] = React.useState('content');
             const [contents, setContents] = React.useState([]);
-            const [newLoginPass, setNewLoginPass] = React.useState('');
             const [newAdminPass, setNewAdminPass] = React.useState('');
             const currentSubject = path[2]?.title;
             const subjectContents = contents.filter(item => item.subject?.toLowerCase() === currentSubject?.toLowerCase());
@@ -2739,59 +2827,12 @@ const handleAccountSignOut = () => {
                                 <div className="mt-12 pt-8 border-t-2 border-gray-100">
     <h3 className="text-xl font-bold mb-6 flex items-center gap-2">
         <i data-lucide="shield-check" className="text-orange-500"></i>
-       {lang === 'ar' ? "إعدادات الأمان وتغيير كلمات المرور" : "Security Settings & Password Change"}
+       {lang === 'ar' ? "إعدادات الأمان" : "Security Settings"}
     </h3>
- 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-       
+
+    {isSuperAdmin && (
+    <div className="max-w-md">
         <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-            <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-    <div className="flex justify-between items-center mb-2">
-        <label className="font-bold text-sm text-gray-600">{lang === 'ar' ? "كلمة مرور دخول الموقع" : "Website Access Password"}</label>
-      
-         <span 
-    onClick={(e) => {
-     const current = localStorage.getItem('gess_admin_pass');
-      e.target.innerText = e.target.innerText.includes(lang === 'ar' ? 'إظهار' : 'Show') 
-    ? `${lang === 'ar' ? 'كلمة المرور الحالية' : 'Current Password'}: ${current} 👁️` 
-    : (lang === 'ar' ? '👁️ إظهار كلمة المرور' : '👁️ Show Password');
-    }}
-    className={`text-[10px] px-2 py-1 rounded-lg cursor-pointer transition-all ${
-      darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-    }`}
-  >
-    {lang === 'ar' ? "👁️ إظهار كلمة المرور" : "👁️ Show Password"}
-  </span>
-    </div>
-    <input 
-  type="password" 
-  placeholder={lang === 'ar' ? "كلمة المرور الجديدة" : "New Password"}
-  onChange={(e) => setNewLoginPass(e.target.value)}
-  className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-4 ${
-    darkMode 
-      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
-      : 'bg-white border-gray-100 text-black'
-  } focus:border-orange-500`}
-/>
-</div>
-           
-            <button 
-               onClick={() => {
-  localStorage.setItem('gess_login_pass', newLoginPass);
-  alert('✅ تم تغيير كلمة المرور');
-}}
-                className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 ${
-  darkMode 
-    ? 'bg-gray-700 hover:bg-gray-600 text-white border border-gray-600 shadow-lg' 
-    : 'bg-gray-900 hover:bg-black text-white shadow-md'
-}`}
-            >
-               {lang === 'ar' ? "تحديث كلمة مرور الدخول" : "Update Login Password"}
-            </button>
-        </div>
- 
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-           <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
     <div className="flex justify-between items-center mb-2">
         <label className="font-bold text-sm text-gray-600">{lang === 'ar' ? "كلمة مرور لوحة الأدمن" : "Admin Panel Password"}</label>
         <span
@@ -2819,19 +2860,18 @@ const handleAccountSignOut = () => {
             ? "هذه كلمة مرور مشتركة بين كل الأدمنز (موحدة عبر كل الأجهزة عن طريق قاعدة البيانات)."
             : "This is a shared password across all admins (synced across devices via the database)."}
     </p>
-   <input 
-  type="password" 
+   <input
+  type="password"
  placeholder={lang === 'ar' ? "كلمة المرور الجديدة" : "New Password"}
   onChange={(e) => setNewAdminPass(e.target.value)}
   className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-2 ${
-    darkMode 
-      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500' 
+    darkMode
+      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500'
       : 'bg-white border-gray-100 text-black'
   } focus:border-orange-500`}
 />
-</div>
-           
-            <button 
+
+            <button
                 onClick={async () => {
   if (!newAdminPass || !newAdminPass.trim()) {
       alert(lang === 'ar' ? 'اكتب كلمة مرور جديدة الأول' : 'Enter a new password first');
@@ -2847,24 +2887,23 @@ const handleAccountSignOut = () => {
   }
 }}
               className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 shadow-lg ${
-  darkMode 
-    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20' 
+  darkMode
+    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20'
     : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
 }`}
             >
                {lang === 'ar' ? "تحديث كلمة مرور الأدمن" : "Update Admin Password"}
             </button>
 
-            {isSuperAdmin && (
-                <div className={`mt-4 p-3 rounded-xl text-[11px] font-bold flex items-center gap-2 ${darkMode ? 'bg-orange-900/20 text-orange-300' : 'bg-orange-50 text-orange-700'}`}>
-                    <i data-lucide="crown" className="w-4 h-4 shrink-0"></i>
-                    {lang === 'ar'
-                        ? "أنت مسجّل دخول كـ أدمن كبير — تقدر دايمًا تدخل بمفتاحك الخاص حتى لو أي أدمن غيّر كلمة المرور دي بدون علمك."
-                        : "You're signed in as Super Admin — your master key always works even if another admin changes this password."}
-                </div>
-            )}
+            <div className={`mt-4 p-3 rounded-xl text-[11px] font-bold flex items-center gap-2 ${darkMode ? 'bg-orange-900/20 text-orange-300' : 'bg-orange-50 text-orange-700'}`}>
+                <i data-lucide="crown" className="w-4 h-4 shrink-0"></i>
+                {lang === 'ar'
+                    ? "أنت مسجّل دخول كـ أدمن كبير — تقدر دايمًا تدخل بمفتاحك الخاص حتى لو أي أدمن غيّر كلمة المرور دي بدون علمك."
+                    : "You're signed in as Super Admin — your master key always works even if another admin changes this password."}
+            </div>
         </div>
     </div>
+    )}
 </div>
                             </div>
                             </>
@@ -4555,10 +4594,10 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 content: content,
                 expiresAt: expiresTimestamp
             }).then(async function() {
-                // ✅ إرسال الإشعار بعد التعديل
+                //  إرسال الإشعار بعد التعديل
                 await sendPushNotification(title, content);
                 if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
-                alert("🚀 تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
+                alert(" تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
                 console.error("خطأ أثناء التعديل:", error);
@@ -4577,17 +4616,17 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 expiresAt: expiresTimestamp,
                 isActive: true
             }).then(async function() {
-                // ✅ إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
+                //  إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
                 await sendPushNotification(title, content);
                 if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
-                alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
+                alert(" تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
                 console.error("حدث خطأ أثناء الحفظ:", error);
                 alert("❌ حدث خطأ أثناء الحفظ: " + error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
+                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
                 }
             });
         }
@@ -4601,8 +4640,8 @@ window.resetFormState = function resetFormState() {
     
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
-        submitBtn.disabled = false;                              // ← إعادة تفعيل الزر
-        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
+        submitBtn.disabled = false;                          
+        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
         submitBtn.style.backgroundColor = "";
     }
 }
