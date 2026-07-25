@@ -2588,8 +2588,8 @@ const handleAccountSignOut = () => {
         <div>
             <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {adminAddMode === 'special_course'
-                    ? (lang === 'ar' ? "1️⃣ إضافة درس لكورس موجود بالفعل" : "1️⃣ Add a lesson to an existing course")
-                    : (lang === 'ar' ? "1️⃣ إضافة درس لمادة موجودة بالفعل" : "1️⃣ Add a lesson to an existing subject")}
+                    ? (lang === 'ar' ? " إضافة درس لكورس موجود بالفعل" : " Add a lesson to an existing course")
+                    : (lang === 'ar' ? " إضافة درس لمادة موجودة بالفعل" : " Add a lesson to an existing subject")}
             </h3>
             <p className="text-sm text-gray-400">
                 {adminAddMode === 'special_course'
@@ -2697,8 +2697,8 @@ const handleAccountSignOut = () => {
 <div className={`mt-10 pt-8 border-t-2 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
     <h3 className={`font-black text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
         {adminAddMode === 'special_course'
-            ? (lang === 'ar' ? "2️⃣ أو أنشئ كورس جديد كليًا" : "2️⃣ Or create a brand new course")
-            : (lang === 'ar' ? "2️⃣ أو أنشئ مادة جديدة كليًا" : "2️⃣ Or create a brand new subject")}
+            ? (lang === 'ar' ? " أو أنشئ كورس جديد كليًا" : " Or create a brand new course")
+            : (lang === 'ar' ? " أو أنشئ مادة جديدة كليًا" : " Or create a brand new subject")}
     </h3>
     <p className="text-sm text-gray-400 mb-4">
         {lang === 'ar' ? "هيتضاف أول درس ليها هنا تحت، وبعدين تقدر تضيف دروس تانية ليها من قسم (1) فوق" : "Its first lesson is added below, then use section (1) above to add more lessons to it"}
