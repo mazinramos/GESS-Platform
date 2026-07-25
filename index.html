@@ -1831,6 +1831,33 @@ const handleEdit = async (collectionName, docId, currentTitle, currentUrl) => {
     }
 };
 
+// نفس فكرة handleEdit، بس واعية بشكل بيانات "links" الموحّد الجديد (بدل حقل url منفصل)
+// مستخدمة لتعديل الدروس المضافة (بعكس المجلات اللي لسه بتستخدم حقل url مباشر)
+const handleEditLecture = async (lecture) => {
+    if (!lecture?.id) {
+        alert("خطأ في المعرف (ID)");
+        return;
+    }
+
+    const currentUrl = lecture.links?.[0]?.url || lecture.url || '';
+    const newTitle = window.prompt(lang === 'ar' ? "تعديل اسم الدرس:" : "Edit lesson title:", lecture.title);
+    if (newTitle === null) return;
+    const newUrl = window.prompt(lang === 'ar' ? "تعديل الرابط:" : "Edit link:", currentUrl);
+    if (newUrl === null) return;
+
+    try {
+        await db.collection("materials").doc(lecture.id).update({
+            title: newTitle.trim() || lecture.title,
+            links: [{ type: lecture.type || 'pdf', title: newTitle.trim() || lecture.title, url: newUrl.trim() }],
+        });
+        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
+        alert(lang === 'ar' ? "✅ تم تعديل الدرس بنجاح" : "✅ Lesson updated");
+    } catch (error) {
+        console.error("Error updating lecture: ", error);
+        alert((lang === 'ar' ? "فشل التعديل: " : "Update failed: ") + error.message);
+    }
+};
+
 const handleEditMagazineDescription = async (docId, currentDescription) => {
     if (!docId) {
         alert("خطأ في المعرف (ID)");
@@ -2067,9 +2094,14 @@ const handleAccountSignOut = () => {
  
   const urlValue = form.url?.value;
   const typeValue = form.type?.value || "pdf";
+  const materialTitle = form.materialTitle?.value?.trim();
  
   if (!urlValue) {
     alert("يا هندسة، الرابط وين؟ لازم تضع الرابط أولاً");
+    return;
+  }
+  if (!materialTitle) {
+    alert(lang === 'ar' ? "لازم تكتب اسم/عنوان للدرس أو المحتوى" : "Please enter a title for this lesson/content");
     return;
   }
  
@@ -2077,9 +2109,12 @@ const handleAccountSignOut = () => {
   const data = {
     subject: subjectName,
     courseName: adminAddMode === 'special_course' ? subjectName : null,
-    title: subjectName + " - محتوى جديد", 
-    url: urlValue,
+    title: materialTitle,
     type: typeValue,
+    // موحّدة دلوقتي مع نفس شكل البيانات اللي بيستخدمه نظام "إضافة درس لمادة موجودة"
+    // (بدل ما يكون فيه شكلين مختلفين للبيانات). المحتوى القديم لسه شغال زي ما هو
+    // لأن شاشة العرض بتدعم الشكلين مع بعض.
+    links: [{ type: typeValue, title: materialTitle, url: urlValue }],
     yearId: modalSubjectData ? String(modalSubjectData.yearId) : (form.yearId?.value || null),
     semesterId: modalSubjectData ? String(modalSubjectData.semesterId) : (form.semesterId?.value || null),
     category: adminAddMode || 'academic',
@@ -2546,16 +2581,20 @@ const handleAccountSignOut = () => {
 </div>
                                         {adminAddMode !== 'magazine' && (
                                         <>
-                                        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="md:col-span-3">
  
  <div className="mt-8 space-y-6">
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
-                {lang === 'ar' ? "إدارة المواد" : "Manage Subjects"}
+                {adminAddMode === 'special_course'
+                    ? (lang === 'ar' ? "1️⃣ إضافة درس لكورس موجود بالفعل" : "1️⃣ Add a lesson to an existing course")
+                    : (lang === 'ar' ? "1️⃣ إضافة درس لمادة موجودة بالفعل" : "1️⃣ Add a lesson to an existing subject")}
             </h3>
             <p className="text-sm text-gray-400">
-                {lang === 'ar' ? "فلتر المواد حسب السنة والسمستر" : "Filter subjects by year and semester"}
+                {adminAddMode === 'special_course'
+                    ? (lang === 'ar' ? "دور على الكورس اللي عايز تضيف ليه درس" : "Find the course you want to add a lesson to")
+                    : (lang === 'ar' ? "فلتر المواد حسب السنة والسمستر" : "Filter subjects by year and semester")}
             </p>
         </div>
  
@@ -2564,22 +2603,52 @@ const handleAccountSignOut = () => {
             <i data-lucide="search" className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4"></i>
             <input 
                 type="text"
-                placeholder={lang === 'ar' ? "بحث عن مادة..." : "Search subject..."}
+                placeholder={adminAddMode === 'special_course' ? (lang === 'ar' ? "بحث عن كورس..." : "Search course...") : (lang === 'ar' ? "بحث عن مادة..." : "Search subject...")}
                 onChange={(e) => setSearchQuery(e.target.value)} 
                 className={`ps-10 p-3 rounded-xl border-2 outline-none transition-all text-sm w-full md:w-64 ${darkMode ? 'bg-gray-800 border-gray-700 text-white focus:border-orange-500' : 'bg-white border-gray-100 focus:border-orange-500'}`}
             />
         </div>
     </div>
+
+    {/* فلتر السنة والسمستر - مالوش معنى للكورسات التدريبية، بيظهر بس للمواد الدراسية */}
+    {adminAddMode === 'academic' && (
+    <div className="grid grid-cols-2 gap-3 max-w-md">
+        <div>
+            <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'السنة الدراسية' : 'Academic Year'}</label>
+            <select
+                value={selectedYear}
+                onChange={(e) => setSelectedYear(e.target.value)}
+                className={`w-full p-3 rounded-xl border-2 outline-none font-bold text-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'} focus:border-[#f58220]`}
+            >
+                {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
+            </select>
+        </div>
+        <div>
+            <label className="text-xs font-bold text-gray-400 mb-1 block">{lang === 'ar' ? 'السمستر' : 'Semester'}</label>
+            <select
+                value={selectedSemester}
+                onChange={(e) => setSelectedSemester(e.target.value)}
+                className={`w-full p-3 rounded-xl border-2 outline-none font-bold text-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-200'} focus:border-[#f58220]`}
+            >
+                {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
+            </select>
+        </div>
+    </div>
+    )}
  
  
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {contents && contents
-            .filter(c => 
-                c.category === 'academic' && 
-                String(c.yearId) === String(selectedYear) && 
-                String(c.semesterId) === String(selectedSemester) &&
-                (c.subject.toLowerCase().includes(searchQuery.toLowerCase())) 
-            )
+            .filter(c => {
+                if (!c.subject) return false;
+                if (!c.subject.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+                if (adminAddMode === 'special_course') {
+                    return c.category === 'special_course';
+                }
+                return c.category === 'academic' &&
+                    String(c.yearId) === String(selectedYear) &&
+                    String(c.semesterId) === String(selectedSemester);
+            })
             .reduce((acc, current) => {
                 const x = acc.find(item => item.subject === current.subject);
                 if (!x) return acc.concat([current]);
@@ -2589,7 +2658,7 @@ const handleAccountSignOut = () => {
                 <div key={index} className={`p-4 rounded-2xl border-2 flex items-center justify-between transition-all hover:shadow-md ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center">
-                            <i data-lucide="book-marked" className="w-5 h-5"></i>
+                            <i data-lucide={adminAddMode === 'special_course' ? 'rocket' : 'book-marked'} className="w-5 h-5"></i>
                         </div>
                         <h4 className={`font-bold ${darkMode ? 'text-white' : 'text-gray-900'}`}>{subjectItem.subject}</h4>
                     </div>
@@ -2610,40 +2679,66 @@ const handleAccountSignOut = () => {
     </div>
  
    
-    {(!contents || contents.filter(c => c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester)).length === 0) && (
+    {(!contents || contents.filter(c => {
+        if (!c.subject) return false;
+        if (adminAddMode === 'special_course') return c.category === 'special_course';
+        return c.category === 'academic' && String(c.yearId) === String(selectedYear) && String(c.semesterId) === String(selectedSemester);
+    }).length === 0) && (
         <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
             <p className="text-gray-400 font-bold">
-                {lang === 'ar' ? "لا توجد مواد مضافة لهذه السنة/السمستر" : "No subjects for this year/semester"}
+                {adminAddMode === 'special_course'
+                    ? (lang === 'ar' ? "لا توجد كورسات مضافة بعد" : "No courses added yet")
+                    : (lang === 'ar' ? "لا توجد مواد مضافة لهذه السنة/السمستر" : "No subjects for this year/semester")}
             </p>
         </div>
     )}
 </div>
- 
+
+<div className={`mt-10 pt-8 border-t-2 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
+    <h3 className={`font-black text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+        {adminAddMode === 'special_course'
+            ? (lang === 'ar' ? "2️⃣ أو أنشئ كورس جديد كليًا" : "2️⃣ Or create a brand new course")
+            : (lang === 'ar' ? "2️⃣ أو أنشئ مادة جديدة كليًا" : "2️⃣ Or create a brand new subject")}
+    </h3>
+    <p className="text-sm text-gray-400 mb-4">
+        {lang === 'ar' ? "هيتضاف أول درس ليها هنا تحت، وبعدين تقدر تضيف دروس تانية ليها من قسم (1) فوق" : "Its first lesson is added below, then use section (1) above to add more lessons to it"}
+    </p>
   <input
     type="text"
-    placeholder={lang === 'ar' ? "أو اكتب مادة جديدة" : "Or enter new subject"}
+    placeholder={adminAddMode === 'special_course' ? (lang === 'ar' ? "اسم الكورس الجديد" : "New course name") : (lang === 'ar' ? "اسم المادة الجديدة" : "New subject name")}
     value={customSubject}
     onChange={(e) => setCustomSubject(e.target.value)}
-    className={`p-4 rounded-2xl border-2 ${
+    className={`w-full p-4 rounded-2xl border-2 ${
       darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white border-gray-200'
     }`}
   />
- 
+</div>
 </div>
                                        
+                                        <p className={`md:col-span-3 text-xs font-bold -mb-2 ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+                                            {lang === 'ar' ? "↓ تفاصيل أول درس في المادة الجديدة دي" : "↓ Details of this new subject's first lesson"}
+                                        </p>
+                                        <input name="materialTitle" required placeholder={lang === 'ar' ? "اسم الدرس/المحتوى (مثال: المحاضرة الأولى - مقدمة)" : "Lesson/content title (e.g. Lecture 1 - Introduction)"} className={`md:col-span-3 w-full p-4 rounded-2xl border-2 transition-all outline-none mt-2 ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         <input name="url" required placeholder={lang === 'ar' ? "الرابط المباشر" : "Direct Link"} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                         {adminAddMode === 'academic' && (<>
-                                        <select name="yearId" onChange={(e) => setSelectedYear(e.target.value)}>
+                                        <select name="yearId" value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}>
                                             {years.map(y => <option key={y.id} value={y.id}>{y.title}</option>)}
                                         </select>
-                                        <select name="semesterId" onChange={(e) => setSelectedSemester(e.target.value)}>
+                                        <select name="semesterId" value={selectedSemester} onChange={(e) => setSelectedSemester(e.target.value)} className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}>
                                             {semesters.map(s => <option key={s.id} value={s.id}>{s.title}</option>)}
                                         </select></>)}
                                         <select name="type" className={`w-full p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-[#f58220]' : 'bg-gray-50 border-transparent focus:bg-white focus:border-[#f58220]'}`}>
-                                            <option value="video">{lang === 'ar' ? "محاضرة فيديو" : "Video Lecture"}</option>
-                                            <option value="pdf">{lang === 'ar' ? "ملف ملخص" : "Summary PDF"}</option>
-                                            <option value="exam">{lang === 'ar' ? "امتحان" : "Exam"}</option>
-                                            <option value="references">{lang === 'ar' ? "مرجع" : "Reference"}</option>
+                                            <option value="video">{lang === 'ar' ? "🎬 محاضرة فيديو" : "Video Lecture"}</option>
+                                            <option value="pdf">{lang === 'ar' ? "📄 ملف ملخص" : "Summary PDF"}</option>
+                                            <option value="exam">{lang === 'ar' ? "📝 امتحان" : "Exam"}</option>
+                                            <option value="ppt">{lang === 'ar' ? "📊 بوربوينت" : "PowerPoint"}</option>
+                                            <option value="voice">{lang === 'ar' ? "🎙️ فويس" : "Voice"}</option>
+                                            <option value="labs">{lang === 'ar' ? "🔬 معمل / Labs" : "Labs"}</option>
+                                            <option value="sheets">{lang === 'ar' ? "📋 شيتات" : "Sheets"}</option>
+                                            <option value="tutorials">{lang === 'ar' ? "🎓 شروحات" : "Tutorials"}</option>
+                                            <option value="quizzes">{lang === 'ar' ? "❓ كويزات" : "Quizzes"}</option>
+                                            <option value="summaries">{lang === 'ar' ? "🥞 ملخصات" : "Summaries"}</option>
+                                            <option value="references">{lang === 'ar' ? "📚 مرجع" : "Reference"}</option>
                                         </select>
                                         <button className={`md:col-span-3 w-full p-5 rounded-2xl font-bold transition-all shadow-lg ${
   darkMode 
@@ -3828,7 +3923,13 @@ if (
   
     <div 
         onClick={(e) => {
-            if (e.target === e.currentTarget) setIsModalOpen(false);
+            if (e.target === e.currentTarget) {
+                setIsModalOpen(false);
+                setLinksList([]);
+                setSelectedLectureId('');
+                setIsExistingLecture(false);
+                setIsFolderOnly(false);
+            }
         }}
         className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
     >
@@ -3840,7 +3941,13 @@ if (
             
         
             <button 
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                    setIsModalOpen(false);
+                    setLinksList([]);
+                    setSelectedLectureId('');
+                    setIsExistingLecture(false);
+                    setIsFolderOnly(false);
+                }}
                 className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors z-10"
             >
                 <i data-lucide="x" className="w-6 h-6"></i>
@@ -3897,6 +4004,7 @@ const lectureData = {
                 subject: modalSubjectData.subject,
                 yearId: String(modalSubjectData.yearId),
                 semesterId: String(modalSubjectData.semesterId),
+                isFolder: isFolderOnly,
           links: formData.get('lectureUrl')?.trim()
     ? [{
         type: formData.get('type'),
@@ -3920,6 +4028,7 @@ const lectureData = {
         setLinksList([]);
         setSelectedLectureId('');
         setIsExistingLecture(false);
+        setIsFolderOnly(false);
         e.target.reset();
         setTimeout(() => setToast({ show: false, message: '' }), 3000);
  
@@ -4326,7 +4435,7 @@ style={{ scrollbarWidth: 'thin' }}
                     
                     <div className="flex gap-2">
                               <button 
-                            onClick={() => handleEdit("materials", lecture.id, lecture.title, lecture.url)}
+                            onClick={() => handleEditLecture(lecture)}
                             className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
                             title="تعديل"
                         >
@@ -4346,7 +4455,7 @@ style={{ scrollbarWidth: 'thin' }}
  
                         {/* زر المعاينة */}
                         <a 
-                            href={lecture.url} 
+                            href={lecture.links?.[0]?.url || lecture.url || '#'} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="p-2 bg-gray-200 text-gray-600 rounded-xl hover:bg-gray-300 transition-colors"
@@ -4594,10 +4703,10 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 content: content,
                 expiresAt: expiresTimestamp
             }).then(async function() {
-                //  إرسال الإشعار بعد التعديل
+                // ✅ إرسال الإشعار بعد التعديل
                 await sendPushNotification(title, content);
                 if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
-                alert(" تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
+                alert("🚀 تم تحديث الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
                 console.error("خطأ أثناء التعديل:", error);
@@ -4616,17 +4725,17 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 expiresAt: expiresTimestamp,
                 isActive: true
             }).then(async function() {
-                //  إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
+                // ✅ إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
                 await sendPushNotification(title, content);
                 if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
-                alert(" تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
+                alert("🚀 تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
                 window.resetFormState();
             }).catch(function(error) {
                 console.error("حدث خطأ أثناء الحفظ:", error);
                 alert("❌ حدث خطأ أثناء الحفظ: " + error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
+                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
                 }
             });
         }
@@ -4640,8 +4749,8 @@ window.resetFormState = function resetFormState() {
     
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
-        submitBtn.disabled = false;                          
-        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
+        submitBtn.disabled = false;                              // ← إعادة تفعيل الزر
+        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار 🚀";
         submitBtn.style.backgroundColor = "";
     }
 }
