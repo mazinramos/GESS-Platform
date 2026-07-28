@@ -443,8 +443,8 @@ const t = {
                 if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
             }, [messages, loading]);
 
-            //  غيّر الرابط دا برابط الـ Cloudflare Worker بتاعك بعد نشره (شوف الدليل المرفق)
-            const AI_WORKER_URL = "(https://gess-ai-chat.mazinflwo-dev.workers.dev/";
+            // 👇 غيّر الرابط دا برابط الـ Cloudflare Worker بتاعك بعد نشره (شوف الدليل المرفق)
+            const AI_WORKER_URL = "https://gess-ai-chat.mazinflwo-dev.workers.dev";
 
             // بناء قائمة مختصرة بمحتوى المنهج (المواد/الدروس/المجلات) الموجود فعليًا في المنصة
             // عشان المساعد الذكي يعرف يجاوب في حدود المنهج المتاح، ويرشد الطالب للمحتوى المناسب
@@ -1573,7 +1573,8 @@ const t = {
             const [showAdminAuth, setShowAdminAuth] = React.useState(false);
             const [adminPassInput, setAdminPassInput] = React.useState("");
             const [isSuperAdmin, setIsSuperAdmin] = React.useState(localStorage.getItem('gess_is_super_admin') === 'true');
-            const [visibleAdminPass, setVisibleAdminPass] = React.useState(null);
+            const [logoTapCount, setLogoTapCount] = React.useState(0);
+            const logoTapTimer = React.useRef(null);
             const [path, setPath] = React.useState([]);
             const [selectedItem, setSelectedItem] = React.useState(null);
             const [darkMode, setDarkMode] = React.useState(localStorage.getItem("gess_theme") === "dark");
@@ -1598,7 +1599,6 @@ const t = {
             const [authModalView, setAuthModalView] = React.useState('login');
             const [adminSection, setAdminSection] = React.useState('content');
             const [contents, setContents] = React.useState([]);
-            const [newAdminPass, setNewAdminPass] = React.useState('');
             const currentSubject = path[2]?.title;
             const subjectContents = contents.filter(item => item.subject?.toLowerCase() === currentSubject?.toLowerCase());
             const typesAvailable = [...new Set(subjectContents.map(item => item.type))];
@@ -1981,10 +1981,26 @@ const handleLogin = (e) => {
     setTimeout(() => setToast({ show: false, message: '' }), 3000);
 };
  
+// اختصار لوحة مفاتيح مخفي (Ctrl+Shift+A) لفتح نافذة دخول الأدمن -
+// ضروري عشان "الأدمن الكبير" يقدر يدخل أول مرة قبل ما يكون عندو حساب بصلاحية،
+// بما إن زرار "لوحة الإدارة" بقى مخفي من القايمة لغير الأدمنز أصلاً
+React.useEffect(() => {
+    const handleShortcut = (e) => {
+        if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+            e.preventDefault();
+            setShowAdminAuth(true);
+        }
+    };
+    window.addEventListener('keydown', handleShortcut);
+    return () => window.removeEventListener('keydown', handleShortcut);
+}, []);
+
 const checkAdminAuth = async (e) => {
     e.preventDefault();
 
-    // المفتاح الرئيسي بتاع "الأدمن الكبير" - شغال دايمًا مهما كانت كلمة مرور الأدمن العادية
+    // المفتاح الرئيسي بتاع "الأدمن الكبير" - ده الطريقة الوحيدة المتبقية للدخول بدون حساب
+    // (بعد ما شلنا فكرة كلمة مرور الأدمن المشتركة). أي أدمن تاني لازم يكون عندو حساب مسجّل
+    // وصلاحية "admin" ممنوحة ليه من السوبر أدمن (من قسم "الطلاب" في اللوحة).
     if (adminPassInput === SUPER_ADMIN_KEY) {
         setIsSuperAdmin(true);
         localStorage.setItem('gess_is_super_admin', 'true');
@@ -1997,29 +2013,11 @@ const checkAdminAuth = async (e) => {
         return;
     }
 
-    // كلمة مرور الأدمن العادية - بنجيبها من Firestore عشان تكون موحدة بين كل الأجهزة والأدمنز
-    let savedAdminPass = 'admin123';
-    try {
-        const doc = await db.collection('config').doc('access').get();
-        if (doc.exists && doc.data().adminPassword) {
-            savedAdminPass = doc.data().adminPassword;
-        }
-    } catch (err) {
-        console.error('Admin password fetch error:', err);
-    }
+    alert(lang === 'ar'
+        ? "❌ مفتاح غير صحيح. الدخول للوحة الإدارة بقى بحسابك الشخصي (لو عندك صلاحية أدمن) أو بمفتاح السوبر أدمن فقط."
+        : "❌ Incorrect key. Admin access now requires your personal admin account, or the Super Admin master key.");
+    setAdminPassInput("");
 
-    if (adminPassInput === savedAdminPass) {
-        setIsSuperAdmin(false);
-        localStorage.removeItem('gess_is_super_admin');
-        setView('admin');
-        setShowAdminAuth(false);
-        setAdminPassInput("");
-        setPath([]);
-        setToast({ show: true, message: lang === 'ar' ? "تم تأكيد صلاحيات الإدارة" : "Admin Authorized" });
-    } else {
-        alert(lang === 'ar' ? "❌ كلمة مرور الإدارة غير صحيحة!" : "❌ Incorrect Admin Password!");
-        setAdminPassInput("");
-    }
     setTimeout(() => setToast({ show: false, message: '' }), 3000);
 };
  
@@ -2188,7 +2186,21 @@ const handleAccountSignOut = () => {
 }`}>
     <div className="max-w-6xl mx-auto px-4 w-full flex items-center justify-between">
         
-        <div className="flex items-center gap-3 order-first">
+        <div
+            className="flex items-center gap-3 order-first"
+            onClick={() => {
+                if (logoTapTimer.current) clearTimeout(logoTapTimer.current);
+                setLogoTapCount(prev => {
+                    const next = prev + 1;
+                    if (next >= 5) {
+                        setShowAdminAuth(true);
+                        return 0;
+                    }
+                    return next;
+                });
+                logoTapTimer.current = setTimeout(() => setLogoTapCount(0), 1500);
+            }}
+        >
             
                 <img src="data:image/jpeg;base64,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"alt="Logo"
                 className="w-10 h-10 object-contain rounded-lg shadow-sm"onError={(e) => { e.target.style.display = 'none'; }}/>
@@ -2352,7 +2364,8 @@ const handleAccountSignOut = () => {
                 </div>
             </button>
  
-            {/* 3.  لوحة الإدارة */}
+            {/* 3.  لوحة الإدارة - تظهر بس لو الحساب عندو صلاحية أدمن فعلاً (أو أدمن كبير مفعّل الجلسة دي) */}
+            {(isSuperAdmin || view === 'admin' || (authUser && (userProfile?.role === 'admin' || userProfile?.role === 'superadmin'))) && (
             <button 
                 onClick={() => {
                     if (view === 'admin') {
@@ -2380,6 +2393,7 @@ const handleAccountSignOut = () => {
                     {lang === 'ar' ? "لوحة الإدارة" : "Admin Panel"}
                 </div>
             </button>
+            )}
  
             {/*  الأدعية والأذكار  */}
 <button 
@@ -2588,8 +2602,8 @@ const handleAccountSignOut = () => {
         <div>
             <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                 {adminAddMode === 'special_course'
-                    ? (lang === 'ar' ? " إضافة درس لكورس موجود بالفعل" : " Add a lesson to an existing course")
-                    : (lang === 'ar' ? " إضافة درس لمادة موجودة بالفعل" : " Add a lesson to an existing subject")}
+                    ? (lang === 'ar' ? "1️⃣ إضافة درس لكورس موجود بالفعل" : "1️⃣ Add a lesson to an existing course")
+                    : (lang === 'ar' ? "1️⃣ إضافة درس لمادة موجودة بالفعل" : "1️⃣ Add a lesson to an existing subject")}
             </h3>
             <p className="text-sm text-gray-400">
                 {adminAddMode === 'special_course'
@@ -2697,8 +2711,8 @@ const handleAccountSignOut = () => {
 <div className={`mt-10 pt-8 border-t-2 ${darkMode ? 'border-gray-700' : 'border-gray-100'}`}>
     <h3 className={`font-black text-xl mb-1 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
         {adminAddMode === 'special_course'
-            ? (lang === 'ar' ? " أو أنشئ كورس جديد كليًا" : " Or create a brand new course")
-            : (lang === 'ar' ? " أو أنشئ مادة جديدة كليًا" : " Or create a brand new subject")}
+            ? (lang === 'ar' ? "2️⃣ أو أنشئ كورس جديد كليًا" : "2️⃣ Or create a brand new course")
+            : (lang === 'ar' ? "2️⃣ أو أنشئ مادة جديدة كليًا" : "2️⃣ Or create a brand new subject")}
     </h3>
     <p className="text-sm text-gray-400 mb-4">
         {lang === 'ar' ? "هيتضاف أول درس ليها هنا تحت، وبعدين تقدر تضيف دروس تانية ليها من قسم (1) فوق" : "Its first lesson is added below, then use section (1) above to add more lessons to it"}
@@ -2926,77 +2940,13 @@ const handleAccountSignOut = () => {
     </h3>
 
     {isSuperAdmin && (
-    <div className="max-w-md">
-        <div className="bg-gray-50 dark:bg-gray-800/50 p-6 rounded-2xl border border-gray-200">
-    <div className="flex justify-between items-center mb-2">
-        <label className="font-bold text-sm text-gray-600">{lang === 'ar' ? "كلمة مرور لوحة الأدمن" : "Admin Panel Password"}</label>
-        <span
-    onClick={async (e) => {
-      if (visibleAdminPass !== null) { setVisibleAdminPass(null); return; }
-      try {
-          const doc = await db.collection('config').doc('access').get();
-          const current = (doc.exists && doc.data().adminPassword) ? doc.data().adminPassword : 'admin123';
-          setVisibleAdminPass(current);
-      } catch (err) {
-          alert(lang === 'ar' ? '⚠️ تعذر جلب كلمة المرور الحالية' : '⚠️ Could not fetch current password');
-      }
-    }}
-    className={`text-[10px] px-2 py-1 rounded-lg cursor-pointer transition-all ${
-      darkMode ? 'bg-gray-700 text-gray-300 hover:bg-gray-600' : 'bg-gray-200 text-gray-600 hover:bg-gray-300'
-    }`}
-  >
-  {visibleAdminPass !== null
-      ? `${lang === 'ar' ? 'الحالية' : 'Current'}: ${visibleAdminPass} 👁️`
-      : (lang === 'ar' ? "👁️ إظهار كلمة المرور" : "👁️ Show Password")}
-  </span>
-    </div>
-    <p className="text-[11px] text-gray-400 font-medium mb-2">
-        {lang === 'ar'
-            ? "هذه كلمة مرور مشتركة بين كل الأدمنز (موحدة عبر كل الأجهزة عن طريق قاعدة البيانات)."
-            : "This is a shared password across all admins (synced across devices via the database)."}
-    </p>
-   <input
-  type="password"
- placeholder={lang === 'ar' ? "كلمة المرور الجديدة" : "New Password"}
-  onChange={(e) => setNewAdminPass(e.target.value)}
-  className={`w-full p-4 rounded-2xl border-2 transition-all outline-none mt-2 ${
-    darkMode
-      ? 'bg-gray-800 border-gray-700 text-white placeholder:text-gray-500'
-      : 'bg-white border-gray-100 text-black'
-  } focus:border-orange-500`}
-/>
-
-            <button
-                onClick={async () => {
-  if (!newAdminPass || !newAdminPass.trim()) {
-      alert(lang === 'ar' ? 'اكتب كلمة مرور جديدة الأول' : 'Enter a new password first');
-      return;
-  }
-  try {
-      await db.collection('config').doc('access').set({ adminPassword: newAdminPass.trim() }, { merge: true });
-      setVisibleAdminPass(null);
-      alert('✅ ' + (lang === 'ar' ? 'تم تغيير كلمة مرور الأدمن لكل الأجهزة' : 'Admin password updated across all devices'));
-  } catch (err) {
-      console.error('Admin password update error:', err);
-      alert(lang === 'ar' ? '⚠️ تعذر تحديث كلمة المرور' : '⚠️ Could not update password');
-  }
-}}
-              className={`w-full p-4 rounded-2xl font-bold transition-all mt-6 shadow-lg ${
-  darkMode
-    ? 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-900/20'
-    : 'bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200'
-}`}
-            >
-               {lang === 'ar' ? "تحديث كلمة مرور الأدمن" : "Update Admin Password"}
-            </button>
-
-            <div className={`mt-4 p-3 rounded-xl text-[11px] font-bold flex items-center gap-2 ${darkMode ? 'bg-orange-900/20 text-orange-300' : 'bg-orange-50 text-orange-700'}`}>
-                <i data-lucide="crown" className="w-4 h-4 shrink-0"></i>
-                {lang === 'ar'
-                    ? "أنت مسجّل دخول كـ أدمن كبير — تقدر دايمًا تدخل بمفتاحك الخاص حتى لو أي أدمن غيّر كلمة المرور دي بدون علمك."
-                    : "You're signed in as Super Admin — your master key always works even if another admin changes this password."}
-            </div>
-        </div>
+    <div className={`max-w-lg p-5 rounded-2xl border-2 border-dashed flex items-start gap-3 ${darkMode ? 'border-orange-900/40 bg-orange-900/10' : 'border-orange-200 bg-orange-50/60'}`}>
+        <i data-lucide="info" className="w-5 h-5 text-[#f58220] shrink-0 mt-0.5"></i>
+        <p className={`text-sm font-bold leading-relaxed ${darkMode ? 'text-gray-200' : 'text-gray-700'}`}>
+            {lang === 'ar'
+                ? "مفيش كلمة مرور مشتركة تانية تارة دلوقتي. كل أدمن لازم يكون عندو حساب مسجّل وصلاحية أدمن ممنوحة ليه — تقدر تدي أو تسحب الصلاحية دي من تاب 'الطلاب' فوق. مفتاحك الخاص كأدمن كبير لسه يفضل يشتغل دايمًا كطريقة دخول احتياطية."
+                : "The shared admin password is gone. Every admin now needs a registered account with admin privileges granted from the \"Students\" tab. Your Super Admin master key still works as a backup access method."}
+        </p>
     </div>
     )}
 </div>
