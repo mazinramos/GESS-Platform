@@ -972,7 +972,6 @@ const t = {
                 [lang === 'ar' ? 'البريد الإلكتروني' : 'Email', student.email || '-'],
                 [lang === 'ar' ? 'الرقم الجامعي' : 'Student ID', student.studentId || '-'],
                 [lang === 'ar' ? 'السنة الدراسية' : 'Academic Year', lang === 'ar' ? `السنة ${yearLabelText(student.year, lang)}` : `Year ${student.year || '-'}`],
-                [lang === 'ar' ? 'الدفعة' : 'Batch', batchLabelForYear(student.year)],
                 [lang === 'ar' ? 'التخصص' : 'Specialization', student.specialization || '-'],
                 [lang === 'ar' ? 'رقم الهاتف' : 'Phone', student.phone || '-'],
                 [lang === 'ar' ? 'الحالة' : 'Status', (student.status || 'active') === 'suspended' ? (lang === 'ar' ? 'موقوف' : 'Suspended') : (lang === 'ar' ? 'نشط' : 'Active')],
@@ -1009,13 +1008,19 @@ const t = {
                     </p>
 
                     {/* بطاقة الطالب */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '18px', background: '#FFF4E9', borderRadius: '20px', padding: '20px', marginBottom: '24px' }}>
-                        <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '26px', flexShrink: 0 }}>
-                            {(student.fullName || '?').trim().charAt(0).toUpperCase()}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '18px', background: '#FFF4E9', borderRadius: '20px', padding: '20px', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '18px' }}>
+                            <div style={{ width: '70px', height: '70px', borderRadius: '18px', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900, fontSize: '26px', flexShrink: 0 }}>
+                                {(student.fullName || '?').trim().charAt(0).toUpperCase()}
+                            </div>
+                            <div>
+                                <div style={{ fontWeight: 900, fontSize: '19px' }}>{student.fullName || '-'}</div>
+                                <div style={{ fontSize: '13px', color: '#555', fontWeight: 700 }} dir="ltr">{student.email}</div>
+                            </div>
                         </div>
-                        <div>
-                            <div style={{ fontWeight: 900, fontSize: '19px' }}>{student.fullName || '-'}</div>
-                            <div style={{ fontSize: '13px', color: '#555', fontWeight: 700 }} dir="ltr">{student.email}</div>
+                        <div style={{ textAlign: 'center', background: 'linear-gradient(135deg,#F58220,#ff5b3d)', borderRadius: '16px', padding: '10px 18px', flexShrink: 0 }}>
+                            <div style={{ color: '#fff', fontWeight: 900, fontSize: '20px', lineHeight: 1 }}>{batchLabelForYear(student.year)}</div>
+                            <div style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 700, fontSize: '9px', marginTop: '3px' }}>{lang === 'ar' ? 'الدفعة' : 'BATCH'}</div>
                         </div>
                     </div>
 
@@ -1089,7 +1094,9 @@ const t = {
         // ============================================================
         // كشف الطلاب الكامل القابل للطباعة/الحفظ كـ PDF
         // ============================================================
-        function StudentsTablePrintFile({ students, lang }) {
+        function StudentsTablePrintFile({ students, lang, yearFilter }) {
+            const isFilteredByYear = yearFilter && yearFilter !== 'all';
+            const batchLabel = isFilteredByYear ? batchLabelForYear(yearFilter) : null;
             return (
                 <div dir={lang === 'ar' ? 'rtl' : 'ltr'} style={{ fontFamily: 'Tajawal, sans-serif', color: '#1a1a1a', padding: '10mm' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '4px solid #F58220', paddingBottom: '14px', marginBottom: '20px' }}>
@@ -1099,12 +1106,23 @@ const t = {
                             </div>
                             <div>
                                 <div style={{ fontWeight: 900, fontSize: '17px' }}>{lang === 'ar' ? 'جامعة الخرطوم - قسم هندسة المساحة' : 'University of Khartoum - Surveying Engineering'}</div>
-                                <div style={{ fontWeight: 700, fontSize: '12px', color: '#888' }}>{lang === 'ar' ? `كشف الطلاب المسجلين (${students.length})` : `Registered Students List (${students.length})`}</div>
+                                <div style={{ fontWeight: 700, fontSize: '12px', color: '#888' }}>
+                                    {isFilteredByYear
+                                        ? (lang === 'ar' ? `كشف طلاب الدفعة ${batchLabel} (${students.length})` : `Batch ${batchLabel} Students List (${students.length})`)
+                                        : (lang === 'ar' ? `كشف الطلاب المسجلين - كل الدفعات (${students.length})` : `Registered Students List - All Batches (${students.length})`)}
+                                </div>
                             </div>
                         </div>
-                        <div style={{ textAlign: lang === 'ar' ? 'left' : 'right' }}>
-                            <div style={{ fontWeight: 900, fontSize: '13px', color: '#F58220' }}>GESS EDU</div>
-                            <div style={{ fontSize: '10px', color: '#999' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</div>
+                        <div style={{ textAlign: lang === 'ar' ? 'left' : 'right', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                            {isFilteredByYear && (
+                                <div style={{ background: 'linear-gradient(135deg,#F58220,#ff5b3d)', color: '#fff', fontWeight: 900, fontSize: '14px', padding: '8px 16px', borderRadius: '999px' }}>
+                                    {lang === 'ar' ? `الدفعة ${batchLabel}` : `Batch ${batchLabel}`}
+                                </div>
+                            )}
+                            <div>
+                                <div style={{ fontWeight: 900, fontSize: '13px', color: '#F58220' }}>GESS EDU</div>
+                                <div style={{ fontSize: '10px', color: '#999' }}>{new Date().toLocaleDateString(lang === 'ar' ? 'ar-EG' : 'en-US')}</div>
+                            </div>
                         </div>
                     </div>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', tableLayout: 'fixed' }}>
@@ -1206,7 +1224,7 @@ const t = {
             );
         }
 
-        function StudentDetailModal({ student, lang, darkMode, isSuperAdmin, currentUid, onClose, onPrint, onToggleStatus, onToggleRole }) {
+        function StudentDetailModal({ student, lang, darkMode, isSuperAdmin, currentUid, onClose, onPrint, onToggleStatus, onToggleRole, onDelete }) {
             if (!student) return null;
             const isAdminRole = student.role === 'admin';
             const isSelf = currentUid && currentUid === student.id;
@@ -1286,24 +1304,35 @@ const t = {
                             )}
                         </div>
 
-                        <div className="p-4 border-t flex gap-2 shrink-0" style={{ borderColor: darkMode ? '#374151' : '#f0f0f0' }}>
-                            <button
-                                onClick={() => onToggleStatus(student)}
-                                className={`flex-1 p-3 rounded-xl font-black text-sm transition-colors ${
-                                    (student.status || 'active') === 'suspended'
-                                        ? 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
-                                        : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
-                                }`}
-                            >
-                                {(student.status || 'active') === 'suspended' ? (lang === 'ar' ? 'تفعيل الحساب' : 'Activate') : (lang === 'ar' ? 'إيقاف الحساب' : 'Suspend')}
-                            </button>
-                            <button
-                                onClick={() => onPrint(student)}
-                                className="flex-1 p-3 rounded-xl font-black text-sm bg-[#f58220] text-white hover:bg-[#dd6e10] transition-colors flex items-center justify-center gap-2"
-                            >
-                                <i data-lucide="printer" className="w-4 h-4"></i>
-                                {lang === 'ar' ? 'طباعة ملف الطالب' : 'Print Student File'}
-                            </button>
+                        <div className="p-4 border-t flex flex-col gap-2 shrink-0" style={{ borderColor: darkMode ? '#374151' : '#f0f0f0' }}>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => onToggleStatus(student)}
+                                    className={`flex-1 p-3 rounded-xl font-black text-sm transition-colors ${
+                                        (student.status || 'active') === 'suspended'
+                                            ? 'bg-green-50 text-green-600 hover:bg-green-600 hover:text-white'
+                                            : 'bg-red-50 text-red-500 hover:bg-red-500 hover:text-white'
+                                    }`}
+                                >
+                                    {(student.status || 'active') === 'suspended' ? (lang === 'ar' ? 'تفعيل الحساب' : 'Activate') : (lang === 'ar' ? 'إيقاف الحساب' : 'Suspend')}
+                                </button>
+                                <button
+                                    onClick={() => onPrint(student)}
+                                    className="flex-1 p-3 rounded-xl font-black text-sm bg-[#f58220] text-white hover:bg-[#dd6e10] transition-colors flex items-center justify-center gap-2"
+                                >
+                                    <i data-lucide="printer" className="w-4 h-4"></i>
+                                    {lang === 'ar' ? 'طباعة ملف الطالب' : 'Print Student File'}
+                                </button>
+                            </div>
+                            {isSuperAdmin && !isSelf && (
+                                <button
+                                    onClick={() => onDelete(student)}
+                                    className="w-full p-2.5 rounded-xl font-bold text-xs bg-transparent text-red-500 hover:bg-red-50 transition-colors flex items-center justify-center gap-1.5 border border-red-200"
+                                >
+                                    <i data-lucide="trash-2" className="w-3.5 h-3.5"></i>
+                                    {lang === 'ar' ? 'حذف الحساب نهائيًا' : 'Permanently delete account'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -1371,6 +1400,30 @@ const t = {
                 } catch (err) {
                     console.error('Role update error:', err);
                     alert(lang === 'ar' ? '⚠️ تعذر تحديث الصلاحية' : '⚠️ Could not update role');
+                }
+            };
+
+            // حذف حساب طالب نهائيًا من القائمة - للسوبر أدمن فقط، لأنه إجراء لا يمكن التراجع عنه
+            // (مفيد لو لقيت حساب وهمي، أو حساب مش تابع للدفعة، أو حساب مكرر)
+            const handleDeleteStudent = async (student) => {
+                if (!isSuperAdmin) return;
+                const confirmText = lang === 'ar'
+                    ? `هتحذف حساب "${student.fullName || student.email}" نهائيًا ومش هترجع تقدر تسترجعه.\n\nاكتب "حذف" بالظبط للتأكيد:`
+                    : `You're about to permanently delete "${student.fullName || student.email}". This cannot be undone.\n\nType "delete" exactly to confirm:`;
+                const typed = window.prompt(confirmText);
+                const expected = lang === 'ar' ? 'حذف' : 'delete';
+                if (!typed || typed.trim() !== expected) {
+                    if (typed !== null) alert(lang === 'ar' ? 'الحذف اتلغى - النص المكتوب مش مطابق' : 'Deletion cancelled - text did not match');
+                    return;
+                }
+                try {
+                    await db.collection('users').doc(student.id).delete();
+                    setStudents(prev => prev.filter(s => s.id !== student.id));
+                    setSelectedStudent(null);
+                    alert(lang === 'ar' ? '🗑️ تم حذف الحساب نهائيًا' : '🗑️ Account permanently deleted');
+                } catch (err) {
+                    console.error('Delete student error:', err);
+                    alert(lang === 'ar' ? '⚠️ تعذر حذف الحساب' : '⚠️ Could not delete account');
                 }
             };
 
@@ -1554,6 +1607,7 @@ const t = {
                             onPrint={(s) => { setPrintStudent(s); setSelectedStudent(null); }}
                             onToggleStatus={toggleStatus}
                             onToggleRole={toggleRole}
+                            onDelete={handleDeleteStudent}
                         />
                     )}
 
@@ -1575,7 +1629,7 @@ const t = {
                             title={lang === 'ar' ? `كشف الطلاب (${filtered.length})` : `Students List (${filtered.length})`}
                             onClose={() => setPrintTableMode(false)}
                         >
-                            <StudentsTablePrintFile students={filtered} lang={lang} />
+                            <StudentsTablePrintFile students={filtered} lang={lang} yearFilter={yearFilter} />
                         </PrintPreviewModal>
                     )}
 
@@ -1587,7 +1641,7 @@ const t = {
                     )}
                     {printTableMode && (
                         <div className="print-area">
-                            <StudentsTablePrintFile students={filtered} lang={lang} />
+                            <StudentsTablePrintFile students={filtered} lang={lang} yearFilter={yearFilter} />
                         </div>
                     )}
                 </div>
