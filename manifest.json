@@ -1,25 +1,39 @@
 {
-  "short_name": "GESS EDU",
-  "name": "GESS EDU PLATFORM",
-  "description": "Geomatics Engineering Educational Platform - University of Khartoum",
-  "lang": "ar",
+  "name": "GESS EDU",
+  "short_name": "GESS",
+  "description": "المنصة الأكاديمية الرسمية لجمعية طلاب قسم هندسة المساحة جامعة الخرطوم GESS",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "background_color": "#ffffff",
   "theme_color": "#f58220",
+  "lang": "ar",
+  "dir": "rtl",
   "icons": [
     {
-      "src": "logo.png",
-      "type": "image/png",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "purpose": "any maskable"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "logo.png",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
