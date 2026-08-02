@@ -4919,33 +4919,6 @@ window.resetFormState = function resetFormState() {
         submitBtn.style.backgroundColor = "";
     }
 }
-
-        // التأكد أولاً من أن التطبيق يعمل داخل Capacitor وأن إضافة Status Bar موجودة
-if (window.Capacitor && window.Capacitor.Plugins.StatusBar) {
-    const StatusBar = window.Capacitor.Plugins.StatusBar;
-
-    const updateStatusBar = async () => {
-        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-        
-        try {
-            if (prefersDark) {
-                // استخدام النص 'DARK' بدلاً من الكائن Style
-                await StatusBar.setStyle({ style: 'DARK' });
-            } else {
-                // استخدام النص 'LIGHT'
-                await StatusBar.setStyle({ style: 'LIGHT' });
-            }
-        } catch (error) {
-            console.log('Status Bar error:', error);
-        }
-    };
-
-    // تشغيل الوظيفة عند فتح التطبيق
-    updateStatusBar();
-
-    // الاستماع لتغيير الوضع
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateStatusBar);
-}
  
  
  
