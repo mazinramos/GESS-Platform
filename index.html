@@ -1783,15 +1783,10 @@ React.useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
                          || window.navigator.standalone === true;
  
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
- 
-    if (isStandalone) {
-        setShowDownloadOption(false);
-    } else {
-        if (isIOS) {
-            setShowDownloadOption(true);
-        }
-    }
+    // نظهر زر "تحميل المنصة كتطبيق" لأي حد لسه ما مثبتها، بغض النظر عن نوع المتصفح.
+    // المتصفحات اللي بتدعم beforeinstallprompt (كروم/إيدج/أندرويد) هنستخدم النافذة الأصلية بتاعتها،
+    // والباقي (فايرفوكس، سفاري ديسكتوب، أو لو الحدث لسه ما اتفعّل) هنوريهم تعليمات يدوية في handleDownloadApp.
+    setShowDownloadOption(!isStandalone);
  
     const handleBeforeInstallPrompt = (e) => {
         e.preventDefault();
@@ -1801,9 +1796,19 @@ React.useEffect(() => {
         }
     };
  
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // بيتفعل لما التطبيق يتثبت فعليًا (حتى لو المستخدم ثبته من قائمة المتصفح مباشرة من غير زرنا)
+    const handleAppInstalled = () => {
+        setShowDownloadOption(false);
+        setDeferredPrompt(null);
+    };
  
-    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+ 
+    return () => {
+        window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.removeEventListener('appinstalled', handleAppInstalled);
+    };
 }, []);
  
 const [showShareModal, setShowShareModal] = React.useState(false);
@@ -1848,14 +1853,23 @@ const handleDownloadApp = async () => {
         return;
     }
  
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt(); 
-    
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-        setShowDownloadOption(false); 
+    // لو المتصفح جهّز نافذة التثبيت الأصلية (كروم/إيدج/أندرويد) نستخدمها مباشرة
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setShowDownloadOption(false);
+        }
+        setDeferredPrompt(null);
+        return;
     }
-    setDeferredPrompt(null);
+ 
+    // لأي متصفح تاني ما بيدعم beforeinstallprompt (فايرفوكس، سفاري ديسكتوب)
+    // أو لو الحدث لسه ما اتفعّل، نوري تعليمات يدوية بدل ما نسيب الزر بدون أي رد فعل
+    alert(lang === 'ar'
+        ? "📥 للتثبيت:\nافتح قائمة المتصفح (⋮ أو ⋯) وابحث عن خيار 'تثبيت التطبيق' أو 'إضافة إلى الشاشة الرئيسية'."
+        : "📥 To Install:\nOpen your browser menu (⋮ or ⋯) and look for 'Install App' or 'Add to Home Screen'."
+    );
 };
  
  
