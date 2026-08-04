@@ -88,7 +88,7 @@ OneSignalDeferred.push(async function (OneSignal) {
         allowLocalhostAsSecureOrigin: true
     });
 
-    console.log(" OneSignal Initialized");
+    console.log("OneSignal Initialized");
 
 });
 </script>
@@ -4752,9 +4752,9 @@ function fetchAndRenderAnnouncements() {
                     </td>
                     <td style="padding: 14px; text-align: center;">
                         <div style="display: flex; gap: 6px; justify-content: center; align-items: center;">
-                            <button type="button" onclick="db.collection('announcements').doc('${itemId}').update({isActive: ${!item.isActive}}).then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })" style="padding: 6px 10px; border: none; background: #e5e7eb; cursor: pointer; border-radius: 8px; font-size: 12px;"></button>
-                            <button type="button" onclick="prepareAnnouncementForEdit('${itemId}', '${item.title.replace(/'/g, "\\'")}', '${item.content.replace(/'/g, "\\'")}')" style="padding: 6px 10px; border: none; background: #feebc8; color: #c05621; cursor: pointer; border-radius: 8px; font-size: 12px; font-weight: bold;"></button>
-                            <button type="button" onclick="if(confirm('حذف؟')){db.collection('announcements').doc('${itemId}').delete().then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })}" style="padding: 6px 10px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 8px; font-size: 12px;"></button>
+                            <button type="button" title="${isShowingNow ? 'إخفاء' : 'إظهار'}" onclick="db.collection('announcements').doc('${itemId}').update({isActive: ${!item.isActive}}).then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })" style="padding: 6px 10px; border: none; background: #e5e7eb; color: #374151; cursor: pointer; border-radius: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center;"><i data-lucide="${isShowingNow ? 'eye-off' : 'eye'}" style="width: 14px; height: 14px;"></i></button>
+                            <button type="button" title="تعديل" onclick="prepareAnnouncementForEdit('${itemId}', '${item.title.replace(/'/g, "\\'")}', '${item.content.replace(/'/g, "\\'")}')" style="padding: 6px 10px; border: none; background: #feebc8; color: #c05621; cursor: pointer; border-radius: 8px; font-size: 12px; font-weight: bold; display: flex; align-items: center; justify-content: center;"><i data-lucide="pencil" style="width: 14px; height: 14px;"></i></button>
+                            <button type="button" title="حذف" onclick="if(confirm('حذف؟')){db.collection('announcements').doc('${itemId}').delete().then(function(){ if(window.gessRefreshAnnouncements) window.gessRefreshAnnouncements(); })}" style="padding: 6px 10px; border: none; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 8px; font-size: 12px; display: flex; align-items: center; justify-content: center;"><i data-lucide="trash-2" style="width: 14px; height: 14px;"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -4765,6 +4765,7 @@ function fetchAndRenderAnnouncements() {
             const aTable = document.getElementById('admin-table-body');
             if (aTable) {
                 aTable.innerHTML = adminTableHtml || '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #9ca3af; font-size: 12px;">لا توجد سجلات.</td></tr>';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             } else {
                 setTimeout(tryInjectingAdminTable, 500);
             }
@@ -4815,7 +4816,7 @@ window.prepareAnnouncementForEdit = function prepareAnnouncementForEdit(id, titl
         titleField.focus(); 
         
         if (submitBtn) {
-            submitBtn.innerHTML = "تحديث وحفظ التعديلات ";
+            submitBtn.innerHTML = "تحديث وحفظ التعديلات";
             submitBtn.style.backgroundColor = "#d69e2e"; 
         }
     }
@@ -4839,14 +4840,14 @@ async function sendPushNotification(title, message) {
         const result = await response.json();
 
         if (result.success) {
-            console.log(" الإشعار أُرسل بنجاح لـ", result.recipients, "مشترك");
+            console.log("الإشعار أُرسل بنجاح لـ", result.recipients, "مشترك");
         } else {
-            console.warn(" OneSignal response:", result);
+            console.warn("OneSignal response:", result);
         }
 
         return result;
     } catch (e) {
-        console.error(" خطأ في إرسال الإشعار:", e);
+        console.error("خطأ في إرسال الإشعار:", e);
         return null;
     }
 }
@@ -4870,7 +4871,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
     // تعطيل الزر أثناء الإرسال
     if (submitBtn) {
         submitBtn.disabled = true;
-        submitBtn.innerHTML = "⏳ جاري النشر والإرسال...";
+        submitBtn.innerHTML = "جاري النشر والإرسال...";
     }
 
     if (typeof db!== 'undefined') {
@@ -4891,7 +4892,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 alert(" حدث خطأ أثناء التعديل: "+ error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = "تحديث وحفظ التعديلات ";
+                    submitBtn.innerHTML = "تحديث وحفظ التعديلات";
                 }
             });
         } else {
@@ -4903,7 +4904,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 expiresAt: expiresTimestamp,
                 isActive: true
             }).then(async function() {
-                // إرسال الإشعار بعد الحفظ —  !
+                // إرسال الإشعار بعد الحفظ — كان مفقوداً هنا!
                 await sendPushNotification(title, content);
                 if (window.gessRefreshAnnouncements) window.gessRefreshAnnouncements();
                 alert(" تم نشر الإعلان وإرسال إشعار لجميع الطلاب!");
@@ -4913,7 +4914,7 @@ window.handlePublishAnnouncement = async function handlePublishAnnouncement() {
                 alert(" حدث خطأ أثناء الحفظ: "+ error.message);
                 if (submitBtn) {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
+                    submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار";
                 }
             });
         }
@@ -4927,13 +4928,13 @@ window.resetFormState = function resetFormState() {
     
     const submitBtn = document.getElementById('submit-btn');
     if (submitBtn) {
-        submitBtn.disabled = false; // ←  تفعيل الزر
-        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار ";
+        submitBtn.disabled = false; // ← إعادة تفعيل الزر
+        submitBtn.innerHTML = "نشر الإعلان وإرسال إشعار";
         submitBtn.style.backgroundColor = "";
     }
 }
 
-        // التأكد  من أن التطبيق  داخل Capacitor وأن إضافة Status Bar موجودة
+        // التأكد أولاً من أن التطبيق يعمل داخل Capacitor وأن إضافة Status Bar موجودة
 if (window.Capacitor && window.Capacitor.Plugins.StatusBar) {
     const StatusBar = window.Capacitor.Plugins.StatusBar;
 
@@ -4942,10 +4943,10 @@ if (window.Capacitor && window.Capacitor.Plugins.StatusBar) {
         
         try {
             if (prefersDark) {
-                //   'DARK'  من الكائن Style
+                // استخدام النص 'DARK' بدلاً من الكائن Style
                 await StatusBar.setStyle({ style: 'DARK' });
             } else {
-                //  النص 'LIGHT'
+                // استخدام النص 'LIGHT'
                 await StatusBar.setStyle({ style: 'LIGHT' });
             }
         } catch (error) {
@@ -4953,9 +4954,10 @@ if (window.Capacitor && window.Capacitor.Plugins.StatusBar) {
         }
     };
 
-    // تشغيل  التطبيق
+    // تشغيل الوظيفة عند فتح التطبيق
     updateStatusBar();
 
+    // الاستماع لتغيير الوضع
     window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateStatusBar);
 }
  
