@@ -2764,12 +2764,12 @@ const handleAccountSignOut = () => {
                                 <div className={`p-8 rounded-[2.5rem] shadow-sm border transition-all ${darkMode ? 'bg-gray-800 border-gray-700 text-white' : 'bg-white border-gray-100 mb-8'}`}>
                                    <h2 className={`text-xl font-black mb-6 border-b pb-4 flex items-center gap-2 ${darkMode ? 'border-gray-700 text-white' : 'border-gray-100 text-gray-800'}`}><i data-lucide="layout-dashboard"></i>{lang === 'ar' ? "إضافة محتوى جديد" : "Add New Content"}</h2>
                                     <form onSubmit={addMaterial} className="grid grid-cols-1 md:grid-cols-3 gap-5">
-                                      <div className={`flex gap-4 mb-6 p-1 rounded-2xl transition-all ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
+                                      <div className={`grid grid-cols-2 sm:flex gap-2 sm:gap-4 mb-6 p-1 rounded-2xl transition-all ${darkMode ? 'bg-gray-800' : 'bg-gray-100'}`}>
 
   <button
     type="button"
     onClick={() => setAdminAddMode('academic')}
-    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'academic'
+    className={`flex-1 p-3 sm:p-4 rounded-xl text-xs sm:text-base transition-all duration-300 ${adminAddMode === 'academic'
       ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold')
       : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
   >
@@ -2779,7 +2779,7 @@ const handleAccountSignOut = () => {
   <button
     type="button"
     onClick={() => setAdminAddMode('special_course')}
-    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'special_course'
+    className={`flex-1 p-3 sm:p-4 rounded-xl text-xs sm:text-base transition-all duration-300 ${adminAddMode === 'special_course'
       ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold')
       : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
   >
@@ -2789,7 +2789,7 @@ const handleAccountSignOut = () => {
   <button
     type="button"
     onClick={() => setAdminAddMode('magazine')}
-    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'magazine'
+    className={`flex-1 p-3 sm:p-4 rounded-xl text-xs sm:text-base transition-all duration-300 ${adminAddMode === 'magazine'
       ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold')
       : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
   >
@@ -2799,7 +2799,7 @@ const handleAccountSignOut = () => {
   <button
     type="button"
     onClick={() => setAdminAddMode('gpa_project')}
-    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'gpa_project'
+    className={`flex-1 p-3 sm:p-4 rounded-xl text-xs sm:text-base transition-all duration-300 ${adminAddMode === 'gpa_project'
       ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold')
       : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
   >
