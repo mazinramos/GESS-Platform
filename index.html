@@ -290,8 +290,8 @@ const t = {
             const items = [
                 { id: 'home', icon: 'home', label: lang === 'ar' ? 'الرئيسية' : 'Home',
                   onClick: () => { setSelectedItem(null); setPath([]); } },
-                { id: 'courses', icon: 'rocket', label: lang === 'ar' ? 'الكورسات' : 'Courses',
-                  onClick: () => { setSelectedItem(null); setPath([{ id: 'courses', title: lang === 'ar' ? 'الكورسات التدريبية' : 'Training Courses', type: 'courses_section' }]); } },
+                { id: 'gpa', icon: 'graduation-cap', label: 'GPA',
+                  onClick: () => { setSelectedItem(null); setPath([{ id: 'gpa', title: lang === 'ar' ? 'مشاريع التخرج' : 'Graduation Projects', type: 'gpa_section' }]); } },
                 { id: 'magazines', icon: 'library', label: lang === 'ar' ? 'المجلات' : 'Magazines',
                   onClick: () => { setSelectedItem(null); setPath([{ id: 'magazines', type: 'magazines_section' }]); } },
                 { id: 'ai', icon: 'sparkles', label: lang === 'ar' ? 'المساعد الذكي' : 'AI Assistant',
@@ -302,7 +302,7 @@ const t = {
 
             const activeId =
                 path.length === 0 ? 'home' :
-                path[0]?.id === 'courses' ? 'courses' :
+                path[0]?.id === 'gpa' ? 'gpa' :
                 path[0]?.id === 'magazines' ? 'magazines' :
                 path[0]?.id === 'ai_chat' ? 'ai' :
                 path[0]?.id === 'supplications' ? 'duas' : null;
@@ -2018,6 +2018,39 @@ const handleEditLecture = async (lecture) => {
     }
 };
 
+const handleEditGpaProject = async (project) => {
+    if (!project?.id) {
+        alert("خطأ في المعرف (ID)");
+        return;
+    }
+
+    const newBatch = window.prompt(lang === 'ar' ? "تعديل الدفعة:" : "Edit batch:", project.batch || '');
+    if (newBatch === null) return;
+    const newGroup = window.prompt(lang === 'ar' ? "تعديل المجموعة:" : "Edit group:", project.group || '');
+    if (newGroup === null) return;
+    const newTitle = window.prompt(lang === 'ar' ? "تعديل اسم المشروع:" : "Edit project title:", project.title || '');
+    if (newTitle === null) return;
+    const newSupervisor = window.prompt(lang === 'ar' ? "تعديل اسم المشرف:" : "Edit supervisor name:", project.supervisor || '');
+    if (newSupervisor === null) return;
+    const newLink = window.prompt(lang === 'ar' ? "تعديل رابط المشروع:" : "Edit project link:", project.driveLink || '');
+    if (newLink === null) return;
+
+    try {
+        await db.collection("materials").doc(project.id).update({
+            batch: newBatch.trim(),
+            group: newGroup.trim(),
+            title: newTitle.trim(),
+            supervisor: newSupervisor.trim(),
+            driveLink: newLink.trim()
+        });
+        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
+        alert(lang === 'ar' ? "تم تعديل المشروع بنجاح" : "Project updated");
+    } catch (error) {
+        console.error("Error updating gpa project: ", error);
+        alert((lang === 'ar' ? "فشل التعديل: " : "Update failed: ") + error.message);
+    }
+};
+
 const handleEditMagazineDescription = async (docId, currentDescription) => {
     if (!docId) {
         alert("خطأ في المعرف (ID)");
@@ -2217,6 +2250,37 @@ const handleAccountSignOut = () => {
         createdAt: new Date()
       });
       alert(" تم رفع المجلة بنجاح - " + magTitle);
+      if (window.gessRefreshMaterials) window.gessRefreshMaterials();
+      form.reset();
+    } catch (error) {
+      console.error("Firebase Error:", error);
+      alert("فشل الرفع: "+ error.message);
+    }
+    return;
+  }
+
+  if (adminAddMode === 'gpa_project') {
+    const gpaBatch = form.gpaBatch?.value?.trim();
+    const gpaGroup = form.gpaGroup?.value?.trim();
+    const gpaTitle = form.gpaTitle?.value?.trim();
+    const gpaSupervisor = form.gpaSupervisor?.value?.trim();
+    const gpaLink = form.gpaLink?.value?.trim();
+    if (!gpaBatch ||!gpaGroup ||!gpaTitle ||!gpaSupervisor ||!gpaLink) {
+      alert(lang === 'ar' ? "الرجاء تعبئة كل الحقول: الدفعة، المجموعة، اسم المشروع، المشرف، والرابط" : "Please fill in batch, group, title, supervisor, and link");
+      return;
+    }
+    try {
+      await db.collection("materials").add({
+        category: 'gpa_project',
+        type: 'gpa_project',
+        batch: gpaBatch,
+        group: gpaGroup,
+        title: gpaTitle,
+        supervisor: gpaSupervisor,
+        driveLink: gpaLink,
+        createdAt: new Date()
+      });
+      alert(" تم رفع مشروع التخرج بنجاح - " + gpaTitle);
       if (window.gessRefreshMaterials) window.gessRefreshMaterials();
       form.reset();
     } catch (error) {
@@ -2732,8 +2796,18 @@ const handleAccountSignOut = () => {
    {lang === 'ar' ? "مجلة" : "Magazine"}
   </button>
 
+  <button
+    type="button"
+    onClick={() => setAdminAddMode('gpa_project')}
+    className={`flex-1 p-4 rounded-xl text-base transition-all duration-300 ${adminAddMode === 'gpa_project'
+      ? (darkMode ? 'bg-gray-700 shadow-lg text-orange-400 font-bold' : 'bg-white shadow text-orange-600 font-bold')
+      : (darkMode ? 'text-gray-400 hover:text-gray-200' : 'text-gray-500 hover:text-gray-700')}`}
+  >
+   {lang === 'ar' ? "مشروع تخرج" : "GPA Project"}
+  </button>
+
 </div>
-                                        {adminAddMode!== 'magazine' && (
+                                        {adminAddMode!== 'magazine' && adminAddMode!== 'gpa_project' && (
                                         <>
                                         <div className="md:col-span-3">
 
@@ -2921,6 +2995,30 @@ const handleAccountSignOut = () => {
                                             </button>
                                         </div>
                                         )}
+
+                                        {adminAddMode === 'gpa_project' && (
+                                        <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <input name="gpaBatch" required list="gpaBatchList" placeholder={lang === 'ar' ? "اسم/رقم الدفعة (مثال: 21)" : "Batch (e.g. 21)"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <datalist id="gpaBatchList">
+                                                {[...new Set(contents.filter(c => c.category === 'gpa_project').map(c => c.batch))].map(b => <option key={b} value={b} />)}
+                                            </datalist>
+                                            <input name="gpaGroup" required list="gpaGroupList" placeholder={lang === 'ar' ? "اسم المجموعة (مثال: المجموعة الأولى)" : "Group name"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <datalist id="gpaGroupList">
+                                                {[...new Set(contents.filter(c => c.category === 'gpa_project').map(c => c.group))].map(g => <option key={g} value={g} />)}
+                                            </datalist>
+                                            <input name="gpaTitle" required placeholder={lang === 'ar' ? "اسم/عنوان مشروع التخرج" : "Graduation project title"}
+                                                className={`md:col-span-2 p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <input name="gpaSupervisor" required placeholder={lang === 'ar' ? "اسم المشرف" : "Supervisor name"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <input name="gpaLink" required placeholder={lang === 'ar' ? "رابط المشروع (Drive)" : "Project Drive link"}
+                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <button className="md:col-span-2 w-full p-5 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200">
+                                                {lang === 'ar' ? "نشر مشروع التخرج الآن" : "Publish Project Now"}
+                                            </button>
+                                        </div>
+                                        )}
                                     </form>
 
                                     {adminAddMode === 'magazine' && (
@@ -2991,6 +3089,58 @@ const handleAccountSignOut = () => {
                                         {contents.filter(c => c.category === 'magazine').length === 0 && (
                                             <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
                                                 <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مجلات مضافة بعد" : "No magazines yet"}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    )}
+
+                                    {adminAddMode === 'gpa_project' && (
+                                    <div className="mt-8 space-y-6">
+                                        <h3 className={`font-black text-xl ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                            {lang === 'ar' ? "مشاريع التخرج المضافة حالياً" : "Current Graduation Projects"}
+                                        </h3>
+
+                                        {[...new Set(contents.filter(c => c.category === 'gpa_project').map(c => c.batch))]
+                                            .sort((a, b) => String(b).localeCompare(String(a), undefined, { numeric: true }))
+                                            .map(batch => (
+                                            <div key={batch} className={`p-4 rounded-2xl border-2 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                                                <h4 className={`font-black mb-3 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                                    <i data-lucide="award" className="w-4 h-4 text-orange-500"></i>
+                                                    {(lang === 'ar' ? 'دفعة ' : 'Batch ') + batch}
+                                                </h4>
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                    {contents.filter(c => c.category === 'gpa_project' && c.batch === batch).map(project => (
+                                                        <div key={project.id} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-100'}`}>
+                                                            <div className="min-w-0">
+                                                                <p className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{project.group}</p>
+                                                                <h5 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{project.title}</h5>
+                                                                <p className="text-xs text-gray-400 truncate">{lang === 'ar' ? 'المشرف: ' : 'Supervisor: '}{project.supervisor}</p>
+                                                            </div>
+                                                            <div className="flex gap-2 shrink-0">
+                                                                <button
+                                                                    onClick={() => handleEditGpaProject(project)}
+                                                                    className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors"
+                                                                    title={lang === 'ar' ? "تعديل" : "Edit"}
+                                                                >
+                                                                    <i data-lucide="edit-3" className="w-4 h-4"></i>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => handleDelete("materials", project.id)}
+                                                                    className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors"
+                                                                    title={lang === 'ar' ? "حذف" : "Delete"}
+                                                                >
+                                                                    <i data-lucide="trash-2" className="w-4 h-4"></i>
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+
+                                        {contents.filter(c => c.category === 'gpa_project').length === 0 && (
+                                            <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
+                                                <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مشاريع تخرج مضافة بعد" : "No graduation projects yet"}</p>
                                             </div>
                                         )}
                                     </div>
@@ -3123,30 +3273,130 @@ const handleAccountSignOut = () => {
                                     </div>
                                 )}
 
-{path.length == 1 && path[0].id == 'courses' && (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in duration-500">
-
-        {[...new Set(
-  contents
-    .filter(c => c.category === 'special_course')
-    .map(c => c.courseName)
-)].map(courseName => (
-            <button
-                key={courseName}
-                onClick={() => setPath([...path, { id: courseName, title: courseName, type: 'inside_course' }])}
-                className="p-8 rounded-2xl bg-white dark:bg-gray-800 shadow-xl hover:scale-105 transition text-center border-2 border-orange-500"
-            >
-                <i data-lucide="book" className="w-12 h-12 mb-4 text-orange-500"></i>
-                <h3 className="text-2xl font-bold">{courseName}</h3>
-                <p>{lang === 'ar' ? "اضغط لعرض المحتويات" : "Click to view contents"}</p>
-            </button>
-        ))}
-
-        {contents.filter(c => c.category == 'special_course').length == 0 && (
-            <div className="col-span-full text-center p-10 opacity-50">
-               <p>{lang === 'ar' ? "..لا توجد كورسات مضافة حالياً" : "No courses added yet.."}</p>
+{path.length == 1 && path[0].id == 'gpa' && (
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="text-center mb-10">
+            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-orange-100 text-orange-600 font-black text-sm mb-5">
+                <i data-lucide="graduation-cap" className="w-5 h-5"></i>
+                GPA
             </div>
-        )}
+            <h1 className={`text-4xl font-black mb-4 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {lang === 'ar' ? 'مشاريع التخرج' : 'Graduation Projects'}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400 max-w-2xl mx-auto">
+                {lang === 'ar' ? "اختر الدفعة لعرض مجموعاتها ومشاريع التخرج الخاصة بها." : "Choose a batch to view its groups and graduation projects."}
+            </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...new Set(
+                contents.filter(c => c.category === 'gpa_project').map(c => c.batch)
+            )]
+            .sort((a, b) => String(b).localeCompare(String(a), undefined, { numeric: true }))
+            .map(batch => (
+                <button
+                    key={batch}
+                    onClick={() => setPath([...path, { id: batch, title: (lang === 'ar' ? 'دفعة ' : 'Batch ') + batch, type: 'gpa_batch' }])}
+                    className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                >
+                    <i data-lucide="award" className="w-12 h-12 text-[#f58220] mb-4"></i>
+                    <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                        {(lang === 'ar' ? 'دفعة ' : 'Batch ') + batch}
+                    </h3>
+                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض المجموعات" : "View groups"}</p>
+                </button>
+            ))}
+
+            {contents.filter(c => c.category === 'gpa_project').length === 0 && (
+                <div className="col-span-full text-center p-10 opacity-50">
+                    <p>{lang === 'ar' ? "لا توجد مشاريع تخرج مضافة بعد" : "No graduation projects added yet"}</p>
+                </div>
+            )}
+        </div>
+    </div>
+)}
+
+{path.length == 2 && path[0].id == 'gpa' && (
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="text-center mb-10">
+            <h1 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {path[1].title}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+                {lang === 'ar' ? "اختر المجموعة لعرض مشاريع التخرج" : "Choose a group to view its graduation projects"}
+            </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[...new Set(
+                contents.filter(c => c.category === 'gpa_project' && String(c.batch) === String(path[1].id)).map(c => c.group)
+            )]
+            .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
+            .map(group => (
+                <button
+                    key={group}
+                    onClick={() => setPath([...path, { id: group, title: group, type: 'gpa_group' }])}
+                    className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                >
+                    <i data-lucide="users" className="w-12 h-12 text-[#f58220] mb-4"></i>
+                    <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{group}</h3>
+                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض مشاريع التخرج" : "View graduation projects"}</p>
+                </button>
+            ))}
+
+            {contents.filter(c => c.category === 'gpa_project' && String(c.batch) === String(path[1].id)).length === 0 && (
+                <div className="col-span-full text-center p-10 opacity-50">
+                    <p>{lang === 'ar' ? "لا توجد مجموعات مضافة لهذه الدفعة بعد" : "No groups added for this batch yet"}</p>
+                </div>
+            )}
+        </div>
+    </div>
+)}
+
+{path.length == 3 && path[0].id == 'gpa' && (
+    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
+        <div className="text-center mb-10">
+            <h1 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                {path[1].title} — {path[2].title}
+            </h1>
+            <p className="text-gray-500 dark:text-gray-400">
+                {lang === 'ar' ? "مشاريع التخرج الخاصة بهذه المجموعة" : "Graduation projects for this group"}
+            </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {contents
+                .filter(c => c.category === 'gpa_project' && String(c.batch) === String(path[1].id) && String(c.group) === String(path[2].id))
+                .map(project => (
+                <div key={project.id} className={`p-6 rounded-[2rem] border shadow-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
+                    <div className="flex items-start gap-3 mb-3">
+                        <div className="w-11 h-11 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="folder-open" className="w-5 h-5"></i>
+                        </div>
+                        <div className="min-w-0">
+                            <h3 className={`font-black text-lg leading-snug ${darkMode ? 'text-white' : 'text-gray-900'}`}>{project.title}</h3>
+                            <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                {lang === 'ar' ? 'المشرف: ' : 'Supervisor: '}
+                                <span className="font-bold">{project.supervisor || (lang === 'ar' ? 'غير محدد' : 'Not specified')}</span>
+                            </p>
+                        </div>
+                    </div>
+                    {project.driveLink && (
+                        <a href={project.driveLink} target="_blank" rel="noopener noreferrer"
+                           className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#f58220] hover:bg-[#e67610] text-white text-sm font-bold transition-all">
+                            <i data-lucide="external-link" className="w-4 h-4"></i>
+                            {lang === 'ar' ? 'فتح المشروع' : 'Open Project'}
+                        </a>
+                    )}
+                </div>
+            ))}
+
+            {contents.filter(c => c.category === 'gpa_project' && String(c.batch) === String(path[1].id) && String(c.group) === String(path[2].id)).length === 0 && (
+                <div className="col-span-full text-center p-10 opacity-50">
+                    <p>{lang === 'ar' ? "لا توجد مشاريع مضافة لهذه المجموعة بعد" : "No projects added for this group yet"}</p>
+                </div>
+            )}
+        </div>
     </div>
 )}
 
