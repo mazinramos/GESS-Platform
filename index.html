@@ -3642,7 +3642,7 @@ const handleAccountSignOut = () => {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {[...new Set(
                 contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').map(c => c.specialization)
             )]
@@ -3653,13 +3653,13 @@ const handleAccountSignOut = () => {
                 <button
                     key={specialization}
                     onClick={() => setPath([...path, { id: specialization, title: specialization, type: 'gpa_specialization' }])}
-                    className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                    className={`p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
                 >
-                    <i data-lucide={specIcon} className="w-12 h-12 text-[#f58220] mb-4"></i>
-                    <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <i data-lucide={specIcon} className="w-8 h-8 md:w-12 md:h-12 text-[#f58220] mb-2 md:mb-4"></i>
+                    <h3 className={`text-sm md:text-2xl font-black transition-colors text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {specialization}
                     </h3>
-                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض الدفعات" : "View batches"}</p>
+                    <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">{lang === 'ar' ? "عرض الدفعات" : "View batches"}</p>
                 </button>
                 );
             })}
@@ -3684,7 +3684,7 @@ const handleAccountSignOut = () => {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {[...new Set(
                 contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id)).map(c => c.batch)
             )]
@@ -3693,13 +3693,13 @@ const handleAccountSignOut = () => {
                 <button
                     key={batch}
                     onClick={() => setPath([...path, { id: batch, title: (lang === 'ar' ? 'دفعة ' : 'Batch ') + batch, type: 'gpa_batch' }])}
-                    className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                    className={`p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
                 >
-                    <i data-lucide="award" className="w-12 h-12 text-[#f58220] mb-4"></i>
-                    <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <i data-lucide="award" className="w-8 h-8 md:w-12 md:h-12 text-[#f58220] mb-2 md:mb-4"></i>
+                    <h3 className={`text-sm md:text-2xl font-black transition-colors text-center ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {(lang === 'ar' ? 'دفعة ' : 'Batch ') + batch}
                     </h3>
-                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض مشاريع التخرج" : "View graduation projects"}</p>
+                    <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2">{lang === 'ar' ? "عرض مشاريع التخرج" : "View graduation projects"}</p>
                 </button>
             ))}
 
