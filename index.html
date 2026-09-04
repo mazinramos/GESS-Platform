@@ -2024,7 +2024,7 @@ const handleAddGpaSpecialization = async () => {
     if (!name || !name.trim()) return;
     const specName = name.trim();
 
-    const exists = contents.some(c => (c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === specName);
+    const exists = contents.some(c => (c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project') && String(c.specialization) === specName);
     if (exists) {
         alert(lang === 'ar' ? "هذا التخصص موجود بالفعل" : "This specialization already exists");
         return;
@@ -2045,7 +2045,7 @@ const handleAddGpaBatch = async (specName) => {
     if (!name || !name.trim()) return;
     const batchName = name.trim();
 
-    const exists = contents.some(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(specName) && String(c.batch) === batchName);
+    const exists = contents.some(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && String(c.specialization) === String(specName) && String(c.batch) === batchName);
     if (exists) {
         alert(lang === 'ar' ? "هذه الدفعة موجودة بالفعل في هذا التخصص" : "This batch already exists in this specialization");
         return;
@@ -2061,27 +2061,6 @@ const handleAddGpaBatch = async (specName) => {
     }
 };
 
-const handleAddGpaGroup = async (specName, batchName) => {
-    const name = window.prompt(lang === 'ar' ? "اسم المجموعة الجديدة (مثال: المجموعة الأولى):" : "New group name:");
-    if (!name || !name.trim()) return;
-    const groupName = name.trim();
-
-    const exists = contents.some(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(specName) && String(c.batch) === String(batchName) && String(c.group) === groupName);
-    if (exists) {
-        alert(lang === 'ar' ? "هذه المجموعة موجودة بالفعل في هذه الدفعة" : "This group already exists in this batch");
-        return;
-    }
-
-    try {
-        await db.collection("materials").add({ category: 'gpa_group', specialization: specName, batch: batchName, group: groupName, createdAt: new Date() });
-        if (window.gessRefreshMaterials) await window.gessRefreshMaterials();
-        setGpaAdminPath([{ id: specName, title: specName }, { id: batchName, title: batchName }, { id: groupName, title: groupName }]);
-    } catch (error) {
-        console.error("Error adding group: ", error);
-        alert((lang === 'ar' ? "فشل الإضافة: " : "Add failed: ") + error.message);
-    }
-};
-
 const handleDeleteGpaSpecialization = async (specName) => {
     const projectCount = contents.filter(c => c.category === 'gpa_project' && String(c.specialization) === String(specName)).length;
     const warning = projectCount > 0
@@ -2091,7 +2070,7 @@ const handleDeleteGpaSpecialization = async (specName) => {
 
     try {
         const toDelete = contents.filter(c =>
-            (c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') &&
+            (c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project') &&
             String(c.specialization) === String(specName)
         );
         await Promise.all(toDelete.map(c => db.collection("materials").doc(c.id).delete()));
@@ -2113,7 +2092,7 @@ const handleDeleteGpaBatch = async (specName, batchName) => {
 
     try {
         const toDelete = contents.filter(c =>
-            (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') &&
+            (c.category === 'gpa_batch' || c.category === 'gpa_project') &&
             String(c.specialization) === String(specName) && String(c.batch) === String(batchName)
         );
         await Promise.all(toDelete.map(c => db.collection("materials").doc(c.id).delete()));
@@ -2122,28 +2101,6 @@ const handleDeleteGpaBatch = async (specName, batchName) => {
         alert(lang === 'ar' ? "تم حذف الدفعة بنجاح" : "Batch deleted");
     } catch (error) {
         console.error("Error deleting batch: ", error);
-        alert((lang === 'ar' ? "فشل الحذف: " : "Delete failed: ") + error.message);
-    }
-};
-
-const handleDeleteGpaGroup = async (specName, batchName, groupName) => {
-    const projectCount = contents.filter(c => c.category === 'gpa_project' && String(c.specialization) === String(specName) && String(c.batch) === String(batchName) && String(c.group) === String(groupName)).length;
-    const warning = projectCount > 0
-        ? (lang === 'ar' ? `تحذير: هذه المجموعة تحتوي على ${projectCount} مشروع وسيتم حذفهم جميعاً. هل أنت متأكد؟` : `Warning: this group contains ${projectCount} project(s), they will all be deleted. Are you sure?`)
-        : (lang === 'ar' ? "هل أنت متأكد من حذف هذه المجموعة؟" : "Are you sure you want to delete this group?");
-    if (!window.confirm(warning)) return;
-
-    try {
-        const toDelete = contents.filter(c =>
-            (c.category === 'gpa_group' || c.category === 'gpa_project') &&
-            String(c.specialization) === String(specName) && String(c.batch) === String(batchName) && String(c.group) === String(groupName)
-        );
-        await Promise.all(toDelete.map(c => db.collection("materials").doc(c.id).delete()));
-        if (window.gessRefreshMaterials) await window.gessRefreshMaterials();
-        setGpaAdminPath([{ id: specName, title: specName }, { id: batchName, title: batchName }]);
-        alert(lang === 'ar' ? "تم حذف المجموعة بنجاح" : "Group deleted");
-    } catch (error) {
-        console.error("Error deleting group: ", error);
         alert((lang === 'ar' ? "فشل الحذف: " : "Delete failed: ") + error.message);
     }
 };
@@ -2158,8 +2115,6 @@ const handleEditGpaProject = async (project) => {
     if (newSpecialization === null) return;
     const newBatch = window.prompt(lang === 'ar' ? "تعديل الدفعة:" : "Edit batch:", project.batch || '');
     if (newBatch === null) return;
-    const newGroup = window.prompt(lang === 'ar' ? "تعديل المجموعة:" : "Edit group:", project.group || '');
-    if (newGroup === null) return;
     const newTitle = window.prompt(lang === 'ar' ? "تعديل اسم المشروع:" : "Edit project title:", project.title || '');
     if (newTitle === null) return;
     const newSupervisor = window.prompt(lang === 'ar' ? "تعديل اسم المشرف:" : "Edit supervisor name:", project.supervisor || '');
@@ -2171,7 +2126,6 @@ const handleEditGpaProject = async (project) => {
         await db.collection("materials").doc(project.id).update({
             specialization: newSpecialization.trim(),
             batch: newBatch.trim(),
-            group: newGroup.trim(),
             title: newTitle.trim(),
             supervisor: newSupervisor.trim(),
             driveLink: newLink.trim()
@@ -2395,12 +2349,11 @@ const handleAccountSignOut = () => {
   if (adminAddMode === 'gpa_project') {
     const gpaSpecialization = gpaAdminPath[0]?.id;
     const gpaBatch = gpaAdminPath[1]?.id;
-    const gpaGroup = gpaAdminPath[2]?.id;
     const gpaTitle = form.gpaTitle?.value?.trim();
     const gpaSupervisor = form.gpaSupervisor?.value?.trim();
     const gpaLink = form.gpaLink?.value?.trim();
-    if (!gpaSpecialization ||!gpaBatch ||!gpaGroup) {
-      alert(lang === 'ar' ? "الرجاء الدخول إلى المجموعة المطلوبة أولاً قبل إضافة مشروع" : "Please open the target group first before adding a project");
+    if (!gpaSpecialization ||!gpaBatch) {
+      alert(lang === 'ar' ? "الرجاء الدخول إلى الدفعة المطلوبة أولاً قبل إضافة مشروع" : "Please open the target batch first before adding a project");
       return;
     }
     if (!gpaTitle ||!gpaSupervisor ||!gpaLink) {
@@ -2413,7 +2366,6 @@ const handleAccountSignOut = () => {
         type: 'gpa_project',
         specialization: gpaSpecialization,
         batch: gpaBatch,
-        group: gpaGroup,
         title: gpaTitle,
         supervisor: gpaSupervisor,
         driveLink: gpaLink,
@@ -3135,11 +3087,11 @@ const handleAccountSignOut = () => {
                                         </div>
                                         )}
 
-                                        {adminAddMode === 'gpa_project' && gpaAdminPath.length === 3 && (
+                                        {adminAddMode === 'gpa_project' && gpaAdminPath.length === 2 && (
                                         <div className="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className={`md:col-span-2 p-3 rounded-2xl text-sm font-bold flex items-center gap-2 ${darkMode ? 'bg-gray-800 text-orange-400' : 'bg-orange-50 text-orange-600'}`}>
                                                 <i data-lucide="folder-open" className="w-4 h-4"></i>
-                                                {(lang === 'ar' ? 'إضافة مشروع في: ' : 'Adding project in: ') + gpaAdminPath[0].id + ' — ' + (lang === 'ar' ? 'دفعة ' : 'Batch ') + gpaAdminPath[1].id + ' — ' + gpaAdminPath[2].id}
+                                                {(lang === 'ar' ? 'إضافة مشروع في: ' : 'Adding project in: ') + gpaAdminPath[0].id + ' — ' + (lang === 'ar' ? 'دفعة ' : 'Batch ') + gpaAdminPath[1].id}
                                             </div>
                                             <input name="gpaTitle" required placeholder={lang === 'ar' ? "اسم/عنوان مشروع التخرج" : "Graduation project title"}
                                                 className={`md:col-span-2 p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
@@ -3269,12 +3221,6 @@ const handleAccountSignOut = () => {
                                                     </button>
                                                 </>
                                             )}
-                                            {gpaAdminPath[2] && (
-                                                <>
-                                                    <i data-lucide="chevron-left" className={`w-4 h-4 opacity-40 ${lang === 'ar' ? '' : 'rotate-180'}`}></i>
-                                                    <span className="px-3 py-1.5 rounded-lg bg-orange-100 text-orange-600">{gpaAdminPath[2].id}</span>
-                                                </>
-                                            )}
                                         </div>
 
                                         {}
@@ -3290,11 +3236,11 @@ const handleAccountSignOut = () => {
                                                 </button>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {[...new Set(contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project').map(c => c.specialization))]
+                                                    {[...new Set(contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').map(c => c.specialization))]
                                                         .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
                                                         .map(specialization => {
                                                             const projectCount = contents.filter(c => c.category === 'gpa_project' && c.specialization === specialization).length;
-                                                            const batchCount = [...new Set(contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === specialization).map(c => c.batch))].length;
+                                                            const batchCount = [...new Set(contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && c.specialization === specialization).map(c => c.batch))].length;
                                                             return (
                                                             <div key={specialization} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                                                                 <button
@@ -3323,7 +3269,7 @@ const handleAccountSignOut = () => {
                                                         })}
                                                 </div>
 
-                                                {contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project').length === 0 && (
+                                                {contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').length === 0 && (
                                                     <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
                                                         <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد تخصصات مضافة بعد" : "No specializations yet"}</p>
                                                     </div>
@@ -3344,11 +3290,10 @@ const handleAccountSignOut = () => {
                                                 </button>
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {[...new Set(contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id).map(c => c.batch))]
+                                                    {[...new Set(contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id).map(c => c.batch))]
                                                         .sort((a, b) => String(b).localeCompare(String(a), undefined, { numeric: true }))
                                                         .map(batch => {
                                                             const projectCount = contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === batch).length;
-                                                            const groupCount = [...new Set(contents.filter(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id && c.batch === batch).map(c => c.group))].length;
                                                             return (
                                                             <div key={batch} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
                                                                 <button
@@ -3360,7 +3305,7 @@ const handleAccountSignOut = () => {
                                                                     <div className="min-w-0">
                                                                         <h4 className={`font-black truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{(lang === 'ar' ? 'دفعة ' : 'Batch ') + batch}</h4>
                                                                         <p className="text-xs text-gray-400">
-                                                                            {groupCount} {lang === 'ar' ? 'مجموعة' : 'group(s)'} · {projectCount} {lang === 'ar' ? 'مشروع' : 'project(s)'}
+                                                                            {projectCount} {lang === 'ar' ? 'مشروع' : 'project(s)'}
                                                                         </p>
                                                                     </div>
                                                                 </button>
@@ -3377,7 +3322,7 @@ const handleAccountSignOut = () => {
                                                         })}
                                                 </div>
 
-                                                {contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id).length === 0 && (
+                                                {contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id).length === 0 && (
                                                     <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
                                                         <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد دفعات في هذا التخصص بعد" : "No batches in this specialization yet"}</p>
                                                     </div>
@@ -3388,62 +3333,11 @@ const handleAccountSignOut = () => {
                                         {}
                                         {gpaAdminPath.length === 2 && (
                                             <div className="space-y-3">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleAddGpaGroup(gpaAdminPath[0].id, gpaAdminPath[1].id)}
-                                                    className="w-full p-4 rounded-2xl font-bold border-2 border-dashed border-orange-300 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-950/30 transition-colors flex items-center justify-center gap-2"
-                                                >
-                                                    <i data-lucide="plus" className="w-5 h-5"></i>
-                                                    {lang === 'ar' ? "إضافة مجموعة جديدة" : "Add New Group"}
-                                                </button>
-
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {[...new Set(contents.filter(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id).map(c => c.group))]
-                                                        .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
-                                                        .map(group => {
-                                                            const projectCount = contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id && c.group === group).length;
-                                                            return (
-                                                            <div key={group} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setGpaAdminPath([gpaAdminPath[0], gpaAdminPath[1], { id: group, title: group }])}
-                                                                    className="flex items-center gap-3 min-w-0 text-start flex-1"
-                                                                >
-                                                                    <i data-lucide="users" className="w-6 h-6 text-orange-500 shrink-0"></i>
-                                                                    <div className="min-w-0">
-                                                                        <h4 className={`font-black truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{group}</h4>
-                                                                        <p className="text-xs text-gray-400">{projectCount} {lang === 'ar' ? 'مشروع' : 'project(s)'}</p>
-                                                                    </div>
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDeleteGpaGroup(gpaAdminPath[0].id, gpaAdminPath[1].id, group)}
-                                                                    className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors shrink-0"
-                                                                    title={lang === 'ar' ? "حذف المجموعة" : "Delete group"}
-                                                                >
-                                                                    <i data-lucide="trash-2" className="w-4 h-4"></i>
-                                                                </button>
-                                                            </div>
-                                                            );
-                                                        })}
-                                                </div>
-
-                                                {contents.filter(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id).length === 0 && (
-                                                    <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
-                                                        <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مجموعات في هذه الدفعة بعد" : "No groups in this batch yet"}</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {}
-                                        {gpaAdminPath.length === 3 && (
-                                            <div className="space-y-3">
                                                 <p className={`text-sm font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                    {lang === 'ar' ? "استخدم النموذج بالأعلى لإضافة مشروع جديد داخل هذه المجموعة." : "Use the form above to add a new project inside this group."}
+                                                    {lang === 'ar' ? "استخدم النموذج بالأعلى لإضافة مشروع جديد داخل هذه الدفعة." : "Use the form above to add a new project inside this batch."}
                                                 </p>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                                    {contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id && c.group === gpaAdminPath[2].id).map(project => (
+                                                    {contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id).map(project => (
                                                         <div key={project.id} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-100'}`}>
                                                             <div className="min-w-0">
                                                                 <h5 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{project.title}</h5>
@@ -3471,9 +3365,9 @@ const handleAccountSignOut = () => {
                                                     ))}
                                                 </div>
 
-                                                {contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id && c.group === gpaAdminPath[2].id).length === 0 && (
+                                                {contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id).length === 0 && (
                                                     <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-3xl">
-                                                        <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مشاريع في هذه المجموعة بعد" : "No projects in this group yet"}</p>
+                                                        <p className="text-gray-400 font-bold">{lang === 'ar' ? "لا توجد مشاريع في هذه الدفعة بعد" : "No projects in this batch yet"}</p>
                                                     </div>
                                                 )}
                                             </div>
@@ -3627,7 +3521,7 @@ const handleAccountSignOut = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[...new Set(
-                contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project').map(c => c.specialization)
+                contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').map(c => c.specialization)
             )]
             .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
             .map(specialization => (
@@ -3644,7 +3538,7 @@ const handleAccountSignOut = () => {
                 </button>
             ))}
 
-            {contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project').length === 0 && (
+            {contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').length === 0 && (
                 <div className="col-span-full text-center p-10 opacity-50">
                     <p>{lang === 'ar' ? "لا توجد مشاريع تخرج مضافة بعد" : "No graduation projects added yet"}</p>
                 </div>
@@ -3660,13 +3554,13 @@ const handleAccountSignOut = () => {
                 {path[1].title}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
-                {lang === 'ar' ? "اختر الدفعة لعرض مجموعاتها ومشاريع التخرج الخاصة بها" : "Choose a batch to view its groups and graduation projects"}
+                {lang === 'ar' ? "اختر الدفعة لعرض مشاريع التخرج الخاصة بها" : "Choose a batch to view its graduation projects"}
             </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[...new Set(
-                contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id)).map(c => c.batch)
+                contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id)).map(c => c.batch)
             )]
             .sort((a, b) => String(b).localeCompare(String(a), undefined, { numeric: true }))
             .map(batch => (
@@ -3679,11 +3573,11 @@ const handleAccountSignOut = () => {
                     <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {(lang === 'ar' ? 'دفعة ' : 'Batch ') + batch}
                     </h3>
-                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض المجموعات" : "View groups"}</p>
+                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض مشاريع التخرج" : "View graduation projects"}</p>
                 </button>
             ))}
 
-            {contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id)).length === 0 && (
+            {contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id)).length === 0 && (
                 <div className="col-span-full text-center p-10 opacity-50">
                     <p>{lang === 'ar' ? "لا توجد دفعات مضافة لهذا التخصص بعد" : "No batches added for this specialization yet"}</p>
                 </div>
@@ -3699,50 +3593,13 @@ const handleAccountSignOut = () => {
                 {path[1].title} — {path[2].title}
             </h1>
             <p className="text-gray-500 dark:text-gray-400">
-                {lang === 'ar' ? "اختر المجموعة لعرض مشاريع التخرج" : "Choose a group to view its graduation projects"}
-            </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[...new Set(
-                contents.filter(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id)).map(c => c.group)
-            )]
-            .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
-            .map(group => (
-                <button
-                    key={group}
-                    onClick={() => setPath([...path, { id: group, title: group, type: 'gpa_group' }])}
-                    className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
-                >
-                    <i data-lucide="users" className="w-12 h-12 text-[#f58220] mb-4"></i>
-                    <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>{group}</h3>
-                    <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض مشاريع التخرج" : "View graduation projects"}</p>
-                </button>
-            ))}
-
-            {contents.filter(c => (c.category === 'gpa_group' || c.category === 'gpa_project') && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id)).length === 0 && (
-                <div className="col-span-full text-center p-10 opacity-50">
-                    <p>{lang === 'ar' ? "لا توجد مجموعات مضافة لهذه الدفعة بعد" : "No groups added for this batch yet"}</p>
-                </div>
-            )}
-        </div>
-    </div>
-)}
-
-{path.length == 4 && path[0].id == 'gpa' && (
-    <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
-        <div className="text-center mb-10">
-            <h1 className={`text-3xl font-black mb-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                {path[1].title} — {path[2].title} — {path[3].title}
-            </h1>
-            <p className="text-gray-500 dark:text-gray-400">
-                {lang === 'ar' ? "مشاريع التخرج الخاصة بهذه المجموعة" : "Graduation projects for this group"}
+                {lang === 'ar' ? "مشاريع التخرج الخاصة بهذه الدفعة" : "Graduation projects for this batch"}
             </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {contents
-                .filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id) && String(c.group) === String(path[3].id))
+                .filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id))
                 .map(project => (
                 <div key={project.id} className={`p-6 rounded-[2rem] border shadow-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
                     <div className="flex items-start gap-3 mb-3">
@@ -3767,9 +3624,9 @@ const handleAccountSignOut = () => {
                 </div>
             ))}
 
-            {contents.filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id) && String(c.group) === String(path[3].id)).length === 0 && (
+            {contents.filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id)).length === 0 && (
                 <div className="col-span-full text-center p-10 opacity-50">
-                    <p>{lang === 'ar' ? "لا توجد مشاريع مضافة لهذه المجموعة بعد" : "No projects added for this group yet"}</p>
+                    <p>{lang === 'ar' ? "لا توجد مشاريع مضافة لهذه الدفعة بعد" : "No projects added for this batch yet"}</p>
                 </div>
             )}
         </div>
