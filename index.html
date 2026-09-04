@@ -1797,6 +1797,8 @@ const t = {
             const [gpaAdminPath, setGpaAdminPath] = React.useState([]);
             const [gpaProjectIcon, setGpaProjectIcon] = React.useState('folder-open');
             const [editingSpecIcon, setEditingSpecIcon] = React.useState(null);
+            const [editingGpaProject, setEditingGpaProject] = React.useState(null);
+            const [editGpaForm, setEditGpaForm] = React.useState({ title: '', icon: 'folder-open', driveLink: '', specialization: '', batch: '' });
             const [selectedSemester, setSelectedSemester] = React.useState("1");
             const [loginType, setLoginType] = React.useState('student');
             const [viewType, setViewType] = React.useState(null);
@@ -2193,36 +2195,37 @@ const handleDeleteGpaBatch = async (specName, batchName) => {
     }
 };
 
-const handleEditGpaProject = async (project) => {
+const handleEditGpaProject = (project) => {
     if (!project?.id) {
         alert("خطأ في المعرف (ID)");
         return;
     }
+    setEditGpaForm({
+        title: project.title || '',
+        icon: project.icon || 'folder-open',
+        driveLink: project.driveLink || '',
+        specialization: project.specialization || '',
+        batch: project.batch || ''
+    });
+    setEditingGpaProject(project);
+};
 
-    const newSpecialization = window.prompt(lang === 'ar' ? "تعديل التخصص:" : "Edit specialization:", project.specialization || '');
-    if (newSpecialization === null) return;
-    const newBatch = window.prompt(lang === 'ar' ? "تعديل الدفعة:" : "Edit batch:", project.batch || '');
-    if (newBatch === null) return;
-    const newTitle = window.prompt(lang === 'ar' ? "تعديل اسم المشروع:" : "Edit project title:", project.title || '');
-    if (newTitle === null) return;
-    const iconChoices = GPA_ICONS.map(o => o.key).join(", ");
-    const newIcon = window.prompt(
-        (lang === 'ar' ? "تعديل أيقونة المشروع (اختر من: " : "Edit project icon (choose from: ") + iconChoices + "):",
-        project.icon || 'folder-open'
-    );
-    if (newIcon === null) return;
-    const newLink = window.prompt(lang === 'ar' ? "تعديل رابط المشروع:" : "Edit project link:", project.driveLink || '');
-    if (newLink === null) return;
-
+const handleSaveGpaProjectEdit = async () => {
+    if (!editingGpaProject?.id) return;
+    if (!editGpaForm.title.trim() || !editGpaForm.driveLink.trim()) {
+        alert(lang === 'ar' ? "الرجاء تعبئة اسم المشروع والرابط" : "Please fill in the project title and link");
+        return;
+    }
     try {
-        await db.collection("materials").doc(project.id).update({
-            specialization: newSpecialization.trim(),
-            batch: newBatch.trim(),
-            title: newTitle.trim(),
-            icon: newIcon.trim() || 'folder-open',
-            driveLink: newLink.trim()
+        await db.collection("materials").doc(editingGpaProject.id).update({
+            specialization: editGpaForm.specialization.trim(),
+            batch: editGpaForm.batch.trim(),
+            title: editGpaForm.title.trim(),
+            icon: editGpaForm.icon || 'folder-open',
+            driveLink: editGpaForm.driveLink.trim()
         });
-        if (window.gessRefreshMaterials) window.gessRefreshMaterials();
+        if (window.gessRefreshMaterials) await window.gessRefreshMaterials();
+        setEditingGpaProject(null);
         alert(lang === 'ar' ? "تم تعديل المشروع بنجاح" : "Project updated");
     } catch (error) {
         console.error("Error updating gpa project: ", error);
@@ -3720,19 +3723,19 @@ const handleAccountSignOut = () => {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6">
             {contents
                 .filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id))
                 .map(project => (
                 <a key={project.id} href={project.driveLink || '#'} target="_blank" rel="noopener noreferrer"
-                   className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center text-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                   className={`p-4 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center text-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
                 >
-                    <i data-lucide={project.icon || 'folder-open'} className="w-12 h-12 text-[#f58220] mb-4"></i>
-                    <h3 className={`text-lg font-black leading-snug transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                    <i data-lucide={project.icon || 'folder-open'} className="w-8 h-8 md:w-12 md:h-12 text-[#f58220] mb-2 md:mb-4"></i>
+                    <h3 className={`text-sm md:text-lg font-black leading-snug transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {project.title}
                     </h3>
-                    <p className="text-gray-400 text-sm mt-2 flex items-center gap-1">
-                        <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
+                    <p className="text-gray-400 text-xs md:text-sm mt-1 md:mt-2 flex items-center gap-1">
+                        <i data-lucide="external-link" className="w-3 h-3 md:w-3.5 md:h-3.5"></i>
                         {lang === 'ar' ? "فتح المشروع" : "Open project"}
                     </p>
                 </a>
@@ -4603,6 +4606,95 @@ if (
         shareUrl={PLATFORM_SHARE_URL}
         onClose={() => setShowShareModal(false)}
     />
+)}
+{editingGpaProject && (
+    <div
+        onClick={(e) => { if (e.target === e.currentTarget) setEditingGpaProject(null); }}
+        className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200"
+    >
+        <div
+            onClick={(e) => e.stopPropagation()}
+            className={`w-full max-w-md p-6 rounded-3xl shadow-2xl relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh] ${darkMode ? 'bg-gray-900 border border-gray-700' : 'bg-white'}`}
+        >
+            <button
+                onClick={() => setEditingGpaProject(null)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors z-10"
+            >
+                <i data-lucide="x" className="w-6 h-6"></i>
+            </button>
+
+            <h3 className={`font-black text-lg mb-4 pr-6 flex items-center gap-2 ${darkMode ? 'text-white' : 'text-gray-900'}`}>
+                <i data-lucide="edit-3" className="w-5 h-5 text-orange-500"></i>
+                {lang === 'ar' ? "تعديل مشروع التخرج" : "Edit Graduation Project"}
+            </h3>
+
+            <div className="space-y-4 overflow-y-auto pr-1">
+                <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                        <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {lang === 'ar' ? "التخصص" : "Specialization"}
+                        </label>
+                        <input
+                            value={editGpaForm.specialization}
+                            onChange={(e) => setEditGpaForm({...editGpaForm, specialization: e.target.value})}
+                            className={`w-full p-3 rounded-xl border-2 outline-none transition-all ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}
+                        />
+                    </div>
+                    <div className="space-y-1">
+                        <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                            {lang === 'ar' ? "الدفعة" : "Batch"}
+                        </label>
+                        <input
+                            value={editGpaForm.batch}
+                            onChange={(e) => setEditGpaForm({...editGpaForm, batch: e.target.value})}
+                            className={`w-full p-3 rounded-xl border-2 outline-none transition-all ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}
+                        />
+                    </div>
+                </div>
+
+                <div className="space-y-1">
+                    <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {lang === 'ar' ? "اسم المشروع" : "Project title"}
+                    </label>
+                    <input
+                        value={editGpaForm.title}
+                        onChange={(e) => setEditGpaForm({...editGpaForm, title: e.target.value})}
+                        className={`w-full p-3 rounded-xl border-2 outline-none transition-all ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {lang === 'ar' ? "أيقونة المشروع" : "Project icon"}
+                    </label>
+                    <IconPicker
+                        value={editGpaForm.icon}
+                        onChange={(icon) => setEditGpaForm({...editGpaForm, icon})}
+                        darkMode={darkMode}
+                        lang={lang}
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                        {lang === 'ar' ? "رابط المشروع" : "Project link"}
+                    </label>
+                    <input
+                        value={editGpaForm.driveLink}
+                        onChange={(e) => setEditGpaForm({...editGpaForm, driveLink: e.target.value})}
+                        className={`w-full p-3 rounded-xl border-2 outline-none transition-all ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`}
+                    />
+                </div>
+
+                <button
+                    onClick={handleSaveGpaProjectEdit}
+                    className="w-full p-4 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200"
+                >
+                    {lang === 'ar' ? "حفظ التعديلات" : "Save Changes"}
+                </button>
+            </div>
+        </div>
+    </div>
 )}
 {isModalOpen && modalSubjectData && (
 
