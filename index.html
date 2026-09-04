@@ -28,48 +28,6 @@
   animation: pulseGlow 3s ease-in-out infinite;
 }
 
-@keyframes splashFloat {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-14px); }
-}
-@keyframes splashFadeUp {
-  from { opacity: 0; transform: translateY(28px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes splashShimmer {
-  0% { background-position: -200% center; }
-  100% { background-position: 200% center; }
-}
-@keyframes splashDrift {
-  0%, 100% { transform: translate(0, 0); }
-  50% { transform: translate(14px, -18px); }
-}
-.splash-float { animation: splashFloat 4.5s ease-in-out infinite; }
-.splash-fade-up { opacity: 0; animation: splashFadeUp 0.85s cubic-bezier(0.22,1,0.36,1) forwards; }
-.splash-logo-anim { opacity: 0; animation: splashFadeUp 0.85s cubic-bezier(0.22,1,0.36,1) forwards, splashFloat 4.5s ease-in-out 0.9s infinite; }
-.splash-shimmer-text {
-  background: linear-gradient(90deg, #ffffff 0%, #ffe3c2 25%, #ffffff 50%, #ffe3c2 75%, #ffffff 100%);
-  background-size: 250% auto;
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: splashShimmer 3.5s linear infinite;
-}
-.splash-orb { animation: splashDrift 8s ease-in-out infinite; }
-.splash-orb-2 { animation: splashDrift 10s ease-in-out infinite reverse; }
-@keyframes splashCursorBlink {
-  0%, 45% { opacity: 1; }
-  50%, 95% { opacity: 0; }
-  100% { opacity: 1; }
-}
-.splash-cursor {
-  display: inline-block;
-  width: 2px;
-  margin-inline-start: 2px;
-  background: currentColor;
-  animation: splashCursorBlink 0.9s step-end infinite;
-}
-
 .mySwiper.swiper-pagination-bullet {
   background: #d1d5db;
   opacity: 1;
@@ -1820,126 +1778,6 @@ const t = {
             );
         }
 
-        function TypewriterText({ text, speed = 45, startDelay = 0, className = '', showCursor = true }) {
-            const [displayed, setDisplayed] = React.useState('');
-            const [done, setDone] = React.useState(false);
-
-            React.useEffect(() => {
-                setDisplayed('');
-                setDone(false);
-                let i = 0;
-                let interval;
-                const startTimer = setTimeout(() => {
-                    interval = setInterval(() => {
-                        i++;
-                        setDisplayed(text.slice(0, i));
-                        if (i >= text.length) {
-                            clearInterval(interval);
-                            setDone(true);
-                        }
-                    }, speed);
-                }, startDelay);
-                return () => { clearTimeout(startTimer); clearInterval(interval); };
-            }, [text, speed, startDelay]);
-
-            return (
-                <span className={className}>
-                    {displayed}
-                    {showCursor && !done && (
-                        <span className="splash-cursor" style={{ height: '1em' }}></span>
-                    )}
-                </span>
-            );
-        }
-
-        function SplashScreen({ lang, setLang, darkMode, onEnter }) {
-            const isAr = lang === 'ar';
-            const features = [
-                { icon: 'graduation-cap', label: isAr ? 'مشاريع التخرج' : 'GPA Projects' },
-                { icon: 'library', label: isAr ? 'المجلات' : 'Magazines' },
-                { icon: 'sparkles', label: isAr ? 'المساعد الذكي' : 'AI Assistant' },
-                { icon: 'moon-star', label: isAr ? 'الأدعية' : 'Duas' },
-            ];
-
-            React.useEffect(() => { lucide.createIcons(); });
-
-            return (
-                <div dir={isAr ? 'rtl' : 'ltr'} className={`min-h-screen w-full relative overflow-hidden flex flex-col items-center justify-between transition-colors duration-500 ${darkMode ? 'bg-gray-950' : ''}`}
-                     style={!darkMode ? { background: 'linear-gradient(160deg, #ff8a3d 0%, #f58220 45%, #e6570f 100%)' } : { background: 'linear-gradient(160deg, #3a2410 0%, #1f1206 55%, #0d0805 100%)' }}>
-
-                    {}
-                    <div className="splash-orb absolute -top-24 -right-24 w-72 h-72 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
-                    <div className="splash-orb-2 absolute top-1/3 -left-20 w-64 h-64 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
-                    <div className="splash-orb absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-white/10 blur-3xl pointer-events-none"></div>
-                    <div className="absolute inset-0 opacity-[0.06] pointer-events-none" style={{
-                        backgroundImage: 'radial-gradient(circle, #fff 1.5px, transparent 1.5px)',
-                        backgroundSize: '28px 28px'
-                    }}></div>
-
-                    {}
-                    <button
-                        onClick={() => setLang(isAr ? 'en' : 'ar')}
-                        className="splash-fade-up relative z-10 mt-6 me-6 self-end px-4 py-2 rounded-full bg-white/15 hover:bg-white/25 backdrop-blur-md text-white text-sm font-bold border border-white/20 transition-all flex items-center gap-2"
-                        style={{ animationDelay: '0.1s' }}
-                    >
-                        <i data-lucide="languages" className="w-4 h-4"></i>
-                        {isAr ? 'English' : 'العربية'}
-                    </button>
-
-                    {}
-                    <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 text-center max-w-xl mx-auto">
-                        <div className="splash-logo-anim relative mb-6" style={{ animationDelay: '0.05s, 0.95s' }}>
-                            <div className="absolute inset-0 rounded-[2rem] bg-white/30 blur-2xl animate-pulse"></div>
-                            <div className="relative w-28 h-28 rounded-[2rem] bg-white shadow-2xl flex items-center justify-center p-3 ring-4 ring-white/30">
-                                <img src={GESS_LOGO} alt="GESS EDU" className="w-full h-full object-contain" />
-                            </div>
-                        </div>
-
-                        <h1 className="splash-fade-up splash-shimmer-text text-4xl sm:text-5xl font-black mb-2 tracking-tight drop-shadow-sm" style={{ animationDelay: '0.25s' }}>
-                            GESS EDU
-                        </h1>
-                        <p className="text-white/90 font-bold text-sm sm:text-base mb-6 min-h-[1.25rem]">
-                            <TypewriterText
-                                text={isAr ? 'نحو آفاق هندسية أوسع' : 'Towards Broader Engineering Horizons'}
-                                speed={45}
-                                startDelay={700}
-                            />
-                        </p>
-
-                        <p className="text-white/85 text-base sm:text-lg leading-relaxed max-w-md mx-auto mb-10 min-h-[3.5rem]">
-                            <TypewriterText
-                                text={isAr
-                                    ? 'منصتك التعليمية الشاملة لطلاب قسم الهندسة المساحية — كل المواد، المشاريع، والمجلات في مكان واحد.'
-                                    : 'Your all-in-one educational platform for Surveying Engineering students — subjects, projects, and magazines in one place.'}
-                                speed={18}
-                                startDelay={1900}
-                            />
-                        </p>
-
-                        <div className="grid grid-cols-4 gap-3 sm:gap-4 w-full mb-2">
-                            {features.map((f, i) => (
-                                <div key={f.icon} className="splash-fade-up flex flex-col items-center gap-2 p-3 rounded-2xl bg-white/10 border border-white/15 backdrop-blur-sm" style={{ animationDelay: `${3.6 + i * 0.12}s` }}>
-                                    <i data-lucide={f.icon} className="w-5 h-5 sm:w-6 sm:h-6 text-white"></i>
-                                    <span className="text-[10px] sm:text-xs font-bold text-white/90 text-center leading-tight">{f.label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    {}
-                    <div className="splash-fade-up relative z-10 w-full max-w-md px-6 pb-10 sm:pb-14" style={{ animationDelay: '4.15s' }}>
-                        <button
-                            onClick={onEnter}
-                            className="w-full group p-5 rounded-[1.75rem] bg-white hover:bg-orange-50 text-[#e6570f] font-black text-lg shadow-2xl transition-all duration-300 active:scale-95 flex items-center justify-center gap-3"
-                        >
-                            {isAr ? 'ابدأ الآن' : 'Get Started'}
-                            <i data-lucide={isAr ? 'arrow-left' : 'arrow-right'} className="w-5 h-5 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1"></i>
-                        </button>
-                    </div>
-                </div>
-            );
-        }
-
         function App() {
             const [user, setUser] = React.useState(null);
             const [isLoggedIn, setIsLoggedIn] = React.useState(localStorage.getItem("gess_is_logged_in") === "true");
@@ -1966,7 +1804,6 @@ const t = {
             const [viewType, setViewType] = React.useState(null);
             const [currentIcon, setCurrentIcon] = React.useState("settings");
             const [lang, setLang] = React.useState('en');
-            const [showSplash, setShowSplash] = React.useState(true);
             const [isModalOpen, setIsModalOpen] = React.useState(false);
             const [modalSubjectData, setModalSubjectData] = React.useState(null);
             const [customSubject, setCustomSubject] = React.useState('');
@@ -2684,10 +2521,6 @@ const handleAccountSignOut = () => {
     alert("فشل الرفع: "+ error.message);
   }
 };
-
-            if (showSplash) {
-                return <SplashScreen lang={lang} setLang={setLang} darkMode={darkMode} onEnter={() => setShowSplash(false)} />;
-            }
 
             return (
                 <div className={`min-h-screen pb-20 transition-colors duration-500 ${darkMode ? 'bg-gray-900 text-white' : 'bg-[#fafafa]'}`}>
