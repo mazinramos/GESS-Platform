@@ -1712,6 +1712,72 @@ const t = {
             );
         }
 
+        const GPA_ICONS = [
+            { key: 'folder-open', ar: 'عام', en: 'General' },
+            { key: 'folder', ar: 'مجلد', en: 'Folder' },
+            { key: 'building-2', ar: 'مبنى', en: 'Building' },
+            { key: 'globe', ar: 'جيوديسيا', en: 'Geodesy' },
+            { key: 'map', ar: 'خرائط', en: 'Map' },
+            { key: 'map-pin', ar: 'موقع', en: 'Location' },
+            { key: 'satellite', ar: 'قمر صناعي', en: 'Satellite' },
+            { key: 'satellite-dish', ar: 'محطة استقبال', en: 'Satellite Dish' },
+            { key: 'waves', ar: 'هيدروغرافي', en: 'Hydrographic' },
+            { key: 'droplet', ar: 'مياه', en: 'Water' },
+            { key: 'mountain', ar: 'طبوغرافي', en: 'Topographic' },
+            { key: 'mountain-snow', ar: 'مرتفعات', en: 'Highlands' },
+            { key: 'camera', ar: 'تصوير', en: 'Photogrammetry' },
+            { key: 'aperture', ar: 'عدسة', en: 'Lens' },
+            { key: 'radio-tower', ar: 'استشعار عن بعد', en: 'Remote Sensing' },
+            { key: 'radio', ar: 'إشارة', en: 'Signal' },
+            { key: 'compass', ar: 'بوصلة', en: 'Compass' },
+            { key: 'navigation', ar: 'ملاحة', en: 'Navigation' },
+            { key: 'ruler', ar: 'قياسات', en: 'Survey' },
+            { key: 'triangle', ar: 'مثلثات', en: 'Triangulation' },
+            { key: 'layers', ar: 'طبقات', en: 'Layers' },
+            { key: 'grid-3x3', ar: 'شبكة', en: 'Grid' },
+            { key: 'anchor', ar: 'بحري', en: 'Marine' },
+            { key: 'ship', ar: 'سفينة', en: 'Ship' },
+            { key: 'flag', ar: 'علامة', en: 'Marker' },
+            { key: 'crosshair', ar: 'نقطة تحكم', en: 'Control Point' },
+            { key: 'target', ar: 'هدف', en: 'Target' },
+            { key: 'database', ar: 'بيانات', en: 'Database' },
+            { key: 'server', ar: 'خادم', en: 'Server' },
+            { key: 'landmark', ar: 'معلم', en: 'Landmark' },
+            { key: 'tree-pine', ar: 'بيئة', en: 'Environment' },
+            { key: 'sun', ar: 'شمس', en: 'Sun' },
+            { key: 'cloud', ar: 'سحابة', en: 'Cloud' },
+            { key: 'wind', ar: 'رياح', en: 'Wind' },
+            { key: 'plane', ar: 'طيران', en: 'Aerial' },
+            { key: 'drone', ar: 'درون', en: 'Drone' },
+            { key: 'car', ar: 'مركبات', en: 'Vehicle' },
+            { key: 'factory', ar: 'صناعي', en: 'Industrial' },
+            { key: 'graduation-cap', ar: 'أكاديمي', en: 'Academic' },
+            { key: 'book-open', ar: 'بحث', en: 'Research' },
+            { key: 'lightbulb', ar: 'فكرة', en: 'Idea' },
+        ];
+
+        function IconPicker({ value, onChange, darkMode, lang }) {
+            return (
+                <div className={`grid grid-cols-6 sm:grid-cols-8 gap-2 p-3 rounded-2xl border-2 max-h-56 overflow-y-auto ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}`}>
+                    {GPA_ICONS.map(opt => (
+                        <button
+                            key={opt.key}
+                            type="button"
+                            title={lang === 'ar' ? opt.ar : opt.en}
+                            onClick={() => onChange(opt.key)}
+                            className={`aspect-square rounded-xl flex items-center justify-center border-2 transition-colors ${
+                                value === opt.key
+                                    ? 'bg-orange-500 border-orange-500 text-white'
+                                    : (darkMode ? 'bg-gray-900 border-gray-700 text-gray-300 hover:border-orange-400' : 'bg-gray-50 border-gray-100 text-gray-600 hover:border-orange-300')
+                            }`}
+                        >
+                            <i data-lucide={opt.key} className="w-5 h-5"></i>
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
         function App() {
             const [user, setUser] = React.useState(null);
             const [isLoggedIn, setIsLoggedIn] = React.useState(localStorage.getItem("gess_is_logged_in") === "true");
@@ -1729,6 +1795,8 @@ const t = {
             const [toast, setToast] = React.useState({ show: false, message: '' });
             const [adminAddMode, setAdminAddMode] = React.useState('academic');
             const [gpaAdminPath, setGpaAdminPath] = React.useState([]);
+            const [gpaProjectIcon, setGpaProjectIcon] = React.useState('folder-open');
+            const [editingSpecIcon, setEditingSpecIcon] = React.useState(null);
             const [selectedSemester, setSelectedSemester] = React.useState("1");
             const [loginType, setLoginType] = React.useState('student');
             const [viewType, setViewType] = React.useState(null);
@@ -2031,12 +2099,32 @@ const handleAddGpaSpecialization = async () => {
     }
 
     try {
-        await db.collection("materials").add({ category: 'gpa_specialization', specialization: specName, createdAt: new Date() });
+        await db.collection("materials").add({ category: 'gpa_specialization', specialization: specName, icon: 'folder', createdAt: new Date() });
         if (window.gessRefreshMaterials) await window.gessRefreshMaterials();
         setGpaAdminPath([{ id: specName, title: specName }]);
     } catch (error) {
         console.error("Error adding specialization: ", error);
         alert((lang === 'ar' ? "فشل الإضافة: " : "Add failed: ") + error.message);
+    }
+};
+
+const getGpaSpecializationIcon = (specName) => {
+    const doc = contents.find(c => c.category === 'gpa_specialization' && String(c.specialization) === String(specName) && c.icon);
+    return doc?.icon || 'folder';
+};
+
+const handleSetGpaSpecializationIcon = async (specName, icon) => {
+    try {
+        const existingDoc = contents.find(c => c.category === 'gpa_specialization' && String(c.specialization) === String(specName));
+        if (existingDoc) {
+            await db.collection("materials").doc(existingDoc.id).update({ icon });
+        } else {
+            await db.collection("materials").add({ category: 'gpa_specialization', specialization: specName, icon, createdAt: new Date() });
+        }
+        if (window.gessRefreshMaterials) await window.gessRefreshMaterials();
+    } catch (error) {
+        console.error("Error updating specialization icon: ", error);
+        alert((lang === 'ar' ? "فشل تحديث الأيقونة: " : "Icon update failed: ") + error.message);
     }
 };
 
@@ -2117,8 +2205,12 @@ const handleEditGpaProject = async (project) => {
     if (newBatch === null) return;
     const newTitle = window.prompt(lang === 'ar' ? "تعديل اسم المشروع:" : "Edit project title:", project.title || '');
     if (newTitle === null) return;
-    const newSupervisor = window.prompt(lang === 'ar' ? "تعديل اسم المشرف:" : "Edit supervisor name:", project.supervisor || '');
-    if (newSupervisor === null) return;
+    const iconChoices = GPA_ICONS.map(o => o.key).join(", ");
+    const newIcon = window.prompt(
+        (lang === 'ar' ? "تعديل أيقونة المشروع (اختر من: " : "Edit project icon (choose from: ") + iconChoices + "):",
+        project.icon || 'folder-open'
+    );
+    if (newIcon === null) return;
     const newLink = window.prompt(lang === 'ar' ? "تعديل رابط المشروع:" : "Edit project link:", project.driveLink || '');
     if (newLink === null) return;
 
@@ -2127,7 +2219,7 @@ const handleEditGpaProject = async (project) => {
             specialization: newSpecialization.trim(),
             batch: newBatch.trim(),
             title: newTitle.trim(),
-            supervisor: newSupervisor.trim(),
+            icon: newIcon.trim() || 'folder-open',
             driveLink: newLink.trim()
         });
         if (window.gessRefreshMaterials) window.gessRefreshMaterials();
@@ -2350,14 +2442,14 @@ const handleAccountSignOut = () => {
     const gpaSpecialization = gpaAdminPath[0]?.id;
     const gpaBatch = gpaAdminPath[1]?.id;
     const gpaTitle = form.gpaTitle?.value?.trim();
-    const gpaSupervisor = form.gpaSupervisor?.value?.trim();
+    const gpaIcon = gpaProjectIcon || 'folder-open';
     const gpaLink = form.gpaLink?.value?.trim();
     if (!gpaSpecialization ||!gpaBatch) {
       alert(lang === 'ar' ? "الرجاء الدخول إلى الدفعة المطلوبة أولاً قبل إضافة مشروع" : "Please open the target batch first before adding a project");
       return;
     }
-    if (!gpaTitle ||!gpaSupervisor ||!gpaLink) {
-      alert(lang === 'ar' ? "الرجاء تعبئة كل الحقول: اسم المشروع، المشرف، والرابط" : "Please fill in title, supervisor, and link");
+    if (!gpaTitle ||!gpaLink) {
+      alert(lang === 'ar' ? "الرجاء تعبئة كل الحقول: اسم المشروع والرابط" : "Please fill in title and link");
       return;
     }
     try {
@@ -2367,13 +2459,14 @@ const handleAccountSignOut = () => {
         specialization: gpaSpecialization,
         batch: gpaBatch,
         title: gpaTitle,
-        supervisor: gpaSupervisor,
+        icon: gpaIcon,
         driveLink: gpaLink,
         createdAt: new Date()
       });
       alert(" تم رفع مشروع التخرج بنجاح - " + gpaTitle);
       if (window.gessRefreshMaterials) window.gessRefreshMaterials();
       form.reset();
+      setGpaProjectIcon('folder-open');
     } catch (error) {
       console.error("Firebase Error:", error);
       alert("فشل الرفع: "+ error.message);
@@ -3095,10 +3188,14 @@ const handleAccountSignOut = () => {
                                             </div>
                                             <input name="gpaTitle" required placeholder={lang === 'ar' ? "اسم/عنوان مشروع التخرج" : "Graduation project title"}
                                                 className={`md:col-span-2 p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
-                                            <input name="gpaSupervisor" required placeholder={lang === 'ar' ? "اسم المشرف" : "Supervisor name"}
-                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                            <div className="md:col-span-2 space-y-2">
+                                                <label className={`text-xs font-bold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                    {lang === 'ar' ? "اختر أيقونة المشروع" : "Choose project icon"}
+                                                </label>
+                                                <IconPicker value={gpaProjectIcon} onChange={setGpaProjectIcon} darkMode={darkMode} lang={lang} />
+                                            </div>
                                             <input name="gpaLink" required placeholder={lang === 'ar' ? "رابط المشروع (Drive)" : "Project Drive link"}
-                                                className={`p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
+                                                className={`md:col-span-2 p-4 rounded-2xl border-2 transition-all outline-none ${darkMode ? 'bg-gray-800 text-white border-gray-700' : 'bg-white text-black border-gray-200'} focus:border-[#f58220]`} />
                                             <button className="md:col-span-2 w-full p-5 rounded-2xl font-bold transition-all shadow-lg bg-[#f58220] hover:bg-[#e67610] text-white shadow-orange-200">
                                                 {lang === 'ar' ? "نشر مشروع التخرج الآن" : "Publish Project Now"}
                                             </button>
@@ -3241,29 +3338,50 @@ const handleAccountSignOut = () => {
                                                         .map(specialization => {
                                                             const projectCount = contents.filter(c => c.category === 'gpa_project' && c.specialization === specialization).length;
                                                             const batchCount = [...new Set(contents.filter(c => (c.category === 'gpa_batch' || c.category === 'gpa_project') && c.specialization === specialization).map(c => c.batch))].length;
+                                                            const specIcon = getGpaSpecializationIcon(specialization);
                                                             return (
-                                                            <div key={specialization} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => setGpaAdminPath([{ id: specialization, title: specialization }])}
-                                                                    className="flex items-center gap-3 min-w-0 text-start flex-1"
-                                                                >
-                                                                    <i data-lucide="folder" className="w-6 h-6 text-orange-500 shrink-0"></i>
-                                                                    <div className="min-w-0">
-                                                                        <h4 className={`font-black truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{specialization}</h4>
-                                                                        <p className="text-xs text-gray-400">
-                                                                            {batchCount} {lang === 'ar' ? 'دفعة' : 'batch(es)'} · {projectCount} {lang === 'ar' ? 'مشروع' : 'project(s)'}
-                                                                        </p>
+                                                            <div key={specialization} className={`p-4 rounded-2xl border-2 ${darkMode ? 'bg-gray-800/50 border-gray-700' : 'bg-gray-50 border-gray-100'}`}>
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setGpaAdminPath([{ id: specialization, title: specialization }])}
+                                                                        className="flex items-center gap-3 min-w-0 text-start flex-1"
+                                                                    >
+                                                                        <i data-lucide={specIcon} className="w-6 h-6 text-orange-500 shrink-0"></i>
+                                                                        <div className="min-w-0">
+                                                                            <h4 className={`font-black truncate ${darkMode ? 'text-white' : 'text-gray-800'}`}>{specialization}</h4>
+                                                                            <p className="text-xs text-gray-400">
+                                                                                {batchCount} {lang === 'ar' ? 'دفعة' : 'batch(es)'} · {projectCount} {lang === 'ar' ? 'مشروع' : 'project(s)'}
+                                                                            </p>
+                                                                        </div>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setEditingSpecIcon(editingSpecIcon === specialization ? null : specialization)}
+                                                                        className="p-2 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-colors shrink-0"
+                                                                        title={lang === 'ar' ? "تغيير الأيقونة" : "Change icon"}
+                                                                    >
+                                                                        <i data-lucide="palette" className="w-4 h-4"></i>
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleDeleteGpaSpecialization(specialization)}
+                                                                        className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors shrink-0"
+                                                                        title={lang === 'ar' ? "حذف التخصص" : "Delete specialization"}
+                                                                    >
+                                                                        <i data-lucide="trash-2" className="w-4 h-4"></i>
+                                                                    </button>
+                                                                </div>
+                                                                {editingSpecIcon === specialization && (
+                                                                    <div className="mt-3">
+                                                                        <IconPicker
+                                                                            value={specIcon}
+                                                                            onChange={(icon) => { handleSetGpaSpecializationIcon(specialization, icon); setEditingSpecIcon(null); }}
+                                                                            darkMode={darkMode}
+                                                                            lang={lang}
+                                                                        />
                                                                     </div>
-                                                                </button>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => handleDeleteGpaSpecialization(specialization)}
-                                                                    className="p-2 bg-red-50 text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-colors shrink-0"
-                                                                    title={lang === 'ar' ? "حذف التخصص" : "Delete specialization"}
-                                                                >
-                                                                    <i data-lucide="trash-2" className="w-4 h-4"></i>
-                                                                </button>
+                                                                )}
                                                             </div>
                                                             );
                                                         })}
@@ -3339,9 +3457,11 @@ const handleAccountSignOut = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                                     {contents.filter(c => c.category === 'gpa_project' && c.specialization === gpaAdminPath[0].id && c.batch === gpaAdminPath[1].id).map(project => (
                                                         <div key={project.id} className={`p-4 rounded-2xl border-2 flex items-center justify-between gap-3 ${darkMode ? 'bg-gray-900 border-gray-700' : 'bg-white border-gray-100'}`}>
-                                                            <div className="min-w-0">
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <div className="w-9 h-9 rounded-lg bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
+                                                                    <i data-lucide={project.icon || 'folder-open'} className="w-4 h-4"></i>
+                                                                </div>
                                                                 <h5 className={`font-bold truncate ${darkMode ? 'text-white' : 'text-gray-900'}`}>{project.title}</h5>
-                                                                <p className="text-xs text-gray-400 truncate">{lang === 'ar' ? 'المشرف: ' : 'Supervisor: '}{project.supervisor}</p>
                                                             </div>
                                                             <div className="flex gap-2 shrink-0">
                                                                 <button
@@ -3524,19 +3644,22 @@ const handleAccountSignOut = () => {
                 contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').map(c => c.specialization)
             )]
             .sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }))
-            .map(specialization => (
+            .map(specialization => {
+                const specIcon = contents.find(c => c.category === 'gpa_specialization' && String(c.specialization) === String(specialization) && c.icon)?.icon || 'folder';
+                return (
                 <button
                     key={specialization}
                     onClick={() => setPath([...path, { id: specialization, title: specialization, type: 'gpa_specialization' }])}
                     className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
                 >
-                    <i data-lucide="folder" className="w-12 h-12 text-[#f58220] mb-4"></i>
+                    <i data-lucide={specIcon} className="w-12 h-12 text-[#f58220] mb-4"></i>
                     <h3 className={`text-2xl font-black transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {specialization}
                     </h3>
                     <p className="text-gray-400 text-sm mt-2">{lang === 'ar' ? "عرض الدفعات" : "View batches"}</p>
                 </button>
-            ))}
+                );
+            })}
 
             {contents.filter(c => c.category === 'gpa_specialization' || c.category === 'gpa_batch' || c.category === 'gpa_project').length === 0 && (
                 <div className="col-span-full text-center p-10 opacity-50">
@@ -3597,31 +3720,22 @@ const handleAccountSignOut = () => {
             </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {contents
                 .filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id))
                 .map(project => (
-                <div key={project.id} className={`p-6 rounded-[2rem] border shadow-sm transition-all ${darkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'}`}>
-                    <div className="flex items-start gap-3 mb-3">
-                        <div className="w-11 h-11 rounded-xl bg-orange-100 dark:bg-orange-900/30 text-orange-600 flex items-center justify-center shrink-0">
-                            <i data-lucide="folder-open" className="w-5 h-5"></i>
-                        </div>
-                        <div className="min-w-0">
-                            <h3 className={`font-black text-lg leading-snug ${darkMode ? 'text-white' : 'text-gray-900'}`}>{project.title}</h3>
-                            <p className={`text-sm mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                                {lang === 'ar' ? 'المشرف: ' : 'Supervisor: '}
-                                <span className="font-bold">{project.supervisor || (lang === 'ar' ? 'غير محدد' : 'Not specified')}</span>
-                            </p>
-                        </div>
-                    </div>
-                    {project.driveLink && (
-                        <a href={project.driveLink} target="_blank" rel="noopener noreferrer"
-                           className="mt-2 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#f58220] hover:bg-[#e67610] text-white text-sm font-bold transition-all">
-                            <i data-lucide="external-link" className="w-4 h-4"></i>
-                            {lang === 'ar' ? 'فتح المشروع' : 'Open Project'}
-                        </a>
-                    )}
-                </div>
+                <a key={project.id} href={project.driveLink || '#'} target="_blank" rel="noopener noreferrer"
+                   className={`p-8 rounded-[2.5rem] border transition-all duration-300 flex flex-col items-center text-center group ${darkMode ? 'bg-gray-800 border-gray-700 shadow-2xl' : 'bg-white border-gray-100 shadow-sm hover:shadow-md'}`}
+                >
+                    <i data-lucide={project.icon || 'folder-open'} className="w-12 h-12 text-[#f58220] mb-4"></i>
+                    <h3 className={`text-lg font-black leading-snug transition-colors ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                        {project.title}
+                    </h3>
+                    <p className="text-gray-400 text-sm mt-2 flex items-center gap-1">
+                        <i data-lucide="external-link" className="w-3.5 h-3.5"></i>
+                        {lang === 'ar' ? "فتح المشروع" : "Open project"}
+                    </p>
+                </a>
             ))}
 
             {contents.filter(c => c.category === 'gpa_project' && String(c.specialization) === String(path[1].id) && String(c.batch) === String(path[2].id)).length === 0 && (
